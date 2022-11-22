@@ -1,3 +1,8 @@
+[ENGLISH](README_en.md)
+=======
+
+AC系列:[https://github.com/SWRT-dev/asuswrt-bcm-ac](https://github.com/SWRT-dev/asuswrt-bcm-ac)
+AX系列:[https://github.com/SWRT-dev/asuswrt-bcm](https://github.com/SWRT-dev/asuswrt-bcm)
 
 注意：
 =
@@ -13,7 +18,7 @@
 sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget libncurses5:i386 libelf1:i386 lib32z1 lib32stdc++6 gtk-doc-tools intltool binutils-dev cmake lzma liblzma-dev lzma-dev uuid-dev liblzo2-dev xsltproc dos2unix libstdc++5 docbook-xsl-* sharutils autogen shtool gengetopt libltdl-dev libtool-bin
 `
 
-3. 使用 `git clone https://github.com/SWRT-dev/asuswrt-bcm` 命令下载好源代码
+3. 使用 `git clone https://github.com/SWRT-dev/asuswrt-bcm-ac` 命令下载好源代码
 
 4. 使用 `git clone https://github.com/SWRT-dev/bcmhnd-toolchains` 命令下载toolchains
 
@@ -57,11 +62,11 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 6. 编译固件
 
-	`cd asuswrt-bcm/release/src-rt-6.x.4708` 
+	`cd asuswrt-bcm-ac/release/src-rt-6.x.4708` 
 
 	`make rt-ac68u`
 
-	`cd asuswrt-bcm/release/src-rt-7.14.114.x/src` 
+	`cd asuswrt-bcm-ac/release/src-rt-7.14.114.x/src` 
 
 	`make rt-ac88u`
 
@@ -69,55 +74,19 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 	`make rt-ac5300`
 
-	`cd asuswrt-bcm/release/src-rt-5.02hnd` 
+	`cd asuswrt-bcm-ac/release/src-rt-5.02hnd` 
 
 	`make rt-ac86u`
 
 	`make gt-ac2900`
 
-	`cd asuswrt-bcm/release/src-rt-5.02axhnd.675x` 
-
-	`make rt-ax95q`
-
-	`git checkout rt-axe95q && make rt-axe95q`
-
-	`make rt-ax55`
-
-	`make rt-ax56u`
-
-	`make rt-ax58u`
-
-	`make rt-ax82u`
-
-	`make tuf-ax3000`
-
-	`make tuf-ax5400`
-
-	`cd asuswrt-bcm/release/src-rt-5.02p1axhnd.675x` 
-
-	`make rt-ax68u`
-
-	`make rt-ax86u`
-
-	`cd asuswrt-bcm/release/src-rt-5.02axhnd` 
-
-	`make rt-ax88u`
-
-	`make gt-ax11000`
-
 	编译完成后输出固件路径：
 
-	asuswrt-bcm/release/src-rt-6.x.4708/image 
+	asuswrt-bcm-ac/release/src-rt-6.x.4708/image 
 
-	asuswrt-bcm/release/src-rt-7.14.114.x/src/image
+	asuswrt-bcm-ac/release/src-rt-7.14.114.x/src/image
 
-	asuswrt-bcm/release/src-rt-5.02hnd/image
-
-	asuswrt-bcm/release/src-rt-5.02axhnd.675x/image
-
-	asuswrt-bcm/release/src-rt-5.02p1axhnd.675x/image
-
-	asuswrt-bcm/release/src-rt-5.02axhnd/image
+	asuswrt-bcm-ac/release/src-rt-5.02hnd/image
 
 
 ## Donate
