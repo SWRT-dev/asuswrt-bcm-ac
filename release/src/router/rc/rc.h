@@ -3348,5 +3348,6 @@ int transform_wanlanstatus(wanlan_st_t *wlst);
 #endif /* RTCONFIG_QCA_PLC2 */
 
 void wl_apply_akm_by_auth_mode(int unit, int subunit, char *sp_prefix_auth);
+extern void save_sys_time(void);
 #endif	/* __RC_H__ */
 

@@ -5104,6 +5104,7 @@ end_of_wl_sched:
 						return;
 
 					logmessage("reboot scheduler", "[%s] The system is going down for reboot\n", __FUNCTION__);
+					save_sys_time();
 					kill(1, SIGTERM);
 				}
 			}
