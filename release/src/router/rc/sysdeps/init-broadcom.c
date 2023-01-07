@@ -10441,6 +10441,7 @@ void set_acs_ifnames()
 	nvram_set("acs_ifnames", acs_ifnames);
 
 	if ( (num_of_wl_if() == 2 && !(nvram_get_hex(strcat_r(prefix_5g, "band5grp", tmp)) & WL_5G_BAND_4) && !nvram_match("location_code", "RU"))
+		|| nvram_match("acs_dfs", "1")
 #ifdef RTCONFIG_QUADBAND
 		|| (num_of_wl_if() > 3 && 
 		    wl_get_band(nvram_safe_get(strcat_r(prefix_5g2, "ifname", tmp))) == WLC_BAND_5G &&
@@ -10475,10 +10476,13 @@ void set_acs_ifnames()
 		snprintf(list, sizeof(list), strlen(list_5g_unii4_chans) ? "%s,%s" : "%s", list_ch165, list_5g_unii4_chans);
 #ifdef RTCONFIG_AMAS
 		/* exclude band4 bw160 chanspecs once fronthaul ap provides */
+#if !defined(GTAC5300)
+		//list_5g_band4_bw160_chans include all 40/80/160 and 165+, it should include 165/80 and 165/160 and 165+, it's a bug on gt-ac5300.
 		if (excl_band4_bw160) {
 			strlcat(list, ",", sizeof(list));
 			strlcat(list, list_5g_band4_bw160_chans, sizeof(list));
 		}
+#endif
 #endif
 	}
 
