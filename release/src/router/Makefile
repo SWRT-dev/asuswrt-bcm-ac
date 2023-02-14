@@ -3736,7 +3736,20 @@ skipdbv2-install: skipdbv2
 	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/skipd
 	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
 
+lua:
+	$(MAKE) -C lua/src CFLAGS="$(CFLAGS) -DLUA_USE_LINUX -std=gnu99 -fPIC -I./ -DNO_TLS" PKG_VERSION="5.1.5" MYLDFLAGS="$(LDFLAGS) -ldl" linux
+
+lua-clean:
+	$(MAKE) -C lua/src clean
+
+lua-install:
+	install -D lua/src/lua $(INSTALLDIR)/lua/usr/sbin/lua
+	install -D lua/src/liblua.so.5.1.5 $(INSTALLDIR)/lua/usr/lib/liblua.so.5.1.5
+	cd $(INSTALLDIR)/lua/usr/lib/ && ln -sf liblua.so.5.1.5 liblua.so
+	$(STRIP) $(INSTALLDIR)/lua/usr/sbin/lua
+	$(STRIP) $(INSTALLDIR)/lua/usr/lib/liblua.so.5.1.5
 endif
+
 ifeq ($(SWRT_NAME),K3)
 sw-auth-lite:
 	cd sw-auth-lite && \
