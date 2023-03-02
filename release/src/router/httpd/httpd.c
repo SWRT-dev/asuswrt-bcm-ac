@@ -82,6 +82,7 @@ typedef unsigned int __u32;   // 1225 ham
 //#include "etioctl.h"
 
 #include <shutils.h>
+#include <swrt.h>
 
 #ifdef RTCONFIG_HTTPS
 #include <syslog.h>
@@ -1323,9 +1324,6 @@ handle_request(void)
 #endif
 			}else{
 				if((strncmp(file, "Main_Login.asp", 14)==0 && login_error_status == LOGINLOCK)|| strstr(url, ".png")){
-#if defined(RTCONFIG_SOFTCENTER)
-				}else if(strstr(url, "_resp") || strstr(url, "_result")){
-#endif
 				}else{
 					send_login_page(fromapp, LOGINLOCK, url, NULL, login_dt, NOLOGINTRY);
 					return;
@@ -1340,10 +1338,6 @@ handle_request(void)
 				last_login_timestamp_wan= 0;
 				lock_flag &= ~(LOCK_LOGIN_WAN);
 				login_error_status = 0;
-#ifdef RTCONFIG_CAPTCHA
-				login_fail_num = 0;
-				HTTPD_DBG("reset login_fail_num\n");
-#endif
 			}else{
 				if((strncmp(file, "Main_Login.asp", 14)==0 && login_error_status == LOGINLOCK)|| strstr(url, ".png")){
 #if defined(RTCONFIG_SOFTCENTER)
@@ -2758,4 +2752,3 @@ int check_current_ip_is_lan_or_wan()
 
 	return -1;
 }
-

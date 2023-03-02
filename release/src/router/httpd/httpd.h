@@ -35,8 +35,8 @@
 #if defined(DEBUG) && defined(DMALLOC)
 #include <dmalloc.h>
 #endif
+#include <json.h>
 #include <rtconfig.h>
-#include "swrt.h"
 
 /* Basic authorization userid and passwd limit */
 #define AUTH_MAX 64
@@ -386,7 +386,7 @@ extern void do_f(char *path, webs_t wp);
 
 /* cgi.c */
 extern int web_read(void *buffer, int len);
-extern void unescape(char *s);
+extern void unescape(char *s, size_t len);
 extern char *get_cgi(char *name);
 extern void set_cgi(char *name, char *value);
 extern void init_cgi(char *query);
@@ -569,4 +569,3 @@ extern int check_chpass_auth(char *cur_username, char *cur_passwd);
 extern void reg_default_final_token();
 extern int get_wl_nband_list();
 #endif /* _httpd_h_ */
-
