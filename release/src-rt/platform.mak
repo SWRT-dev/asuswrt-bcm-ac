@@ -83,7 +83,7 @@ export PRBM_EXT=_preb
  else
 export KERNEL_BINARY=$(LINUXDIR)/arch/arm/boot/zImage
 export PLATFORM_ARCH := arm-uclibc
-export CROSS_COMPILE := arm-brcm-linux-uclibcgnueabi-
+export CROSS_COMPILE := /opt/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin/arm-brcm-linux-uclibcgnueabi-
 export CROSS_COMPILER := $(CROSS_COMPILE)
 export CONFIGURE := ./configure --host=arm-linux --build=$(BUILD)
 export HOSTCONFIG := linux-armv4 -fomit-frame-pointer

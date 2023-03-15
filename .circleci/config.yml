@@ -18,9 +18,6 @@ jobs:
           shell: /bin/bash
           command: |
             git clone --depth=1 https://github.com/SWRT-dev/asuswrt-bcm-ac bcm470x
-            if [ ! -d ~/bcm-toolchains ];then
-            git clone --depth=1 https://github.com/SWRT-dev/bcm-toolchains ~/bcm-toolchains
-            fi
             cd bcm470x/release/src-rt-7.14.114.x/src
             sudo /home/docker/envs/bcm.sh
             make rt-ac5300
