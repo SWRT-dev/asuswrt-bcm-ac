@@ -21,26 +21,14 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 3. 使用 `git clone https://github.com/SWRT-dev/asuswrt-bcm-ac` 命令下载好源代码
 
-4. 使用 `git clone https://github.com/SWRT-dev/bcmhnd-toolchains` 命令下载toolchains
+4. 使用 `git clone https://github.com/SWRT-dev/bcm-toolchains` 命令下载toolchains
 
 5. 分别执行 `cd bcmhnd-toolchains`
 
     `sudo mkdir -p /opt/toolchains/`
 
-    `sudo ln -sf $(pwd)/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+    `sudo ln -sf $(pwd)/hndtools-arm-linux-2.6.36-uclibc-4.5.3 /opt/toolchains/`
 
-    `sudo ln -sf $(pwd)/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
-
-    `sudo ln -sf $(pwd)/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.24-binutils-2.25 /opt/toolchains/`
-    
-    `sudo ln -sf $(pwd)/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1 /opt/toolchains/`
-    
-    `sudo ln -sf $(pwd)/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.24-binutils-2.25 /opt/toolchains/`
-    
-    `sudo ln -sf $(pwd)crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1 /opt/toolchains/`
-    
-    `sudo ln -sf $(pwd)/crosstools-gcc-5.3-linux-4.1-uclibc-1.0.12-glibc-2.24-binutils-2.25 /opt/toolchains/`
-    
     `sudo mkdir -p /projects/`
     
     `sudo mkdir -p /projects/bca/`
@@ -56,7 +44,7 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
     `sudo ln -sf $(pwd)/fwtag.ini /projects/bca/tools/linux/bin/`
     
     `sudo ln -sf /projects/bca/ /projects/hnd/`
-
+    
     `chsh -s /bin/bash`
 
     `sudo ln -sf /bin/bash /bin/sh`
