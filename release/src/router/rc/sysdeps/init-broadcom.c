@@ -11534,4 +11534,3 @@ void smart_connect_sync_config(int unit) {
 
 }
 #endif
-

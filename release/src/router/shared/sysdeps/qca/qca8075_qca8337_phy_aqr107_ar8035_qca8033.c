@@ -123,12 +123,12 @@ static const int bsport_to_vport[32] = {
  * 			0x20? means ethX, ethtool ioctl
  */
 #if defined(RTAX89U)
-/* HwId: A ~ B, AQR107, AQR113 A1/B0 */
+/* HwId: A ~ B, AQR107, AQR113 A1/B0 @ PHY7, SP6 */
 static const int vport_to_phy_addr_hwid_a[MAX_WANLAN_PORT] = {
 	10, 9, 4, 3, 2, 1, 0, 6, 11, 0x107, 0x204
 };
 
-/* HwId: C, AQR113C */
+/* HwId: C, AQR113C @ PHY8, SP6 */
 static const int vport_to_phy_addr_hwid_c[MAX_WANLAN_PORT] = {
 	10, 9, 4, 3, 2, 1, 0, 6, 11, 0x108, 0x204
 };
@@ -703,6 +703,10 @@ static int get_phy_info(unsigned int phy, unsigned int *link, unsigned int *spee
 	else if (phy >= 9 && phy <= 11) {
 		r = ipq8074_port_speed(phy - 7);
 	}
+	else if (phy == 0x107 || phy == 0x108) {
+		/* AQR107/113 and AQR113C are attached to port 6 of IPQ807X. */
+		r = ipq8074_port_speed(6);
+	}
 #endif
 	else if (phy < 0x20) {
 		r = mdio_phy_speed(phy);
@@ -868,7 +872,7 @@ static void build_wan_lan_mask(int stb, int stb_bitmask)
 	if (sw_mode == SW_MODE_AP || sw_mode == SW_MODE_REPEATER)
 		wanscap_lan = 0;
 
-	if (wanscap_lan && (wans_lanport < 0 || wans_lanport > 4)) {
+	if (wanscap_lan && (wans_lanport < 1 || wans_lanport > 4)) {
 		_dprintf("%s: invalid wans_lanport %d!\n", __func__, wans_lanport);
 		wanscap_lan = 0;
 	}
@@ -911,7 +915,7 @@ static void build_wan_lan_mask(int stb, int stb_bitmask)
 
 	/* One of LAN port is acting as WAN. */
 	if (wanscap_lan) {
-		wans_lan_mask = 1U << lan_id_to_vport_nr(wans_lanport);
+		wans_lan_mask = 1U << lan_id_to_vport_nr(wans_lanport -1);
 		lan_mask &= ~wans_lan_mask;
 	}
 

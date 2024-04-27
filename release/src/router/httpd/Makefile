@@ -159,7 +159,7 @@ OBJS += vis_gui.o
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
-OBJS += $(if $(wildcard pwenc.c), pwenc.o, prebuild/$(BUILD_NAME)/pwenc.o)
+OBJS += $(if $(wildcard pwenc.c), pwenc.o, prebuild/pwenc.o)
 endif
 
 OBJS += sysinfo.o
@@ -171,7 +171,7 @@ ifeq ($(RTCONFIG_CAPTCHA),y)
 OBJS += libcaptcha.o
 endif
 
-OBJS += $(if $(wildcard web_hook.c), web_hook.o, prebuild/$(BUILD_NAME)/web_hook.o)
+OBJS += $(if $(wildcard web_hook.c), web_hook.o, prebuild/web_hook.o)
 
 LIBS = -L$(TOP_PLATFORM)/nvram${BCMEX}$(EX7) -lnvram -L$(TOP)/shared -lshared
 ifeq ($(RTCONFIG_BCM_502L07P2),y)
@@ -348,7 +348,7 @@ httpd: $(OBJS)
 install: all
 	@echo " [httpd] Installing to $(INSTALLDIR)"
 	@install -D httpd $(INSTALLDIR)/usr/sbin/httpd
-	@$(STRIP) $(INSTALLDIR)/usr/sbin/httpd
+	$(if $(RTCONFIG_DEBUG),,@$(STRIP) $(INSTALLDIR)/usr/sbin/httpd)
 	@cd $(INSTALLDIR)/usr/sbin/; ln -sf httpd httpds
 	@chmod 0500 $(INSTALLDIR)/usr/sbin/httpd
 	#@install -m 0755 test_apps $(INSTALLDIR)/usr/sbin

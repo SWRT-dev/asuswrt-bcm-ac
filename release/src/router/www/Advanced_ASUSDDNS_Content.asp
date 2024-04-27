@@ -139,7 +139,7 @@ function update_ddns_wan_unit_option(){
 
 var MAX_RETRY_NUM = 5;
 var external_ip_retry_cnt = MAX_RETRY_NUM;
-var privateIP_warning = 0;
+
 function show_warning_message(){
 	if(realip_support && (based_modelid == "BRT-AC828" || wans_mode != "lb")){
 		if(realip_state != "2" && external_ip_retry_cnt > 0){
@@ -149,26 +149,20 @@ function show_warning_message(){
 				setTimeout("get_real_ip();", 3000);
 		}
 		else if(realip_state != "2"){
-			if(cur_wan_ipaddr == "0.0.0.0" || validator.isPrivateIP(cur_wan_ipaddr)){
-				privateIP_warning = 1;
+			if(cur_wan_ipaddr == "0.0.0.0" || validator.isPrivateIP(cur_wan_ipaddr))
 				showhide("wan_ip_hide2", 1);
-			}
 			else
 				showhide("wan_ip_hide2", 0);
 		}
 		else{
-			if(!external_ip){
-				privateIP_warning = 1;
+			if(!external_ip)
 				showhide("wan_ip_hide2", 1);
-			}
 			else
 				showhide("wan_ip_hide2", 0);
 		}
 	}
-	else if(cur_wan_ipaddr == "0.0.0.0" || validator.isPrivateIP(cur_wan_ipaddr)){
-		privateIP_warning = 1;
+	else if(cur_wan_ipaddr == "0.0.0.0" || validator.isPrivateIP(cur_wan_ipaddr))
 		showhide("wan_ip_hide2", 1);
-	}
 }
 
 function get_real_ip(){
@@ -265,7 +259,6 @@ function ddns_load_body(){
             else
                 document.getElementById("ddns_hostname_x").value = "<#asusddns_inputhint#>";
         }
-        showhide("ddns_ipcheck_tr", 1);
 		show_ipv6update_setting();
         change_ddns_setting(document.form.ddns_server_x.value);
         if(letsencrypt_support){
@@ -290,7 +283,6 @@ function ddns_load_body(){
         document.form.ddns_wildcard_x[0].disabled= 1;
         document.form.ddns_wildcard_x[1].disabled= 1;
         showhide("wildcard_field",0);
-        showhide("ddns_ipcheck_tr", 0);
         if(letsencrypt_support)
             show_cert_settings(0);
     }
@@ -363,13 +355,6 @@ function applyRule(){
 
 function validForm(){
 	if(document.form.ddns_enable_x[0].checked){		//ddns enable
-		if(privateIP_warning && document.form.ddns_realip_x != undefined && document.form.ddns_realip_x.value == "0"){
-			alert("The wireless router currently uses a private WAN IP address. Please change method to retrieve WAN IP to \'External\'.");//untranslated
-			document.form.ddns_realip_x.focus();
-			$("#ddns_realip_hint").show();
-			return false;
-		}
-
 		if(document.form.ddns_server_x.value.indexOf("WWW.ASUS.COM") != -1){		//WWW.ASUS.COM	or WWW.ASUS.COM.CN
 			if(document.form.DDNSName.value == ""){
 				alert("<#LANHostConfig_x_DDNS_alarm_14#>");
@@ -407,7 +392,7 @@ function validForm(){
 				return false;
 			}
 			if(document.form.ddns_server_x.value != "CUSTOM"){             // Not CUSTOM
-			if(document.form.ddns_username_x.value == ""){
+			if(document.form.ddns_server_x.value != "DNS.HE.NET" && document.form.ddns_username_x.value == ""){
 				alert("<#QKSet_account_nameblank#>");
 				document.form.ddns_username_x.focus();
 				document.form.ddns_username_x.select();
@@ -637,9 +622,12 @@ function change_ddns_setting(v){
 			document.getElementById("ddns_hostname_tr").style.display="";
 			document.form.ddns_hostname_x.parentNode.style.display = "";
 			document.form.DDNSName.parentNode.style.display = "none";
-			inputCtrl(document.form.ddns_username_x, 1);
+			if(v == "DNS.HE.NET")
+				inputCtrl(document.form.ddns_username_x, 0);
+			else
+				inputCtrl(document.form.ddns_username_x, 1);
 			inputCtrl(document.form.ddns_passwd_x, 1);
-			if(v == "WWW.TUNNELBROKER.NET" || v == "WWW.SELFHOST.DE" || v == "WWW.CLOUDFLARE.COM" || v == "DOMAINS.GOOGLE.COM")
+			if(v == "WWW.TUNNELBROKER.NET" || v == "DNS.HE.NET" || v == "WWW.SELFHOST.DE" || v == "WWW.CLOUDFLARE.COM" || v == "DOMAINS.GOOGLE.COM")
 				var disable_wild = 1;
 			else
 				var disable_wild = 0;
@@ -948,18 +936,8 @@ function check_unregister_result(){
 				</select>
 				</td>
 			</tr>
-			<tr id="ddns_ipcheck_tr">
-				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,17);">Method to retrieve WAN IP</a></th>
-                                <td>
-				<select name="ddns_realip_x" class="input_option">
-					<option class="content_input_fd" value="0" <% nvram_match("ddns_realip_x", "0","selected"); %>><#IPConnection_VSList_Internal#></option>
-					<option class="content_input_fd" value="1" <% nvram_match("ddns_realip_x", "1","selected"); %>><#IPConnection_VSList_External#></option>
-				</select>
-				<span id="ddns_realip_hint" style="display: none; color:#FFCC00; margin-left: 5px;">Please change method to retrieve WAN IP to 'External'</span><!--untranslated-->
-				</td>
-			</tr>
 			<tr id="ddns_ipv6update_tr" style="display: none;">
-				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,18);">IPv6 Update</a></th>
+				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,18);"><#DDNS_ipv6_update#></a></th>
 				<td>
 					<input type="radio" name="ddns_ipv6_update" class="input" value="1" <% nvram_match("ddns_ipv6_update", "1", "checked"); %>><#checkbox_Yes#>
 					<input type="radio" name="ddns_ipv6_update" class="input" value="0" <% nvram_match("ddns_ipv6_update", "0", "checked"); %>><#checkbox_No#>
@@ -979,6 +957,7 @@ function check_unregister_result(){
 						<option value="WWW.SELFHOST.DE" <% nvram_match("ddns_server_x", "WWW.SELFHOST.DE","selected"); %>>WWW.SELFHOST.DE</option>
 						<option value="WWW.ZONEEDIT.COM" <% nvram_match("ddns_server_x", "WWW.ZONEEDIT.COM","selected"); %>>WWW.ZONEEDIT.COM</option>
 						<option value="WWW.DNSOMATIC.COM" <% nvram_match("ddns_server_x", "WWW.DNSOMATIC.COM","selected"); %>>WWW.DNSOMATIC.COM</option>
+						<option value="DNS.HE.NET" <% nvram_match("ddns_server_x", "DNS.HE.NET","selected"); %>>HE.NET</option>
 						<option value="WWW.TUNNELBROKER.NET" <% nvram_match("ddns_server_x", "WWW.TUNNELBROKER.NET","selected"); %>>WWW.TUNNELBROKER.NET</option>
 						<option value="WWW.NO-IP.COM" <% nvram_match("ddns_server_x", "WWW.NO-IP.COM","selected"); %>>WWW.NO-IP.COM</option>
 						<option value="WWW.ORAY.COM" <% nvram_match("ddns_server_x", "WWW.ORAY.COM","selected"); %>>WWW.ORAY.COM(花生壳)</option>
@@ -986,8 +965,8 @@ function check_unregister_result(){
 						<option value="CUSTOM" <% nvram_match("ddns_server_x", "CUSTOM","selected"); %>>Custom</option>
 					</select>
 					<input id="deregister_btn" class="button_gen" style="display: none; margin-left: 5px;" type="button" value="Deregister" onclick="showLoading();asuscomm_deregister();"/>
-				<a id="link" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_DDNSServer_linkname#></a>
-				<a id="linkToHome" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#ddns_home_link#></a>
+					<a id="link" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_DDNSServer_linkname#></a>
+					<a id="linkToHome" href="javascript:openLink('x_DDNSServer')" style=" margin-left:5px; text-decoration: underline;"><#ddns_home_link#></a>
 				<div id="customnote" style="display:none;"><span>For the Custom DDNS you must manually create a ddns-start script that handles your custom notification.</span></div>
 				<div id="need_custom_scripts" style="display:none;"><span>WARNING: you must enable both the JFFS2 partition and custom scripts support!<br>Click <a href="Advanced_System_Content.asp" style="text-decoration: underline;">HERE</a> to proceed.</span></div>
 				</td>
@@ -1046,7 +1025,7 @@ function check_unregister_result(){
 			</tr>
 			<tr id="ddns_status_tr" style="display:none;">
 				<th>DDNS Status</th>
-				<td><sapn id="ddns_status" style="color:#FFCC00"></sapn><span id="ddns_status_detail" class="notificationon" style="display: none;" onmouseover="show_ddns_status_detail();" onMouseOut="nd();"></span></td>
+				<td><span id="ddns_status" style="color:#FFCC00"></span><span id="ddns_status_detail" class="notificationon" style="display: none;" onmouseover="show_ddns_status_detail();" onMouseOut="nd();"></span></td>
 			</tr>
 			<tr id="ddns_result_tr" style="display:none;">
 				<th>DDNS Registration Result</th>
@@ -1143,4 +1122,3 @@ function check_unregister_result(){
 </form>
 </body>
 </html>
-

@@ -345,7 +345,6 @@ function change_common_radio(o, s, v, r){
 				show_cert_settings(1);
 
 			change_ddns_setting(document.form.ddns_server_x.value);
-			showhide("ddns_ipcheck_tr", 1);
 			show_ipv6update_setting();
 		}else{
 			if(document.form.ddns_server_x.value == "WWW.ASUS.COM"){
@@ -365,7 +364,6 @@ function change_common_radio(o, s, v, r){
 			document.form.ddns_regular_check.value = 0;
 			showhide("check_ddns_field", 0);
 			inputCtrl(document.form.ddns_regular_period, 0);
-			showhide("ddns_ipcheck_tr", 0);
 			showhide("ddns_ipv6update_tr", 0);
 
 			document.getElementById("ddns_status_tr").style.display = "none";
@@ -463,6 +461,8 @@ function openLink(s){
 			tourl = "http://WWW.SELFHOST.DE";
 		else if (document.form.ddns_server_x.value == 'WWW.DNSOMATIC.COM')
 			tourl = "http://dnsomatic.com/create/";
+		else if (document.form.ddns_server_x.value == 'DNS.HE.NET')
+			tourl = "https://ipv6.he.net/certification/register.php";
 		else if (document.form.ddns_server_x.value == 'WWW.TUNNELBROKER.NET')
 			tourl = "http://www.tunnelbroker.net/register.php";
 		else if (document.form.ddns_server_x.value == 'WWW.ASUS.COM')
@@ -1869,11 +1869,23 @@ function limit_auth_method(g_unit){
 						var auth_array = [["<#Wireless_Encryption_OWE#>", "owe"], ["WPA3-Personal", "sae"]];
 					}
 					else{
-						var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA3-Personal", "sae"], ["WPA/WPA2-Personal", "pskpsk2"], ["WPA2/WPA3-Personal", "psk2sae"], ["WPA2-Enterprise", "wpa2"], ["WPA/WPA2-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+						if(based_modelid === 'RT-AX92U' && wl_unit === '2'
+						|| Bcmwifi_support && band5g_11ax_support && based_modelid !== 'RT-AX92U'){
+							var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA3-Personal", "sae"], ["WPA/WPA2-Personal", "pskpsk2"], ["WPA2/WPA3-Personal", "psk2sae"], ["WPA2-Enterprise", "wpa2"], ["WPA/WPA2-Enterprise", "wpawpa2"]];
+						}
+						else{					
+							var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA3-Personal", "sae"], ["WPA/WPA2-Personal", "pskpsk2"], ["WPA2/WPA3-Personal", "psk2sae"], ["WPA2-Enterprise", "wpa2"], ["WPA/WPA2-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+						}
 					}
 				}
 				else{
-					var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+					if(based_modelid === 'RT-AX92U' && wl_unit === '2'
+					|| Bcmwifi_support && band5g_11ax_support && based_modelid !== 'RT-AX92U'){
+						var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+					}
+					else{					
+						var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+					}					
 				}
 			}
 			else if(wifi_logo_support){
@@ -1883,7 +1895,13 @@ function limit_auth_method(g_unit){
 				var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
 			}
 			else{
-				var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+				if(based_modelid === 'RT-AX92U' && wl_unit === '2'
+				|| Bcmwifi_support && band5g_11ax_support && based_modelid !== 'RT-AX92U'){
+					var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+				}
+				else{					
+					var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
+				}	
 			}
 		}
 	}
@@ -2119,11 +2137,43 @@ function gen_tab_menu(_tab_list_array, _currentItem) {
 	}
 }
 
-function check_is_merlin_fw(_fw) {
-	var fw_array = _fw.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)\.([^_]+)_(\w+)/);
-	if (fw_array && (fw_array[5].indexOf('.') > 0) )
-		return true;
-	else
-		return false;
+function is_unit_24g(_unit) {
+	if (based_modelid == "GT-AXE16000") {
+		if (_unit == 3) return true;
+	} else {
+		if (_unit == 0) return true;
+	}
+	return false;
 }
 
+function is_unit_5g(_unit) {
+	if (based_modelid == "GT-AXE16000") {
+		if (_unit == 0) return true;
+	} else if (wl_info.band5g_support) {
+		if (_unit == 1) return true;
+	}
+	return false;
+}
+
+function is_unit_5g_2(_unit) {
+	if (based_modelid == "GT-AXE16000") {
+		if (_unit == 1) return true;
+	} else if (wl_info.band5g_2_support) {
+		if (_unit == 2) return true;
+	}
+	return false;
+}
+
+function is_unit_6g(_unit) {
+	if (band6g_support) {
+		if (_unit == 2) return true;
+	}
+	return false;
+}
+
+function is_unit_60g(_unit){
+	if (band60g_support) {
+		if (_unit == 3) return true;
+	}
+	return false;
+}

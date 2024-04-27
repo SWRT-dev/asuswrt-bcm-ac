@@ -69,6 +69,8 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 	`make gt-ac2900`
 
+	`git checkout gtac5300 && make gt-ac5300`
+
 	Build result will be produced to `asuswrt-bcm/release/src-rt-xxxxx/image` directory
 
 	asuswrt-bcm-ac/release/src-rt-6.x.4708/image 

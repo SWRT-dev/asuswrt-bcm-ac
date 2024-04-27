@@ -42,6 +42,8 @@
 #include <dbapi.h>
 #endif
 
+extern char *get_cgi_json(char *name, json_object *root);
+
 //unlock all languages for cn
 int get_lang_num_swrt()
 {

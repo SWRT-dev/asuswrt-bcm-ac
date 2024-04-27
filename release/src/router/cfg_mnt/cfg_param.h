@@ -921,7 +921,10 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl2_user_rssi", 		FT_WIRELESS, 		SUBFT_ADVANCED_BAND3,		"-70"},
 	{ "wl3_user_rssi", 		FT_WIRELESS, 		SUBFT_ADVANCED_BAND4,		"-70"},
 #if defined(RTCONFIG_WIFI_QCN5024_QCN5054)
+	/* Extended NSS */
 	{ "wl1_ext_nss", 		FT_WIRELESS, 		SUBFT_ADVANCED_BAND2,		"1"},
+	/* Agile DFS (preCACen) */
+	{ "wl1_precacen",		FT_WIRELESS,		SUBFT_ADVANCED_BAND2,		"1"},
 #endif
 	/* http login */
 	{ "http_username", 	FT_LOGIN,		SUBFT_ROUTER_LOGIN,		"admin"},
@@ -1226,8 +1229,31 @@ static struct wlcsuffix_mapping_s wlcsuffix_mapping_list[] __attribute__ ((unuse
 	{ "radius_ipaddr", NULL },
 	{ "radius_key", NULL },
 	{ "radius_port", NULL },
+	{ "ap_isolate", NULL},
 	{ NULL, 		NULL }
 };
 
+struct smart_connect_nvsuffix_t {
+	char *name;
+	char *converted_name;
+};
+
+static struct smart_connect_nvsuffix_t smart_connect_nvsuffix_list[] = {
+	{ "ssid\0", NULL },
+	{ "wpa_psk\0", NULL },
+	{ "crypto\0", NULL },
+	{ "auth_mode_x\0", "auth_mode\0" },
+	{ "wep_x\0", "wep\0" },
+	{ "key\0", NULL },
+	{ "key1\0", NULL },
+	{ "key2\0", NULL },
+	{ "key3\0", NULL },
+	{ "key4\0", NULL },
+	{ "closed\0", NULL },
+	{ "radius_ipaddr\0", NULL },
+	{ "radius_key\0", NULL },
+	{ "radius_port\0", NULL },
+	{ NULL }
+};
 #endif /* __CFG_PARAM_H__ */
 /* End of cfg_param.h */
