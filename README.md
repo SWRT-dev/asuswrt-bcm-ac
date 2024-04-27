@@ -23,7 +23,7 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 4. 使用 `git clone https://github.com/SWRT-dev/bcm-toolchains` 命令下载toolchains
 
-5. 分别执行 `cd bcmhnd-toolchains`
+5. 分别执行 `cd bcm-toolchains`
 
     `sudo mkdir -p /opt/toolchains/`
 
@@ -49,7 +49,15 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
     `sudo ln -sf /bin/bash /bin/sh`
 
-6. 编译固件
+6. 使用 `git clone https://github.com/SWRT-dev/bcmhnd-toolchains` 命令下载toolchains
+
+7. 分别执行 `cd bcmhnd-toolchains`
+
+    `sudo ln -sf $(pwd)/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+
+    `sudo ln -sf $(pwd)/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+
+8. 编译固件
 
 	`cd asuswrt-bcm-ac/release/src-rt-6.x.4708` 
 
@@ -68,6 +76,8 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 	`make rt-ac86u`
 
 	`make gt-ac2900`
+
+	`git checkout gtac5300 && make gt-ac5300`
 
 	编译完成后输出固件路径：
 

@@ -23,7 +23,7 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 4. Run `git clone https://github.com/SWRT-dev/bcm-toolchains` to clone the toolchains
 
-5. Run `cd bcmhnd-toolchains` to enter the directory, and follow commands step by step 
+5. Run `cd bcm-toolchains` to enter the directory, and follow commands step by step 
 
     `sudo mkdir -p /opt/toolchains/`
 
@@ -49,7 +49,15 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
     `sudo ln -sf /bin/bash /bin/sh`
 
-6. Build firmware
+6. Run `git clone https://github.com/SWRT-dev/bcmhnd-toolchains` to clone the toolchains
+
+7. Run `cd bcmhnd-toolchains` to enter the directory, and follow commands step by step 
+
+    `sudo ln -sf $(pwd)/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+
+    `sudo ln -sf $(pwd)/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+
+8. Build firmware
 
 	`cd asuswrt-bcm-ac/release/src-rt-6.x.4708`
 
@@ -68,6 +76,8 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 	`make rt-ac86u`
 
 	`make gt-ac2900`
+
+	`git checkout gtac5300 && make gt-ac5300`
 
 	Build result will be produced to `asuswrt-bcm/release/src-rt-xxxxx/image` directory
 
