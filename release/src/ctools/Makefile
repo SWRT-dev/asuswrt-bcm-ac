@@ -1,3 +1,4 @@
+
 CC = gcc
 CFLAGS = -O3 -Wall
 LBITS := $(shell getconf LONG_BIT)

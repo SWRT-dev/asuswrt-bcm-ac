@@ -116,6 +116,7 @@ typedef struct ovpn_sconf {
 	int direction;	//key-direction of secret or tls-auth (hmac)
 	char digest[32]; //HMAC message digest algorithm: e.g. SHA1, RSA-SHA512, ecdsa-with-SHA1
 	char cipher[32];	//cipher algorithm: e.g. AES-128-CBC, CAMELLIA-256-CBC
+	int ncp_enable;
 
 //TLS Mode Options:
 	int reneg;	//TLS Renegotiation Time
@@ -127,6 +128,7 @@ typedef struct ovpn_sconf {
 	int poll;	//polling interval of cron job in seconds
 	char lan_ipaddr[16];
 	char lan_netmask[16];
+	char lan_subnet[16];
 	int ipv6_enable;
 	int nat6;
 	char wan6_ifname[16];
@@ -161,7 +163,7 @@ typedef struct ovpn_cconf {
 	int userauth;	//username, password
 	int useronly;	//client certificte not required
 	char username[64];
-	char password[64];
+	char password[256];
 
 //Data Channel Encryption Options:
 	int direction;	//key-direction of secret or tls-auth (hmac)
@@ -172,7 +174,7 @@ typedef struct ovpn_cconf {
 	int reneg;	//TLS Renegotiation Time
 	int tlscrypt;	//Encrypt and authenticate all control channel packets.
 	int verify_x509_type;	//TYPE of verify-x509-name
-	char verify_x509_name[32];	//NAME of verify-x509-name
+	char verify_x509_name[65];	//NAME of verify-x509-name
 
 //Router options and info
 	char firewall[8];	//auto
@@ -208,7 +210,7 @@ typedef enum ovpn_errno{
 typedef struct ovpn_accnt
 {
 	char username[128];
-	char password[128];
+	char password[256];
 } ovpn_accnt_t;
 
 
@@ -229,6 +231,7 @@ extern int set_ovpn_key(ovpn_type_t type, int unit, ovpn_key_t key_type, char *b
 extern int ovpn_key_exists(ovpn_type_t type, int unit, ovpn_key_t key_type);
 
 extern int need_dnsmasq_serverfile();
+extern char* get_lan_subnet(char* buf, size_t len);
 extern char* get_lan_cidr(char* buf, size_t len);
 extern char* get_lan_cidr6(char* buf, size_t len);
 extern char* get_ovpn_sconf_remote(char* buf, size_t len);
@@ -242,4 +245,7 @@ extern ovpn_accnt_info_t* get_ovpn_accnt(ovpn_accnt_info_t *accnt_info);
 
 extern void reset_ovpn_setting(ovpn_type_t type, int unit);
 extern void ovpn_defaults();
+#ifdef RTCONFIG_MULTILAN_CFG
+extern char* ovpn_get_sdn_subnet_mask(ovpn_type_t type, int unit, char* buf, size_t len);
+#endif
 #endif

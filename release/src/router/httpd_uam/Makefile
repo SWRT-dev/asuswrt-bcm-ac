@@ -7,10 +7,10 @@ ifeq ($(RTCONFIG_FBWIFI),y)
 CFLAGS +=-I$(TOP)/openssl/include -I$(TOP)/curl-7.21.7/include
 endif
 
-include $(SRCBASE)/.config
-
 LIBS = -L$(TOP_PLATFORM)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared
-
+ifeq ($(RTCONFIG_BCM_502L07P2),y)
+LIBS += -L$(TOP_PLATFORM)/ethctl_lib -lethctl
+endif
 ifeq ($(RTCONFIG_FBWIFI),y)
 LIBS += -L$(TOP)/fb_wifi -lfbwifi
 LIBS += -L$(TOP)/openssl -lcrypto -lssl
