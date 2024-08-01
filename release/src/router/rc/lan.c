@@ -1326,6 +1326,8 @@ void start_lan(void)
 		nvram_set("btn_ez_radiotoggle", "0"); // reset to default
 	}
 
+	set_hostname();
+
 	convert_routes();
 
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA) || defined(RTCONFIG_REALTEK) || defined(RTCONFIG_QSR10G)
@@ -1360,6 +1362,14 @@ void start_lan(void)
 	// configure 6715 GPIO direction
 	eval("wl", "-i", "eth4", "gpioout", "0x2002", "0x2002");
 	eval("wl", "-i", "eth5", "gpioout", "0x2002", "0x2002");
+#endif
+
+#ifdef RTAX9000
+	// configure 6715 GPIO direction
+	eval("wl", "-i", "eth6", "gpioout", "0x2002", "0x2002");
+	eval("wl", "-i", "eth6", "ledbh", "13", "7");
+	eval("wl", "-i", "eth7", "gpioout", "0x2002", "0x2002");
+	eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #endif
 
 #if defined(GTAX6000) || defined(RTAX88U_PRO)
@@ -2331,11 +2341,11 @@ gmac3_no_swbr:
 #endif
 			&& !(rp_mode() && nvram_get_int("re_mode") == 0)
 	) {
-		// only none routing mode need lan_proto=dhcp
 		char *dhcp_argv[] = { "udhcpc",
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
+					"-H", get_lan_hostname(),
 					NULL };
 		pid_t pid;
 
@@ -6599,3 +6609,4 @@ void set_onboarding_vif_status()
 		nvram_set_int("obvif_bss", 0);
 }
 #endif
+

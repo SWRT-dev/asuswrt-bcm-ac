@@ -228,7 +228,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port, char *cli
 		phdr_ex = (IBOX_COMM_PKT_HDR_EX *)pdubuf;	
 		
 		// Check Mac Address
-		if (memcpy(phdr_ex->MacAddress, mac, 6)==0)
+		if (memcmp(phdr_ex->MacAddress, mac, 6)==0)
 		{
 			_dprintf("Mac Error %2x%2x%2x%2x%2x%2x\n",
 				(unsigned char)phdr_ex->MacAddress[0],
@@ -392,6 +392,7 @@ char *processPacket(int sockfd, char *pdubuf, unsigned short cli_port, char *cli
 
 		     sendInfo(sockfd, pdubuf_res, send_port);
 		     return pdubuf_res;
+
 #if 0
 		case NET_CMD_ID_MANU_CMD:
 		{

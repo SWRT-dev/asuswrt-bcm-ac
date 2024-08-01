@@ -1388,6 +1388,10 @@ define RouterOptions
 			echo "RTCONFIG_SAMBA3=y" >>$(1); \
 		fi; \
 	fi;
+	if [ "$(AWSIOT)" = "y" ]; then \
+		sed -i "/RTCONFIG_AWSIOT/d" $(1); \
+		echo "RTCONFIG_AWSIOT=y" >>$(1); \
+	fi;
 	if [ "$(REALTEK)" = "y" ]; then \
 		sed -i "/RTCONFIG_REALTEK/d" $(1); \
 		echo "RTCONFIG_REALTEK=y" >>$(1); \
@@ -2429,6 +2433,15 @@ define RouterOptions
 		sed -i "/RTCONFIG_DYN_DICT_NAME/d" $(1); \
 		echo "RTCONFIG_DYN_DICT_NAME=y" >>$(1); \
 	fi;
+	if [ "$(VALGRIND)" = "y" ]; then \
+		sed -i "/RTCONFIG_VALGRIND\>/d" $(1); \
+		echo "RTCONFIG_VALGRIND=y" >>$(1); \
+		sed -i "/RTCONFIG_DEBUG/d" $(1); \
+		echo "RTCONFIG_DEBUG=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_VALGRIND/d" $(1); \
+		echo "# RTCONFIG_VALGRIND is not set" >>$(1); \
+	fi;
 	if [ "$(DMALLOC)" = "y" ]; then \
 		sed -i "/RTCONFIG_DMALLOC/d" $(1); \
 		echo "RTCONFIG_DMALLOC=y" >>$(1); \
@@ -3363,6 +3376,10 @@ define RouterOptions
 			sed -i "/RTCONFIG_HIDDEN_BACKHAUL/d" $(1); \
 			echo "RTCONFIG_HIDDEN_BACKHAUL=y" >>$(1); \
 		fi; \
+		if [ "$(NRLWL)" = "y" ]; then \
+			sed -i "/RTCONFIG_NO_RELOAD_WIFI_DRV_IF_POSSIBLE/d" $(1); \
+			echo "RTCONFIG_NO_RELOAD_WIFI_DRV_IF_POSSIBLE=y" >>$(1); \
+		fi; \
 		if [ "$(CFG80211)" = "y" ]; then \
 			sed -i "/RTCONFIG_CFG80211/d" $(1); \
 			echo "RTCONFIG_CFG80211=y" >>$(1); \
@@ -3573,6 +3590,8 @@ define RouterOptions
 		if [ "$(findstring RP-, $(BUILD_NAME))" != "RP-" ]; then \
 			sed -i "/RTCONFIG_ACCOUNT_BINDING/d" $(1); \
 			echo "RTCONFIG_ACCOUNT_BINDING=y" >>$(1); \
+			sed -i "/RTCONFIG_AWSIOT/d" $(1); \
+			echo "RTCONFIG_AWSIOT=y" >>$(1); \
 		fi; \
 		sed -i "/RTCONFIG_NOTIFICATION_CENTER/d" $(1); \
 		echo "RTCONFIG_NOTIFICATION_CENTER=y" >>$(1); \
@@ -3741,10 +3760,6 @@ define RouterOptions
 	if [ "$(FRS_LIVE_UPDATE)" = "y" ]; then \
 		sed -i "/RTCONFIG_LIBASUSLOG/d" $(1); \
 		echo "RTCONFIG_LIBASUSLOG=y" >>$(1); \
-	fi;
-	if [ "$(ASUSDDNS_ACCOUNT_BASE)" = "y" ]; then \
-		sed -i "/RTCONFIG_ASUSDDNS_ACCOUNT_BASE/d" $(1); \
-		echo "RTCONFIG_ASUSDDNS_ACCOUNT_BASE=y" >>$(1); \
 	fi;
 	if [ "$(LIVE_UPDATE_RSA)" != "n" ] && [ "$(LIVE_UPDATE_RSA)" != "" ]; then \
 		sed -i "/RTCONFIG_LIVE_UPDATE_RSA/d" $(1); \
@@ -5635,6 +5650,10 @@ fi;
 		sed -i "/CONFIG_BCM_BPM_BUF_MEM_PRCNT/d" $(1); \
 		echo "CONFIG_BCM_BPM_BUF_MEM_PRCNT=10" >>$(1); \
 	fi;
+	if [ "$(BUILD_NAME)" = "RT-AX9000" ]; then \
+		sed -i "/CONFIG_BCM_WLCLED/d" $(1); \
+		echo "CONFIG_BCM_WLCLED=y" >>$(1); \
+	fi; \
 	if [ "$(BUILD_NAME)" = "RT-AX3000N" ]; then \
 		sed -i "/CONFIG_BCM_MAX_UCAST_FLOWS/d" $(1); \
 		echo "CONFIG_BCM_MAX_UCAST_FLOWS=4096" >>$(1); \
@@ -5792,12 +5811,9 @@ endif
 else ifneq (,$(wildcard bootloaders/build/configs/options_$(BRCM_CHIP)_nand.conf.$(BUILD_NAME)))
 	cp bootloaders/build/configs/options_$(BRCM_CHIP)_nand.conf.$(BUILD_NAME) bootloaders/build/configs/options_$(BRCM_CHIP)_nand.conf
 endif
-else
-ifeq ($(F9K1118),y)
-	@cp $(LINUXDIR)/config_base_F9K1118.6a $(LINUXDIR)/config_$(lowercase_B)
+
 else
 	@cp $(LINUXDIR)/config_base.6a $(LINUXDIR)/config_$(lowercase_B)
-endif
 endif
 else
 	@if [ "$(RALINK)" = "y" ]; then \

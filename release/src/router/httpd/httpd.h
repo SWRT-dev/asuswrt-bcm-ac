@@ -52,6 +52,8 @@
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #endif
 
+#define IPV6_CLIENT_LIST        "/tmp/ipv6_client_list"
+
 /* Generic MIME type handler */
 struct mime_handler {
 	char *pattern;
@@ -201,6 +203,7 @@ enum {
 	HTTP_FAIL = 400,
         HTTP_CHPASS_FAIL,
         HTTP_CHPASS_FAIL_MAX,
+	HTTP_AUTH_EXPIRE,
 	HTTP_RULE_ADD_SUCCESS = 2001,
 	HTTP_RULE_DEL_SUCCESS,
 	HTTP_NORULE_DEL,
@@ -217,7 +220,8 @@ enum {
 	HTTP_INVALID_FILE,
 	HTTP_INVALID_SUPPORT,
 	HTTP_SHMGET_FAIL = 5000,
-	HTTP_FB_SVR_FAIL
+	HTTP_FB_SVR_FAIL,
+	HTTP_DM_SVR_FAIL
 };
 
 /* Exception MIME handler */
@@ -239,7 +243,7 @@ extern struct mime_referer mime_referers[];
 typedef struct asus_token_table asus_token_t;
 struct asus_token_table{
 	char useragent[1024];
-	char token[32];
+	char token[33];
 	char ipaddr[16];
 	char login_timestampstr[32];
 	char host[64];
@@ -457,11 +461,15 @@ extern void logmessage(char *logheader, char *fmt, ...);
 extern int is_private_subnet(const char *ip);
 extern char* INET6_rresolve(struct sockaddr_in6 *sin6, int numeric);
 extern char *trim_r(char *str);
+extern void write_encoded_crt(char *name, char *value);
 extern int is_wlif_up(const char *ifname);
 extern void add_asus_token(char *token);
 extern int check_token_timeout_in_list(void);
 extern asus_token_t* search_timeout_in_list(asus_token_t **prev, int fromapp_flag);
 extern asus_token_t* create_list(char *token);
+extern void get_ipv6_client_info(void);
+extern void get_ipv6_client_list(void);
+extern int inet_raddr6_pton(const char *src, void *dst, void *buf);
 extern int delete_logout_from_list(char *cookies);
 extern void set_referer_host(void);
 extern int check_xss_blacklist(char* para, int check_www);
@@ -470,6 +478,9 @@ extern int useful_redirect_page(char *next_page);
 extern char* reverse_str( char *str );
 #ifdef RTCONFIG_AMAS
 extern int check_AiMesh_whitelist(char *page);
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+extern int ej_get_dnsprivacy_presets(int eid, webs_t wp, int argc, char_t **argv);
 #endif
 extern int check_cmd_injection_blacklist(char *para);
 extern void __validate_apply_set_wl_var(char *nv, char *val) __attribute__((weak));
@@ -483,6 +494,8 @@ extern int ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
 extern int ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wps_info_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wps_info(int eid, webs_t wp, int argc, char_t **argv);
+extern int ej_wl_unit_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit);
+extern int ej_wl_status_array(int eid, webs_t wp, int argc, char_t **argv);
 extern const char *syslog_msg_filter[];
 
 /* web.c/web-*.c */
@@ -577,6 +590,9 @@ extern void amazon_wss_enable(char *wss_enable, char *do_rc);
 #endif
 #ifdef RTCONFIG_ACCOUNT_BINDING
 extern void do_get_eptoken_cgi(char *url, FILE *stream);
+extern void do_asusrouter_request_token_cgi(char *url, FILE *stream);
+extern void do_asusrouter_request_access_token_cgi(char *url, FILE *stream);
+extern void do_endpoint_request_token_cgi(char *url, FILE *stream);
 #endif
 #ifdef RTCONFIG_CAPTCHA
 extern unsigned int login_fail_num;
@@ -601,3 +617,4 @@ extern char *wl_nband_to_wlx(char *nv_name, char *wl_name, size_t len);
 extern int gen_asus_token_cookie(char *asus_token, int asus_token_len, char *token_cookie, int cookie_len);
 extern void check_lock_state();
 #endif /* _httpd_h_ */
+

@@ -2013,6 +2013,7 @@ void start_dnsmasq(void)
 #if defined(RTCONFIG_AMAS)
 	fprintf(fp, "script-arp\n");
 #endif
+	fprintf(fp, "edns-packet-max=1232\n");
 
 	append_custom_config("dnsmasq.conf", fp);
 	/* close fp move to the last */
@@ -3443,6 +3444,27 @@ void stop_hapdevent(void)
 }
 #endif
 
+#ifdef RTCONFIG_AWSIOT
+int start_awsiot(void)
+{
+    char *ev_argv[] = {"/usr/sbin/awsiot", NULL};
+    pid_t pid = 0;
+    int ret = 0;
+
+    stop_awsiot();
+
+
+    ret = _eval(ev_argv, NULL, 0, &pid);
+
+    return ret;
+}
+
+void stop_awsiot(void)
+{
+    killall_tk("awsiot");
+}
+#endif
+
 #ifdef RTCONFIG_NOTIFICATION_CENTER
 int start_wlc_nt(void)
 {
@@ -4138,6 +4160,7 @@ ddns_updated_main(int argc, char *argv[])
 	ipv6 = safe_getenv("INADYN_IPv6");
 	if (*ipv6) {
 		nvram_set("ddns_ipv6_ipaddr", ipv6);
+		nvram_set("ddns_ipv6_updated", "1");
 	}
 #endif
 	nvram_set("ddns_status", "1");
@@ -4260,6 +4283,12 @@ start_ddns(char *caller)
 		return 0;
 	}
 
+	/* MAX Retry Count mechanism */
+	if (caller == NULL) { // not from watchdog
+		//logmessage("ddns", "Reset DDNS Retry.\n");
+		nvram_set("ddns_check_retry", "10");
+	}
+
 	unit = wan_primary_ifunit();
 #if defined(RTCONFIG_DUALWAN)
 	if (nvram_match("wans_mode", "lb")) {
@@ -4270,14 +4299,14 @@ start_ddns(char *caller)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("ddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return -2;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("ddns", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return -2;
+				}
 			}
-			else {
-				unit = u;
-			}
+			unit = u;
 		}
 	}
 #endif
@@ -4295,6 +4324,15 @@ start_ddns(char *caller)
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 	wan_ifname = get_wan_ifname(unit);
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.(%d)", wan_ifname, ddns_check_retry);
+		nvram_unset("ddns_ipv6_updated");
+	}
+#endif
+
 	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
 #ifdef RTCONFIG_INADYN
 	if (wan_public) { // private WAN IP
@@ -4304,6 +4342,17 @@ start_ddns(char *caller)
 #ifdef RTCONFIG_GETREALIP
 		if (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2) {
 			wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+		} else {
+#ifdef RTCONFIG_IPV6
+			if (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)
+#endif
+			{
+				/* Trigger watchdog when start fails */
+				logmessage("ddns", "%s not find External WAN IP, go retry.(%d)", wan_ifname, ddns_check_retry);
+				nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+				nvram_set("ddns_return_code_chk", "-1");
+				return -1;
+			}
 		}
 #endif
 	} else {
@@ -4313,32 +4362,17 @@ start_ddns(char *caller)
 #endif
 
 	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
-		logmessage("ddns", "WAN IP is empty.(%d)", ddns_check_retry);
-		/* Trigger watchdog when start fails */
+		logmessage("ddns", "WAN(%d) IP is empty.(%d)", unit, ddns_check_retry);
 		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
-		nvram_set("ddns_return_code_chk", "-1");
 		return -1;
 	}
-#ifdef RTCONFIG_IPV6
-	if (nvram_get_int("ddns_ipv6_update")
-		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
-	{
-		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.(%d)", wan_ifname, ddns_check_retry);
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
-		nvram_set("ddns_return_code_chk", "-1");
-		return -1;
-	}
-#endif
 
 	if (
 #ifdef RTCONFIG_INADYN
 		realip == 0 &&
 #endif
 #ifdef RTCONFIG_IPV6
-		!nvram_get_int("ddns_ipv6_update") &&
+		(!nvram_get_int("ddns_ipv6_update") || (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)) &&
 #endif
 		wan_public) { // private WAN IP
 		logmessage("ddns", "use Private WAN IP (%s).(%d)", wan_ip, ddns_check_retry);
@@ -4358,11 +4392,13 @@ start_ddns(char *caller)
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
 #ifdef RTCONFIG_IPV6
-		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
+		&& (!ipv6_enabled() || nvram_match("ddns_ipv6_update", "0") || (ipv6_enabled() && nvram_match("ddns_ipv6_update", "1") && 
+		((strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0 && strnlen(nvram_safe_get("ddns_ipv6_ipaddr"), INET6_ADDRSTRLEN) == 0) || nvram_match("ddns_ipv6_ipaddr", ip6_addr))))
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
 	) {
 		logmessage("ddns", "IP address, server and hostname have not changed since the last update.");
+		nvram_set("ddns_updated", "1");
 		return -1;
 	}
 
@@ -4383,6 +4419,8 @@ start_ddns(char *caller)
 		service = "easydns";
 	else if (strcmp(server, "WWW.DNSOMATIC.COM")==0)
 		service = "dnsomatic";
+	else if (strcmp(server, "DNS.HE.NET") == 0)
+		service = "dyndns@he.net";
 	else if (strcmp(server, "WWW.TUNNELBROKER.NET")==0) {
 		service = "heipv6tb";
 		eval("iptables", "-t", "filter", "-D", "INPUT", "-p", "icmp", "-s", "66.220.2.74", "-j", "ACCEPT");
@@ -4432,8 +4470,10 @@ start_ddns(char *caller)
 	else if (strcmp(server, "WWW.SELFHOST.DE") == 0)
 		service = "default@selfhost.de";
 	else if (strncmp(server, "WWW.ASUS.COM", 12) == 0) { /* WWW.ASUS.COM or WWW.ASUS.COM.CN */
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE		
-		if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#ifdef RTCONFIG_ACCOUNT_BINDING
+		if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+			((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+			|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 			service = "updatev2@asus.com";
 		else
 #endif			
@@ -4465,12 +4505,6 @@ start_ddns(char *caller)
 	_dprintf("start_ddns update %s %s, wan_unit %d\n", server, service, unit);
 	logmessage("ddns", "update %s %s, wan_unit %d\n", server, service, unit);
 
-	/* MAX Retry Count mechanism */
-	if (caller == NULL) { // not from watchdog
-		//logmessage("ddns", "Reset DDNS Retry.\n");
-		nvram_set("ddns_check_retry", "10");
-	}
-
 	nvram_set("ddns_return_code", "ddns_query");
 
 #ifndef RTCONFIG_INADYN
@@ -4493,6 +4527,7 @@ start_ddns(char *caller)
 	nvram_unset("ddns_ipaddr");
 #ifdef RTCONFIG_IPV6
 	nvram_unset("ddns_ipv6_ipaddr");
+	nvram_unset("ddns_ipv6_updated");
 #endif
 	nvram_unset("ddns_status");
 	nvram_unset("ddns_updated");
@@ -4511,6 +4546,7 @@ start_ddns(char *caller)
 		nvram_unset("ddns_ipaddr");
 #ifdef RTCONFIG_IPV6
 		nvram_unset("ddns_ipv6_ipaddr");
+		nvram_unset("ddns_ipv6_updated");
 #endif
 		nvram_unset("ddns_status");
 		nvram_unset("ddns_updated");
@@ -4573,7 +4609,14 @@ start_ddns(char *caller)
 		};
 
 		if ((fp = fopen("/etc/inadyn.conf", "w"))) {
-			fprintf(fp, "provider %s {\n", service);
+			if (asus_ddns == 10) {
+				fprintf(fp, "custom namecheap {\n");
+				fprintf(fp, "ddns-server = dynamicdns.park-your-domain.com\n");
+				// We store the domain.tld in the username nvram
+				fprintf(fp, "ddns-path = \"/update?domain=%%u&password=%%p&host=%%h\"\n");
+			} else {
+				fprintf(fp, "provider %s {\n", service);
+			}
 			fprintf(fp, "hostname = %s\n", host);
 			fprintf(fp, "username = '%s'\n", ppp_safe_escape(user, tmp, sizeof(tmp)));
 			fprintf(fp, "password = '%s'\n", ppp_safe_escape(passwd, tmp, sizeof(tmp)));
@@ -4600,8 +4643,10 @@ start_ddns(char *caller)
 #endif
 			fclose(fp);
 
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
-			if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+			if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+				((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+			|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 			{
 				nvram_set("asusddns_token_state", "0");
 				if(update_asus_ddns_token() != 1 || nvram_get_int("asusddns_token_state") != 1)
@@ -4649,6 +4694,7 @@ stop_ddns(void)
 	if (nvram_match("ddns_tunbkrnet", "1")) {
 		int evalRet = eval("iptables-restore", "/tmp/filter_rules");
 		rule_apply_checking("services", __LINE__, "/tmp/filter_rules", evalRet);
+		run_custom_script("firewall-start", 0, get_wan_ifname(wan_primary_ifunit()), NULL);
 		nvram_unset("ddns_tunbkrnet");
 	}
 #ifdef RTCONFIG_OPENVPN
@@ -4693,14 +4739,14 @@ asusddns_reg_domain(int reg)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return -2;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("ddns", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return -2;
+				}
 			}
-			else {
-				unit = u;
-			}
+			unit = u;
 		}
 	}
 #endif
@@ -4708,6 +4754,15 @@ asusddns_reg_domain(int reg)
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 	wan_ifname = get_wan_ifname(unit);
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.", wan_ifname);
+		nvram_unset("ddns_ipv6_updated");
+	}
+#endif
+
 	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
 #ifdef RTCONFIG_INADYN
 	if (wan_public) { // private WAN IP
@@ -4717,6 +4772,17 @@ asusddns_reg_domain(int reg)
 #ifdef RTCONFIG_GETREALIP
 		if (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2) {
 			wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+		} else {
+#ifdef RTCONFIG_IPV6
+			if (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)
+#endif
+			{
+				/* Trigger watchdog when start fails */
+				logmessage("ddns", "%s not find External WAN IP, go retry.", wan_ifname);
+				nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+				nvram_set("ddns_return_code_chk", "-1");
+				return -1;
+			}
 		}
 #endif
 	} else {
@@ -4726,33 +4792,17 @@ asusddns_reg_domain(int reg)
 #endif
 
 	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
-		logmessage("asusddns", "WAN IP is empty.");
-		/* Trigger watchdog when start fails */
+		logmessage("asusddns", "WAN(%d) IP is empty.", unit);
 		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
-		nvram_set("ddns_return_code_chk", "-1");
 		return -1;
 	}
-#ifdef RTCONFIG_IPV6
-	if (nvram_get_int("ddns_ipv6_update")
-		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
-	{
-		logmessage("asusddns", "%s has not yet obtained an WAN IPv6 address", wan_ifname);
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
-		nvram_set("ddns_return_code_chk", "-1");
-		return -1;
-	}
-#endif
 
-	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
 	if (
 #ifdef RTCONFIG_INADYN
 		realip == 0 &&
 #endif
 #ifdef RTCONFIG_IPV6
-		!nvram_get_int("ddns_ipv6_update") &&
+		(!nvram_get_int("ddns_ipv6_update") || (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)) &&
 #endif
 		wan_public) { // private WAN IP
 		logmessage("asusddns", "use Private WAN IP (%s).", wan_ip);
@@ -4776,7 +4826,8 @@ asusddns_reg_domain(int reg)
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
 #ifdef RTCONFIG_IPV6
-		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
+		&& (!ipv6_enabled() || nvram_match("ddns_ipv6_update", "0") || (ipv6_enabled() && nvram_match("ddns_ipv6_update", "1") && 
+		((strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0 && strnlen(nvram_safe_get("ddns_ipv6_ipaddr"), INET6_ADDRSTRLEN) == 0) || nvram_match("ddns_ipv6_ipaddr", ip6_addr))))
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
 	) {
@@ -4845,8 +4896,10 @@ asusddns_reg_domain(int reg)
 		};
 
 		if ((fp = fopen("/etc/inadyn.conf", "w"))) {
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
-			if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#ifdef RTCONFIG_ACCOUNT_BINDING
+			if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+				((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+				|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 				fprintf(fp, "provider %s {\n", "registerv2@asus.com");
 			else
 #endif
@@ -4869,8 +4922,10 @@ asusddns_reg_domain(int reg)
 			if (1)
 				fprintf(fp, "secure-ssl = false\n");
 			fclose(fp);
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
-			if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+			if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+				((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+				|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 			{
 				nvram_set("asusddns_token_state", "0");
 				if(update_asus_ddns_token() != 1 || nvram_get_int("asusddns_token_state") != 1)
@@ -4950,14 +5005,14 @@ asusddns_unregister(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return -2;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("ddns", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return -2;
+				}
 			}
-			else {
-				unit = u;
-			}
+			unit = u;
 		}
 	}
 #endif
@@ -5000,8 +5055,10 @@ _dprintf("%s: do ez-ipupdate to unregister! unit = %d wan_ifname = %s nserver = 
 		};
 
 		if ((fp = fopen("/etc/inadyn.conf", "w"))) {
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
-			if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#ifdef RTCONFIG_ACCOUNT_BINDING
+			if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+				((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+				|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 				fprintf(fp, "provider %s {\n", "unregisterv2@asus.com");
 			else
 #endif
@@ -5026,8 +5083,10 @@ _dprintf("%s: do ez-ipupdate to unregister! unit = %d wan_ifname = %s nserver = 
 				fprintf(fp, "secure-ssl = false\n");
 			fclose(fp);
 
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
-			if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+			if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+				((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+				|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 			{
 				nvram_set("asusddns_token_state", "0");
 				if(update_asus_ddns_token() != 1 || nvram_get_int("asusddns_token_state") != 1)
@@ -6420,7 +6479,7 @@ start_httpd(void)
 #endif
 	char *cur_dir;
 	pid_t pid;
-#ifdef DEBUG_RCTEST
+#ifdef RTCONFIG_UIDEBUG
 	char *httpd_dir;
 #endif
 
@@ -6430,7 +6489,7 @@ start_httpd(void)
 	}
 
 	cur_dir = getcwd(NULL, 0);
-#ifdef DEBUG_RCTEST // Left for UI debug
+#ifdef RTCONFIG_UIDEBUG // Left for UI debug
 	httpd_dir = nvram_safe_get("httpd_dir");
 	if(strlen(httpd_dir)) chdir(httpd_dir);
 	else
@@ -6767,7 +6826,7 @@ void start_upnp(void)
 					"friendly_name=%s\n"
 					"model_name=%s\n"
 					"model_description=%s\n"
-					"model_number=%s.%s\n"
+					"model_number=%s\n"
 					"serial=%s\n"
 					"uuid=%s\n"
 					"lease_file=%s\n",
@@ -6785,9 +6844,9 @@ void start_upnp(void)
 					nvram_get_int("upnp_secure") ? "yes" : "no",	// secure_mode (only forward to self)
 					nvram_get_int("upnp_ssdp_interval"),
 					get_lan_hostname(),
-					get_productid(),
 					"ASUS Wireless Router",
-					rt_version, rt_serialno,
+					"ASUS Wireless Router",
+					get_productid(),
 					nvram_get("serial_no") ? : serial, uuid,
 					"/tmp/upnp.leases");
 
@@ -10795,6 +10854,9 @@ start_services(void)
 #if defined(RTCONFIG_HAPDEVENT)
 	start_hapdevent();
 #endif
+#ifdef RTCONFIG_AWSIOT
+	start_awsiot();
+#endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_HSPOT
 	start_hspotap();
@@ -11707,47 +11769,88 @@ stop_services_mfg(void)
 #ifdef RTCONFIG_CONNDIAG
 	stop_conn_diag();
 #endif
+#ifdef RTCONFIG_AWSIOT
+	stop_awsiot();
+#endif
+#ifdef RTCONFIG_CONNDIAG
+	stop_amas_portstatus();
+#endif
+#ifdef SW_DEVLED
+	if (pids("sw_devled"))
+		killall_tk("sw_devled");
+#endif
+#ifdef RTCONFIG_NBR_RPT
+	if (pids("nbr_monitor"))
+		killall_tk("nbr_monitor");
+#endif
+#ifdef RTCONFIG_SCHED_DAEMON
+	stop_sched_daemon();
+#endif
+#ifdef RTCONFIG_FSMD
+	if (pids("fsmd"))
+		killall_tk("fsmd");
+#endif
+#if defined(GTBE98) || defined(GTBE98_PRO)
+	stop_rtkmonitor();
+	eval("ebtables", "-t", "broute", "-F");
+#endif
+#if defined(RTCONFIG_USB_MODEM) \
+	&& (defined(RTCONFIG_HND_ROUTER) \
+	|| defined(RTCONFIG_QCA) \
+	|| defined(RTCONFIG_MT798X))
+#ifndef RTCONFIG_BCM4906_504
+	if (pids("usbmuxd"))
+		killall_tk("usbmuxd");
+#endif
+#endif
 }
 
 // 2008.10 magic
+
+int no_need_to_start_wanduck()
+{
+#if 0
+	int sw_mode = sw_mode();
+	if(sw_mode != SW_MODE_ROUTER && sw_mode != SW_MODE_REPEATER)
+		return 1;
+#endif
+
+#ifdef RTCONFIG_BCM_MFG
+	return 1;
+#endif
+
+#ifdef RTCONFIG_MFGFW
+	if(nvram_match("mfgfw", "1"))
+		return 1;
+#endif
+
+	if(ate_factory_mode()) {
+		logmessage("wanduck", "WARNING - router is in manufacturing mode, and can behave unexpectedly (did you mess with your bootloader?)");
+		//return 1;
+	}
+
+	if(!strcmp(nvram_safe_get("wanduck_down"), "1"))
+		return 1;
+
+#if defined(RPAX56) || defined(RPAX58)
+	if(!nvram_match("x_Setting", "0"))
+		return 1;
+#endif
+#ifdef RTCONFIG_MODEM_BRIDGE
+	if(sw_mode() == SW_MODE_AP && nvram_get_int("modem_bridge"))
+		return 1;
+#endif
+
+	return 0;
+}
 
 int start_wanduck(void)
 {
 	char *argv[] = {"/sbin/wanduck", NULL};
 	pid_t pid;
 
-#if 0
-	int sw_mode = sw_mode();
-	if(sw_mode != SW_MODE_ROUTER && sw_mode != SW_MODE_REPEATER)
-		return -1;
-#endif
-
-#ifdef RTCONFIG_BCM_MFG
-	return 0;
-#endif
-
-#ifdef RTCONFIG_MFGFW
-	if(nvram_match("mfgfw", "1"))
+	if (no_need_to_start_wanduck())
 		return 0;
-#endif
-
-	if(ate_factory_mode())
-		return 0;
-
-	if(!strcmp(nvram_safe_get("wanduck_down"), "1"))
-		return 0;
-
-#if defined(RPAX56) || defined(RPAX58)
-	if(!nvram_match("x_Setting", "0"))
-		return 0;
-#endif
-#ifdef RTCONFIG_MODEM_BRIDGE
-	if(sw_mode() == SW_MODE_AP && nvram_get_int("modem_bridge"))
-		return 0;
-#endif
-#ifdef RTCONFIG_DSL ///TODO
-	nvram_set("freeze_duck", "0");
-#endif
 
 	return _eval(argv, NULL, 0, &pid);
 }
@@ -12611,6 +12714,7 @@ static void QOS_CONTROL()
 #ifdef RTCONFIG_LANTIQ
 	char ppa_cmd[255] = {0};
 #endif
+	char dev_wan[16];
 
 	add_iQosRules(get_wan_ifname(wan_primary_ifunit()));
 #if defined(RTCONFIG_BWDPI)
@@ -15050,6 +15154,7 @@ check_ddr_done:
 #if defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_FTP)
 			start_dnsmasq();	// this includes stop_dnsmasq
 			setup_passwd();
+			set_hostname();
 			start_samba();
 			start_ftpd();
 #endif
@@ -15206,6 +15311,19 @@ check_ddr_done:
 	}
 
 //#endif
+
+#ifdef RTCONFIG_NFCM
+	else if (strcmp(script, "nfcm") == 0)
+	{
+		if(action&RC_SERVICE_STOP){
+			stop_nfcm();
+		}
+		if(action&RC_SERVICE_START) {
+			start_nfcm();
+		}
+	}
+#endif
+
 //#ifdef RTCONFIG_CLOUDSYNC
 	else if (strcmp(script, "cloudsync") == 0)
 	{
@@ -15801,7 +15919,7 @@ check_ddr_done:
 	else if(!strncmp(script, "webs_", 5) || !strncmp(script, "gobi_", 5))
 	{
 		if(action & RC_SERVICE_START) {
-#ifdef DEBUG_RCTEST // Left for UI debug
+#ifdef RTCONFIG_UIDEBUG // Left for UI debug
 			char *webscript_dir;
 			webscript_dir = nvram_safe_get("webscript_dir");
 			if(strlen(webscript_dir))
@@ -16010,8 +16128,14 @@ check_ddr_done:
 #if defined(RTCONFIG_BWDPI)
 	else if (strcmp(script, "wrs") == 0)
 	{
+		char dev_wan[16];
+
 		if(action & RC_SERVICE_STOP) stop_dpi_engine_service(0);
 		if(action & RC_SERVICE_START) start_dpi_engine_service();
+
+		// add workaround to make IPoE protocol works
+		strlcpy(dev_wan, get_wan_ifname(wan_primary_ifunit()), sizeof(dev_wan));
+		eval("iptables", "-t", "mangle", "-D", "BWDPI_FILTER", "-i", dev_wan, "-p", "udp", "--sport", "67", "--dport", "68", "-j", "DROP");
 	}
 	else if (strcmp(script, "wrs_force") == 0)
 	{
@@ -16021,6 +16145,7 @@ check_ddr_done:
 	{
 		if(action & RC_SERVICE_START){
 			char *sig_update_argv[] = {"sig_update.sh", NULL};
+			char dev_wan[16];
 			_eval(sig_update_argv, NULL, 0, NULL);
 			if(nvram_get_int("sig_state_flag")){
 				char *sig_upgrade_argv[] = {"sig_upgrade.sh", NULL};
@@ -16028,6 +16153,9 @@ check_ddr_done:
 			}
 			stop_dpi_engine_service(0);
 			start_dpi_engine_service();
+
+			// add workaround to make IPoE protocol works
+			eval("iptables", "-t", "mangle", "-D", "BWDPI_FILTER", "-i", dev_wan, "-p", "udp", "--sport", "67", "--dport", "68", "-j", "DROP");
 		}
 	}
 	else if (strcmp(script, "dpi_disable") == 0)
@@ -16468,6 +16596,7 @@ retry_wps_enr:
 			start_hapd_wpasupp(1);	// skip wpa_supp
 		}
 	}
+#ifdef RTCONFIG_AMAS
 	else if (strcmp(script, "wpasupp_qis")==0)	// rp qis dedicated preauth
 	{
 		int i = -1, t, r, band = -1;
@@ -16738,6 +16867,7 @@ retry_wps_enr:
 			}
 		}
 	}
+#endif
 #endif
 	else if (strcmp(script, "wlcmode")==0)
 	{
@@ -17511,6 +17641,11 @@ start_write_smb_conf();
 	}
 #endif
 #ifdef RTCONFIG_SOFTWIRE46
+	else if (strcmp(script, "auto46det") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_auto46det();
+		if(action & RC_SERVICE_START) start_auto46det();
+	}
 	else if (strcmp(script, "v6plusd") == 0)
 	{
 		int unit = (cmd[1]) ? atoi(cmd[1]) : wan_primary_ifunit();
@@ -17626,6 +17761,13 @@ start_write_smb_conf();
 		if(action&RC_SERVICE_STOP) stop_obd();
 		if(action&RC_SERVICE_START) start_obd();
 	}
+#ifdef RTCONFIG_AWSIOT
+	else if (strcmp(script,"awsiot") == 0)
+    	{
+        	if(action&RC_SERVICE_STOP) stop_awsiot();
+        	if(action&RC_SERVICE_START) start_awsiot();
+    	}
+#endif
 #ifdef RTCONFIG_FPROBE
 	else if (strcmp(script,"fprobe") == 0)
 	{
@@ -17950,6 +18092,9 @@ start_write_smb_conf();
 	}
 
 skip:
+
+	run_custom_script("service-event-end", 0, actionstr, script);
+
 	if(nvptr && strlen(nvptr)){
 _dprintf("goto again(%d)...\n", getpid());
 		goto again;
@@ -17966,7 +18111,7 @@ _dprintf("goto again(%d)...\n", getpid());
 		unsetenv("unit");
 	}
 #endif
-	run_custom_script("service-event-end", 0, actionstr, script);
+
 	nvram_set("rc_service", "");
 	nvram_set("rc_service_pid", "");
 _dprintf("handle_notifications() end\n");
@@ -18598,7 +18743,7 @@ void start_amas_lldpd(void)
 	} else
 	{
 		fprintf(fp, "amas-utils-cli set cost -v %d\n", nvram_get_int("cfg_cost"));
-		if(strcmp(nvram_safe_get("cfg_group"), "") == 0)
+		if(!nvram_get_int("x_Setting"))
 		{
 			strlcpy(ifnames, nvram_safe_get("eth_ifnames"), sizeof(ifnames));
 			isWan = 1;
@@ -18724,6 +18869,41 @@ stop_plcdet(void)
 	killall_tk("autodet_plc");
 	_dprintf("rc: ==> stop_plcdet!!!\n");
 }
+#endif
+
+#ifdef RTCONFIG_SOFTWIRE46
+void
+start_auto46det(void)
+{
+	char *auto46det_argv[] = {"auto46det", "-r", NULL};
+	pid_t pid;
+
+	if(getpid() != 1) {
+		notify_rc("start_auto46det");
+		return;
+	}
+
+	// default, autodet will only be called by wanduck
+	if(!nvram_get_int("x_Setting"))
+		return;
+
+	if(!pids("auto46det")) {
+		_eval(auto46det_argv, NULL, 0, &pid);
+	}
+}
+
+void
+stop_auto46det(void)
+{
+	if(getpid() != 1) {
+		notify_rc("stop_auto46det");
+		return;
+	}
+
+	killall_tk("auto46det");
+	nvram_set("wan46det_proceeding", "0");
+}
+
 #endif
 
 void
@@ -21395,9 +21575,7 @@ int start_cfgsync(void)
 	char *cfg_client_argv[] = {"cfg_client", NULL};
 	pid_t pid;
 	int ret = 0;
-#if defined(SWRT_VER_MAJOR_B)
-	return 0;
-#endif
+
 #ifdef RTCONFIG_MASTER_DET
 	if (nvram_match("cfg_master", "1") && (is_router_mode() || access_point_mode()))
 #else
@@ -21492,6 +21670,23 @@ void send_event_to_cfgmnt(int event_id)
 }
 
 #ifdef RTCONFIG_CONNDIAG
+void stop_amas_portstatus(void){
+	if(pids("amas_portstatus"))
+		killall_tk("amas_portstatus");
+}
+void start_amas_portstatus(void){
+	char *cmd[] = {"amas_portstatus", NULL};
+	pid_t pid;
+
+	stop_amas_portstatus();
+#ifdef EBG19
+	_dprintf("tmp disable amas_portstatus\n");
+	return;
+#endif
+
+	_eval(cmd, NULL, 0, &pid);
+}
+
 void stop_conn_diag(void){
 	if(pids("conn_diag"))
 		killall_tk("conn_diag");

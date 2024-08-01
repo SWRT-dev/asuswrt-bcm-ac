@@ -205,9 +205,10 @@ static int top = 0;
 static int chkusb3_period = 0;
 static int u3_chk_life = 6;
 #endif
-#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(DSL_AX82U)
+#if !defined(RTCONFIG_BCM_MFG) && (defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(DSL_AX82U))
 static int ledg_count = 0;
 #endif
+static int wanduck_count = 0;
 static int btn_pressed = 0;
 static int btn_count = 0;
 #ifdef BTN_SETUP
@@ -217,6 +218,7 @@ static int wsc_timeout = 0;
 static int btn_count_setup_second = 0;
 static int btn_pressed_toggle_radio = 0;
 #endif
+static long ddns_update_timer = 0;
 
 #if defined(RTCONFIG_WIRELESS_SWITCH) && defined(RTCONFIG_DSL)
 // for WLAN sw init, only for slide switch
@@ -540,6 +542,7 @@ int init_toggle(void)
 		case MODEL_XD6_V2:
 		case MODEL_RTAX58U_V2:
 		case MODEL_GT10:
+		case MODEL_RTAX9000:
 		case MODEL_RTAXE7800:
 		case MODEL_TUFAX3000_V2:
 		case MODEL_RTAX56U:
@@ -2777,6 +2780,88 @@ static void handle_eject_usb_button(void)
 static inline void handle_eject_usb_button(void) { }
 #endif	/* RTCONFIG_EJUSB_BTN && RTCONFIG_BLINK_LED */
 
+#if defined(RMAC2100)
+void led_on_off(void)
+{
+	if (nvram_match("led_on_off", "1")) {
+		led_control(LED_POWER, LED_ON);
+		led_control(LED_WAN, LED_ON);
+		led_control(LED_ALL, LED_ON);
+	}else{
+		led_control(LED_POWER, LED_OFF);
+		led_control(LED_WAN, LED_OFF);
+		led_control(LED_ALL, LED_OFF);
+	}
+}
+#elif defined(R6800)
+struct i2cled_lanwan_s {
+	int lan1status;
+	int lan2status;
+	int lan3status;
+	int lan4status;
+	int wanstatus;
+};
+struct i2cled_lanwan_s i2cled_lanwan_list[] = {{0}};
+void i2c_led_check(void)
+{
+	int mode = 0, speed = 0;
+	int i;
+
+	for(i = 0; i < 5; i++){
+		swrt_esw_port_status(i, &mode, &speed);
+		switch(i){
+			case 4:
+				if(mode != i2cled_lanwan_list->wanstatus){
+					i2cled_lanwan_list->wanstatus = mode;
+					if(mode)
+						i2cled_control(I2CLED_WAN_WHITE, 1);
+					else
+						i2cled_control(I2CLED_WAN_WHITE, 0);
+				}
+				break;
+			case 3:
+				if(mode != i2cled_lanwan_list->lan4status){
+					i2cled_lanwan_list->lan4status = mode;
+					if(mode)
+						i2cled_control(I2CLED_LAN4_WHITE, 1);
+					else
+						i2cled_control(I2CLED_LAN4_WHITE, 0);
+				}
+				break;
+			case 2:
+				if(mode != i2cled_lanwan_list->lan3status){
+					i2cled_lanwan_list->lan3status = mode;
+					if(mode)
+						i2cled_control(I2CLED_LAN3_WHITE, 1);
+					else
+						i2cled_control(I2CLED_LAN3_WHITE, 0);
+				}
+				break;
+			case 1:
+				if(mode != i2cled_lanwan_list->lan2status){
+					i2cled_lanwan_list->lan2status = mode;
+					if(mode)
+						i2cled_control(I2CLED_LAN2_WHITE, 1);
+					else
+						i2cled_control(I2CLED_LAN2_WHITE, 0);
+				}
+				break;
+			case 0:
+				if(mode != i2cled_lanwan_list->lan1status){
+					i2cled_lanwan_list->lan1status = mode;
+					if(mode)
+						i2cled_control(I2CLED_LAN1_WHITE, 1);
+					else
+						i2cled_control(I2CLED_LAN1_WHITE, 0);
+				}
+				break;
+			default:
+				break;
+		}
+	}
+}
+#endif
+
 #if defined(RTCONFIG_TURBO_BTN) && defined(RTCONFIG_RGBLED)
 static inline void toggle_aura_rgb_mode(int led_onoff)
 {
@@ -3915,8 +4000,12 @@ void btn_check(void)
 #endif
 #if !defined(RTCONFIG_FAKE_ETLAN_LED) || defined(RTAX86U) || defined(RTAX88U) || defined(GTAC5300)
 			setLANLedOn();
-#else
+#endif
+#ifdef RTCONFIG_FAKE_ETLAN_LED
 			nvram_set_int("etlan_led_reset", 1);
+#ifdef RTAX9000
+			nvram_set_int("etwan_led_reset", 1);
+#endif
 #endif
 #endif
 #else
@@ -3954,6 +4043,8 @@ void btn_check(void)
 				eval("wl", "-i", "eth2", "ledbh", "0", "25");
 #elif defined(TUFAX3000_V2) || defined(RTAXE7800)
 				eval("wl", "-i", "eth5", "ledbh", "0", "25");
+#elif defined(RTAX9000)
+				eval("wl", "-i", "eth8", "ledbh", "0", "25");
 #elif defined(RTAX82_XD6S)
 				eval("wl", "-i", "eth2", "ledbh", "0", "25");
 #elif defined(BCM6750)
@@ -4003,6 +4094,8 @@ void btn_check(void)
 				eval("wl", "-i", "eth6", "ledbh", "0", "25");
 #elif defined(RTAXE7800)
 				eval("wl", "-i", "eth7", "ledbh", "15", "7");
+#elif defined(RTAX9000)
+				eval("wl", "-i", "eth6", "ledbh", "13", "7");
 #elif defined(GTAX6000)
 				eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #elif defined(GTAX11000_PRO)
@@ -4060,11 +4153,13 @@ void btn_check(void)
 				eval("wl", "-i", "eth9", "ledbh", "13", "7");
 #elif defined(RTAXE7800)
 				eval("wl", "-i", "eth6", "ledbh", "0", "25");
+#elif defined(RTAX9000)
+				eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #endif
 			}
 #endif
 #ifdef RTCONFIG_EXTPHY_BCM84880
-#if defined(RTAX86U) || defined(GTAX11000) || defined(GTAX6000) || defined(TUFAX3000_V2) || defined(RTAXE7800)
+#if defined(RTAX86U) || defined(GTAX11000) || defined(GTAX6000) || defined(TUFAX3000_V2) || defined(RTAXE7800) || defined(RTAX9000)
 			int ext_phy_model = nvram_get_int("ext_phy_model");
 
 			if(!strcmp(get_productid(), "RT-AX86S")) ;
@@ -5361,7 +5456,7 @@ unsigned long get_etlan_count()
 	char buf[256];
 	char *ifname, *p;
 	unsigned long counter=0;
-#if defined(GTAC5300) || defined(RTAX88U) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(CTAX56_XD4) || defined(RTAX86U) || defined(RTAX68U) || defined(RTAX55) || defined(RTAX1800) || defined(GTAXE11000) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(RTAX3000N) || defined(RTAX88U_PRO)
+#if defined(GTAC5300) || defined(RTAX88U) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(CTAX56_XD4) || defined(RTAX86U) || defined(RTAX68U) || defined(RTAX55) || defined(RTAX1800) || defined(GTAXE11000) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(RTAX3000N) || defined(RTAX88U_PRO) || defined(XC5) || defined(RTAX9000)
 	unsigned long tmpcnt=0;
 #endif
 
@@ -5384,9 +5479,9 @@ unsigned long get_etlan_count()
 		if ((ifname = strrchr(buf, ' ')) == NULL) ifname = buf;
 		else ++ifname;
 
-#if defined(GTAC5300) || defined(RTAX88U) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX68U) || defined(RTAX55) || defined(RTAX1800) || defined(GTAXE11000) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(RTAX3000N) || defined(RTAX88U_PRO)
+#if defined(GTAC5300) || defined(RTAX88U) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX68U) || defined(RTAX55) || defined(RTAX1800) || defined(GTAXE11000) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(RTAX3000N) || defined(RTAX88U_PRO) || defined(RTAX9000)
 		if (strcmp(ifname, "eth1")
-#if defined(GTAC5300) || defined(RTAX88U) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX68U) || defined(GTAXE11000) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(RTAX88U_PRO)
+#if defined(GTAC5300) || defined(RTAX88U) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX68U) || defined(GTAXE11000) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(RTAX88U_PRO) || defined(RTAX9000)
 			&& strcmp(ifname, "eth2") && strcmp(ifname, "eth3") && strcmp(ifname, "eth4")
 #endif
 #if defined(GTAXE16000) || defined(GTAX11000_PRO)
@@ -5544,11 +5639,13 @@ void fake_etlan_led(void)
 #else
 	phystatus = GetPhyStatus(0, NULL);
 
-#if defined(RTCONFIG_EXTPHY_BCM84880) && !defined(BCM4912)
+#if defined(RTCONFIG_EXTPHY_BCM84880) && !defined(BCM4912) && !defined(BCM6855)
 	if ((nvram_get_int("wans_extwan") && !(phystatus & 0x3e)) || // configure 2.5G port as WAN, need to consider 1G WAN connectivity
 			(!nvram_get_int("wans_extwan") && !(phystatus & 0x1e)))  // configure 2.5G port as LAN, ignore 2.5G port
 #elif defined(GTAX6000) || defined(RTAX88U_PRO)
 	if (!((phystatus & 0x2) || (phystatus & 0x4) || (phystatus & 0x8) || (phystatus & 0x10)))
+#elif defined(RTAX9000)
+	if (!((phystatus & 0x2) || (phystatus & 0x4) || (phystatus & 0x8) || (phystatus & 0x10) || (phystatus & 0x20)))
 #else
 	if (!phystatus
 #if defined(RTAX92U) || defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX68U)
@@ -5711,6 +5808,104 @@ void fake_etlan_led_extra(void)
 	}
 
 	blink_check++;
+}
+#endif
+
+#ifdef RTAX9000
+unsigned long get_etwan_count()
+{
+	FILE *f;
+	char buf[256];
+	char *ifname, *p;
+	unsigned long tmpcnt=0;
+	unsigned long counter=0;
+
+	if ((f = fopen("/proc/net/dev", "r")) == NULL) return -1;
+
+	fgets(buf, sizeof(buf), f);
+	fgets(buf, sizeof(buf), f);
+
+	while (fgets(buf, sizeof(buf), f)) {
+		if ((p=strchr(buf, ':')) == NULL) continue;
+		*p = 0;
+		if ((ifname = strrchr(buf, ' ')) == NULL) ifname = buf;
+		else ++ifname;
+
+		if (strcmp(ifname, "eth0")) continue;
+
+		if (sscanf(p+1, "%lu", &tmpcnt) != 1) continue;
+		counter += tmpcnt;
+
+	}
+	fclose(f);
+
+	return counter;
+}
+
+void fake_etwan_led(void)
+{
+	static unsigned int blink_etwan_check = 0;
+	static unsigned int blink_etwan = 0;
+	static unsigned int data_etwan = 0;
+	unsigned long count_etwan;
+	int i;
+	static int j;
+
+	static int status = -1;
+	static int status_old;
+	int phystatus = 0;
+
+	phystatus = hnd_get_phy_status(0);
+	if (!phystatus ) {
+		led_control(LED_WAN_NORMAL, LED_OFF);
+		status = -1;
+		return;
+	}
+
+	if (nvram_match("AllLED", "0") || nvram_match("x_Setting", "0") || !nvram_match("link_internet", "2")) {
+		led_control(LED_WAN_NORMAL, LED_OFF);
+		return;
+	}
+
+	if (nvram_get_int("etwan_led_reset")) {
+		nvram_set_int("etwan_led_reset", 0);
+		status = -1;
+	}
+
+	// check data per 10 count
+	if ((blink_etwan_check%10) == 0) {
+		count_etwan = get_etwan_count();
+		if (count_etwan && data_etwan != count_etwan) {
+			blink_etwan = 1;
+			data_etwan = count_etwan;
+		}
+		else blink_etwan = 0;
+		led_control(LED_WAN_NORMAL, LED_ON);
+	}
+
+	if (blink_etwan) {
+		j = rand_seed_by_time() % 3;
+		for(i=0;i<10;i++) {
+			usleep(33*1000);
+
+			status_old = status;
+			if (((i%2) == 0) && (i > (3 + 2*j)))
+				status = 0;
+			else
+				status = 1;
+
+			if (status != status_old)
+			{
+				if (status)
+					led_control(LED_WAN_NORMAL, LED_ON);
+				else
+					led_control(LED_WAN_NORMAL, LED_OFF);
+			}
+		}
+		led_control(LED_WAN_NORMAL, LED_ON);
+	}
+
+	blink_etwan_check++;
 }
 #endif
 #endif	// RTCONFIG_FAKE_ETLAN_LED
@@ -6214,7 +6409,7 @@ void led_check(int sig)
 		kill_pidfile_s("/var/run/sw_devled.pid", SIGUSR2);
 #endif
 
-#if (defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN) || defined(RTCONFIG_TURBO_BTN) || (!defined(RTCONFIG_WIFI_TOG_BTN) && !defined(RTCONFIG_QCA))) && !defined(GTAX6000) && !defined(TUFAX3000_V2) && !defined(RTAXE7800) && !defined(GT10)
+#if (defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN) || defined(RTCONFIG_TURBO_BTN) || (!defined(RTCONFIG_WIFI_TOG_BTN) && !defined(RTCONFIG_QCA))) && !defined(GTAX6000) && !defined(TUFAX3000_V2) && !defined(RTAXE7800) && !defined(GT10) && !defined(RTAX9000)
 	int all_led;
 	int turnoff_counts = swled_alloff_counts?:3;
 
@@ -6276,6 +6471,9 @@ void led_check(int sig)
 #if defined(GTAXE16000) || defined(GTAX11000_PRO)
 	fake_etlan_led_extra();
 #endif
+#ifdef RTAX9000
+	fake_etwan_led();
+#endif
 #endif
 
 #if defined(RTCONFIG_USB) && (defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER))
@@ -6310,6 +6508,7 @@ void led_check(int sig)
 		case MODEL_TUFAX5400_V2:
 		case MODEL_RTAX58U_V2:
 		case MODEL_GT10:
+		case MODEL_RTAX9000:
 		case MODEL_RTAXE7800:
 		case MODEL_TUFAX3000_V2:
 		case MODEL_RTAX56U:
@@ -6779,9 +6978,9 @@ void regular_ddns_check(void)
 {
 #ifdef RPAC68U
 /* The workaround solution avoiding watchdog segfault on RP-AC68U. */
-	int r, wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #else
-	int r, wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #endif
 	char prefix[sizeof("wanXXXXXXXXXX_")], *host;
 	struct in_addr ip_addr;
@@ -6808,14 +7007,14 @@ void regular_ddns_check(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("DDNS", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return;
+				}
 			}
-			else {
-				wan_unit = u;
-			}
+			wan_unit = u;
 		}
 	}
 #endif
@@ -6842,14 +7041,8 @@ void regular_ddns_check(void)
 #endif
 	}
 	logmessage("watchdog", "Hostname/IP mapping error! Restart ddns.");
-	if (last_unit != wan_unit)
-		r = notify_rc("restart_ddns");
-	else
-		r = notify_rc("start_ddns");
-
-	if (!r)
-		nvram_set_int("ddns_last_wan_unit", wan_unit);
-
+	stop_ddns();
+	start_ddns(NULL);
 
 	return;
 }
@@ -6858,9 +7051,9 @@ void ddns_check(void)
 {
 #ifdef RPAC68U
 /* The workaround solution avoiding watchdog segfault on RP-AC68U. */
-	int r, wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #else
-	int r, wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #endif
 
 	//_dprintf("ddns_check... %d\n", ddns_check_count);
@@ -6877,14 +7070,14 @@ void ddns_check(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("DDNS", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return;
+				}
 			}
-			else {
-				wan_unit = u;
-			}
+			wan_unit = u;
 		}
 	}
 #endif
@@ -6918,8 +7111,17 @@ void ddns_check(void)
 		ddns_check_count++;
 	}
 
-	if (wan_unit == last_unit && nvram_match("ddns_updated", "1")) //already updated success
+	if (wan_unit == last_unit && nvram_match("ddns_updated", "1")) { //already updated success
+#ifdef RTCONFIG_IPV6
+		/* not enable IPv6 or IPv6 already updated success */
+		if (!ipv6_enabled() || nvram_match("ddns_ipv6_update", "0") || (ipv6_enabled() && nvram_match("ddns_ipv6_update", "1") && nvram_match("ddns_ipv6_updated", "1"))) {
+			//logmessage("watchdog", "IPv4/IPv6 already updated success, exit DDNS Retry.\n");
+			return;
+		}
+#else
 		return;
+#endif
+	}
 
 	if (wan_unit == last_unit) {
 		if ( nvram_match("ddns_server_x", "WWW.ASUS.COM") || nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
@@ -6970,13 +7172,8 @@ void ddns_check(void)
 #endif
 	}
 	logmessage("watchdog", "start ddns.");
-	if (last_unit != wan_unit)
-		r = notify_rc("restart_ddns watchdog");
-	else
-		r = notify_rc("start_ddns watchdog");
-
-	if (!r)
-		nvram_set_int("ddns_last_wan_unit", wan_unit);
+	stop_ddns();
+	start_ddns("watchdog");
 
 	return;
 }
@@ -7019,6 +7216,14 @@ void httpd_check()
 		start_rtl_watchdog();
 #endif
 	}
+}
+
+void awsiot_check()
+{
+#ifdef RTCONFIG_AWSIOT
+    if (!pids("awsiot"))
+        start_awsiot();
+#endif
 }
 
 #ifdef RTCONFIG_UPNPC_NEW
@@ -8066,7 +8271,6 @@ static void auto_firmware_check()
 	}
 
 }
-
 
 #if defined(RTCONFIG_LP5523) || defined(RTCONFIG_FIXED_BRIGHTNESS_RGBLED)
 #define FILE_LP5523 "/tmp/lp5523_log"
@@ -9987,7 +10191,7 @@ void watchdog(int sig)
 		if (!top)
 			system("top -b -n 1 | head | logger -t top");
 	}
-#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(DSL_AX82U)
+#if !defined(RTCONFIG_BCM_MFG) && (defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(DSL_AX82U))
 	if (!pids("ledg")) {
 		ledg_count = (ledg_count + 1) % 4 ;
 		if (!ledg_count) {
@@ -9995,9 +10199,18 @@ void watchdog(int sig)
 		}
 	}
 #endif
-#ifdef RTAX3000N
+#if defined(RTAX3000N) || defined(RPAX58)
 	parse_ptf();
 #endif
+
+	if (!no_need_to_start_wanduck() && !pids("wanduck")) {
+		wanduck_count = (wanduck_count + 1) % 4 ;
+		if (!wanduck_count) {
+			stop_wanduck();
+			start_wanduck();
+		}
+	}
+
 	if(nvram_match("ntp_ready", "1")) {
 #ifndef RTCONFIG_AVOID_TZ_ENV
 		if(!nvram_match("time_zone_x", time_zone_t)){
@@ -10135,9 +10348,7 @@ wdp:
 	amas_ctl_check();
 #endif
 #ifdef RTCONFIG_CFGSYNC
-#if !defined(SWRT_VER_MAJOR_B)
 	cfgsync_check();
-#endif
 #endif
 #ifdef RTCONFIG_TUNNEL
 	mastiff_check();
@@ -10153,6 +10364,10 @@ wdp:
 #if defined(RTCONFIG_SOC_IPQ8074)
 	beacon_counter_monitor();
 	thermal_monitor();
+#endif
+
+#ifdef RTCONFIG_AWSIOT
+	awsiot_check();
 #endif
 
 #ifdef RTCONFIG_UPNPC_NEW
@@ -10178,9 +10393,6 @@ wdp:
 #endif
 	if(check_auth_code)
 		check_auth_code();
-#if defined(RAX200)
-	fan_watchdog();
-#endif
 }
 
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
@@ -10470,3 +10682,4 @@ void RC_SEND_NT_EVENT(int NT_EVENT_FLAG, char *sub_event)
 	if(nt_root) json_object_put(nt_root);
 }
 #endif
+

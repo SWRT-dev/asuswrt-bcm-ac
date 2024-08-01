@@ -782,6 +782,36 @@ void update_wan_state(char *prefix, int state, int reason)
 		nvram_set_int("entware_wan_sig", 1);
 #endif
 	}
+
+	sprintf(tmp,"%d", unit);
+
+	switch (state) {
+	case WAN_STATE_INITIALIZING:
+		strcpy(tmp1, "init");
+		break;
+	case WAN_STATE_CONNECTING:
+		strcpy(tmp1, "connecting");
+		break;
+	case WAN_STATE_CONNECTED:
+		strcpy(tmp1, "connected");
+		break;
+	case WAN_STATE_DISCONNECTED:
+		strcpy(tmp1, "disconnected");
+		break;
+	case WAN_STATE_STOPPED:
+		strcpy(tmp1, "stopped");
+		break;
+	case WAN_STATE_DISABLED:
+		strcpy(tmp1, "disabled");
+		break;
+	case WAN_STATE_STOPPING:
+		strcpy(tmp1, "stopping");
+		break;
+	default:
+		sprintf(tmp1, "state %d", state);
+	}
+
+	run_custom_script("wan-event", 0, tmp, tmp1);
 }
 
 #ifdef RTCONFIG_IPV6
@@ -1150,8 +1180,9 @@ start_wan_if(int unit)
 	struct ifreq ifr;
 	int wan_mtu;
 	pid_t pid;
+	int mtu = 0;
 #ifdef RTCONFIG_USB_MODEM
-	int flags, mtu = 0;
+	int flags;
 	char usb_node[32], port_path[8];
 	char nvram_name[32];
 	int i = 0;
@@ -1169,10 +1200,9 @@ start_wan_if(int unit)
 #ifdef RTCONFIG_DSL_REMOTE
 	char dsl_prefix[16] = {0};
 #endif
-#if 0
+
 #if defined(BCM4912)
 	uint phy_pwr_skip = 0;
-#endif
 #endif
 
 #ifdef RTCONFIG_HND_ROUTER_AX
@@ -1219,33 +1249,31 @@ start_wan_if(int unit)
 
 	update_wan_state(prefix, WAN_STATE_INITIALIZING, 0);
 
-#if defined(BCM4912)
-#if 0
-	snprintf(wan_ifname, sizeof(wan_ifname), "%s", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
-	if(strlen(wan_ifname) && strstr(wan_ifname, "eth") != NULL) {
+#if defined(BCM4912) && !defined(RTAX86U_PRO)
+	switch (get_wan_proto(prefix)) {
+	case WAN_V6PLUS:
+	case WAN_OCNVC:
+		snprintf(wan_ifname, sizeof(wan_ifname), "%s", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+		if (strlen(wan_ifname) && strstr(wan_ifname, "eth") != NULL) {
 #ifdef RTCONFIG_DUALWAN
-		if(!nvram_contains_word("wans_dualwan", "none") &&
-			WAN_STATE_CONNECTED == nvram_get_int(strcat_r(prefix, "state_t", tmp))) {
-			phy_pwr_skip = 1;
-		}
+			if (!nvram_contains_word("wans_dualwan", "none") &&
+			     WAN_STATE_CONNECTED == nvram_get_int(strcat_r(prefix, "state_t", tmp))) {
+				phy_pwr_skip = 1;
+			}
 #endif
-#if defined(RTAX86U_PRO)
-		phy_pwr_skip = 1;
-#endif
-		if(!phy_pwr_skip) {
-			nvram_set("freeze_duck", "7");
+			if (!phy_pwr_skip) {
+				nvram_set("freeze_duck", "7");
 				doSystem("ethctl %s phy-power down", wan_ifname);
 				usleep(100*1000);
 				doSystem("ethctl %s phy-power up", wan_ifname);
-			/* add delay to wait wan link up, in order to avoid skip by add_multi_routes() */
-			if (nvram_match(strcat_r(prefix, "proto", tmp), "static")) {
-				sleep(10);
 			}
-		}
 		else
 			_dprintf("%s: skip to power recycle %s\n", __func__, wan_ifname);
+		}
+		break;
+	default:
+		break;
 	}
-#endif
 #endif
 
 #if defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_USB_MODEM)
@@ -2472,6 +2500,10 @@ int update_resolvconf(void)
 		nvram_match(ipv6_nvname("ipv6_only"), "1"))
 		goto NOIP;
 #endif
+
+#if defined(RTCONFIG_OPENVPN) && !defined(RTCONFIG_VPN_FUSION)
+	write_ovpn_resolv_dnsmasq(fp_servers);
+#endif
 	{
 		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -2507,10 +2539,6 @@ int update_resolvconf(void)
 #endif
 #ifdef RTCONFIG_DNSPRIVACY
 				if (dnspriv_enable)
-					break;
-#endif
-#if defined(RTCONFIG_OPENVPN) && !defined(RTCONFIG_VPN_FUSION)
-				if (write_ovpn_resolv_dnsmasq(fp_servers))
 					break;
 #endif
 #if defined(RTCONFIG_WIREGUARD) && !defined(RTCONFIG_VPN_FUSION)
@@ -4657,11 +4685,7 @@ void convert_wan_nvram(char *prefix, int unit)
 		}
 	}
 #else
-#if defined(SBRAC1900P)
-	else nvram_set(strcat_r(prefix, "hwaddr", tmp), nvram_safe_get("et2macaddr"));
-#else
 	else nvram_set(strcat_r(prefix, "hwaddr", tmp), nvram_safe_get("et0macaddr"));
-#endif
 #endif	/* RTCONFIG_RGMII_BRCM5301X */
 #else
 	else nvram_set(strcat_r(prefix, "hwaddr", tmp), get_wan_hwaddr());
@@ -4771,6 +4795,95 @@ int autodet_plc_main(int argc, char *argv[]){
 	cnt = get_connected_plc(NULL);
 	nvram_set_int("autodet_plc_state" , cnt);
 
+	return 0;
+}
+#endif
+
+#ifdef RTCONFIG_SOFTWIRE46
+void init_wan46(void) {
+
+	int unit;
+	char prefix[]="wan46detXXXXXX_", tmp[100];
+
+	/* JP Sku Only */
+	if (!strncmp(nvram_safe_get("territory_code"), "JP", 2)) {
+		nvram_unset("wan46det_proceeding");
+		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
+			if (unit == WAN_UNIT_FIRST)
+				snprintf(prefix, sizeof(prefix), "wan46det_");
+			else
+				snprintf(prefix, sizeof(prefix), "wan46det%d_", unit);
+			nvram_unset(strcat_r(prefix, "state", tmp));
+		}
+	}
+	return;
+}
+
+int auto46det_main(int argc, char *argv[]) {
+
+	int opt, unit, re = 0;
+	char wired_link_nvram[16];
+	char prefix[]="wan46detXXXXXX_", tmp[100];
+
+	while ((opt = getopt(argc, argv, "r")) != -1) {
+		switch (opt) {
+		case 'r':
+			re = 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (nvram_get_int("wan46det_proceeding"))
+		return 0;
+
+	nvram_set("wan46det_proceeding", "1");
+
+	/* JP Sku Only */
+	if (!strncmp(nvram_safe_get("territory_code"), "JP", 2)) {
+		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit) {
+
+			if (!eth_wantype(unit))
+				continue;
+
+			link_wan_nvname(unit, wired_link_nvram, sizeof(wired_link_nvram));
+			if (unit == WAN_UNIT_FIRST)
+				snprintf(prefix, sizeof(prefix), "wan46det_");
+			else
+				snprintf(prefix, sizeof(prefix), "wan46det%d_", unit);
+
+			if (nvram_get_int("x_Setting") && !ipv6_enabled()) {
+				nvram_set_int(strcat_r(prefix, "state", tmp), WAN46DET_STATE_UNKNOW);
+				_dprintf("[%s(%d)] ### IPv6 Disabled. ###\n", __FUNCTION__, __LINE__);
+				continue;
+			}
+
+			if (re) {
+				_dprintf("[%s(%d)] ### Aute Detect RESET ###\n", __FUNCTION__, __LINE__);
+				nvram_set_int(strcat_r(prefix, "state", tmp), WAN46DET_STATE_INITIALIZING);
+			}
+
+			if (!nvram_get_int(wired_link_nvram)) {
+				nvram_set_int(strcat_r(prefix, "state", tmp), WAN46DET_STATE_NOLINK);
+				continue;
+			}
+
+			if (nvram_get_int(strcat_r(prefix, "state", tmp)) >= WAN46DET_STATE_UNKNOW)
+				continue;
+
+			if (!pids("odhcp6c")) {
+				nvram_set("ipv6_service", "ipv6pt");
+				wan6_up(get_wan6face());
+				sleep(5);
+			}
+
+			nvram_set_int(strcat_r(prefix, "state", tmp), WAN46DET_STATE_INITIALIZING);
+			nvram_set_int(strcat_r(prefix, "state", tmp), wan46det(unit));
+		}
+	}
+
+	nvram_set("wan46det_proceeding", "0");
 	return 0;
 }
 #endif
@@ -5329,3 +5442,4 @@ int detwan_main(int argc, char *argv[]){
 	return 0;
 }
 #endif	/* RTCONFIG_DETWAN */
+

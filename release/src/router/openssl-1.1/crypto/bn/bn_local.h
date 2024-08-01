@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,6 +34,26 @@
  */
 /* #define BN_DEBUG */
 /* #define BN_DEBUG_RAND */
+
+/*
+ * This should limit the stack usage due to alloca to about 4K.
+ * BN_SOFT_LIMIT is a soft limit equivalent to 2*OPENSSL_RSA_MAX_MODULUS_BITS.
+ * Beyond that size bn_mul_mont is no longer used, and the constant time
+ * assembler code is disabled, due to the blatant alloca and bn_mul_mont usage.
+ * Note that bn_mul_mont does an alloca that is hidden away in assembly.
+ * It is not recommended to do computations with numbers exceeding this limit,
+ * since the result will be highly version dependent:
+ * While the current OpenSSL version will use non-optimized, but safe code,
+ * previous versions will use optimized code, that may crash due to unexpected
+ * stack overflow, and future versions may very well turn this into a hard
+ * limit.
+ * Note however, that it is possible to override the size limit using
+ * "./config -DBN_SOFT_LIMIT=<limit>" if necessary, and the O/S specific
+ * stack limit is known and taken into consideration.
+ */
+# ifndef BN_SOFT_LIMIT
+#  define BN_SOFT_LIMIT         (4096 / BN_BYTES)
+# endif
 
 # ifndef OPENSSL_SMALL_FOOTPRINT
 #  define BN_MUL_COMBA
@@ -495,10 +515,10 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         ret =  (r);                     \
         BN_UMULT_LOHI(low,high,w,tmp);  \
         ret += (c);                     \
-        (c) =  (ret<(c))?1:0;           \
+        (c) =  (ret<(c));               \
         (c) += high;                    \
         ret += low;                     \
-        (c) += (ret<low)?1:0;           \
+        (c) += (ret<low);               \
         (r) =  ret;                     \
         }
 
@@ -507,7 +527,7 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         BN_UMULT_LOHI(low,high,w,ta);   \
         ret =  low + (c);               \
         (c) =  high;                    \
-        (c) += (ret<low)?1:0;           \
+        (c) += (ret<low);               \
         (r) =  ret;                     \
         }
 
@@ -523,10 +543,10 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         high=  BN_UMULT_HIGH(w,tmp);    \
         ret += (c);                     \
         low =  (w) * tmp;               \
-        (c) =  (ret<(c))?1:0;           \
+        (c) =  (ret<(c));               \
         (c) += high;                    \
         ret += low;                     \
-        (c) += (ret<low)?1:0;           \
+        (c) += (ret<low);               \
         (r) =  ret;                     \
         }
 
@@ -536,7 +556,7 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         high=  BN_UMULT_HIGH(w,ta);     \
         ret =  low + (c);               \
         (c) =  high;                    \
-        (c) += (ret<low)?1:0;           \
+        (c) += (ret<low);               \
         (r) =  ret;                     \
         }
 
@@ -569,10 +589,10 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         lt=(bl)*(lt); \
         m1=(bl)*(ht); \
         ht =(bh)*(ht); \
-        m=(m+m1)&BN_MASK2; if (m < m1) ht+=L2HBITS((BN_ULONG)1); \
+        m=(m+m1)&BN_MASK2; ht += L2HBITS((BN_ULONG)(m < m1)); \
         ht+=HBITS(m); \
         m1=L2HBITS(m); \
-        lt=(lt+m1)&BN_MASK2; if (lt < m1) ht++; \
+        lt=(lt+m1)&BN_MASK2; ht += (lt < m1); \
         (l)=lt; \
         (h)=ht; \
         }
@@ -589,7 +609,7 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         h*=h; \
         h+=(m&BN_MASK2h1)>>(BN_BITS4-1); \
         m =(m&BN_MASK2l)<<(BN_BITS4+1); \
-        l=(l+m)&BN_MASK2; if (l < m) h++; \
+        l=(l+m)&BN_MASK2; h += (l < m); \
         (lo)=l; \
         (ho)=h; \
         }
@@ -603,9 +623,9 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         mul64(l,h,(bl),(bh)); \
  \
         /* non-multiply part */ \
-        l=(l+(c))&BN_MASK2; if (l < (c)) h++; \
+        l=(l+(c))&BN_MASK2; h += (l < (c)); \
         (c)=(r); \
-        l=(l+(c))&BN_MASK2; if (l < (c)) h++; \
+        l=(l+(c))&BN_MASK2; h += (l < (c)); \
         (c)=h&BN_MASK2; \
         (r)=l; \
         }
@@ -619,7 +639,7 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         mul64(l,h,(bl),(bh)); \
  \
         /* non-multiply part */ \
-        l+=(c); if ((l&BN_MASK2) < (c)) h++; \
+        l+=(c); h += ((l&BN_MASK2) < (c)); \
         (c)=h&BN_MASK2; \
         (r)=l&BN_MASK2; \
         }
@@ -649,7 +669,7 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
                            int cl, int dl);
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num);
-
+void bn_correct_top_consttime(BIGNUM *a);
 BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                            const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
                            int *noinv);

@@ -13,6 +13,13 @@ cat /etc/image_version
 
 echo
 echo "######build profile######"
+if [ -e /etc/build_profile ]; then
+    ls -al /etc/build_profile|cut -d'>' -f 2
+    cat /etc/build_profile
+fi
+
+echo
+echo "######build kernel config######"
 gunzip -c /proc/config.gz
 
 if [ -e /etc/patch.version ]; then
@@ -109,6 +116,19 @@ echo
 echo "###### dump all vlanctl rules ######"
 vlanctl --rule-dump-all
 
+#TC rules
+echo
+echo "###### dump all interfaces ######"
+sleep 1
+ip -d link
+echo
+echo
+
+echo
+echo "###### dump all TC rules ######"
+sleep 1
+for i in $(ip -br a | awk '{print$1}'); do echo "### $i qdisc ###"; tc qdisc show dev $i 2>/dev/null; echo "### $i class ###"; tc class show dev $i 2>/dev/null; echo "### $i filter ###"; tc -s filter show dev $i 2>/dev/null; done;
+
 echo
 echo "######brctl show######"
 brctl show
@@ -124,6 +144,10 @@ iptables -t nat -L -v -n
 echo
 echo "###### iptables -w -t filter -L ######"
 iptables -t filter -L -v -n
+
+echo
+echo "###### ip6tables -w -t filter -L ######"
+ip6tables -t filter -L -v -n
 
 echo
 echo "###### iptables -w -t mangle -L ######"
@@ -152,7 +176,6 @@ net_info_list="/proc/net/arp
                /proc/net/netfilter/nf_queue
                /proc/net/netfilter/nfnetlink_queue
                /proc/net/stat/nf_conntrack
-               /proc/net/nf_conntrack
                /proc/net/nf_conntrack_expect"
 
 # busybox msh does not support passing lists to functions
@@ -208,6 +231,12 @@ do
     fi
 done
 
+# compress /proc/net/nf_conntrack
+cp /proc/net/nf_conntrack /tmp
+cd /tmp && tar zcf nf_conntrack.tgz nf_conntrack
+rm -f /tmp/nf_conntrack
+mkdir -p /tmp/asusfbsvcs/duplicate_log
+mv /tmp/nf_conntrack.tgz /tmp/asusfbsvcs/duplicate_log
 
 echo
 echo
@@ -269,12 +298,11 @@ redirect_dmesg () {
     cat /tmp/dmesg_tmp
 }
 
+mkdir -p /tmp/asusfbsvcs/duplicate_log
+dmesg -c >> /tmp/asusfbsvcs/duplicate_log/dmesg.txt
+
 # Archer
 if [ -e /bin/archerctl ]; then
-    echo
-    echo "###### dmesg ######"
-    redirect_dmesg
-    echo
     echo "###### archerctl status ######"
     archerctl status
     redirect_dmesg
@@ -301,6 +329,8 @@ if [ -e /proc/driver/phy/cmd ]; then
     redirect_dmesg
 fi
 
+mibdump=`nvram get eth_mibdump`
+if [ "$mibdump" == "1" ]; then
 if [ -e /bin/ethswctl ]; then
     echo
     echo "###### ethswctl -c mibdump -a ######"
@@ -315,6 +345,7 @@ if [ -e /bin/ethswctl ]; then
         sleep 5
         fi
     done
+fi
 fi
 
 if [ -e /bin/spuctl ]; then

@@ -1342,6 +1342,16 @@ get_uplinkports_linkrate(char *ifname)
 		sprintf(pif[3], "%s", "eth3");
 		}
 		break;
+	case MODEL_RTAX9000:
+		/* 0 1 2 3 4 5 W0 L1 L2 L3 L4 L5 */
+		ports[0]=0; ports[1]=5; ports[2]=1; ports[3]=2; ports[4]=3; ports[5]=4;
+		sprintf(pif[0], "%s", "eth0");
+		sprintf(pif[1], "%s", "eth1");
+		sprintf(pif[2], "%s", "eth2");
+		sprintf(pif[3], "%s", "eth3");
+		sprintf(pif[4], "%s", "eth4");
+		sprintf(pif[5], "%s", "eth5");
+		break;
 	case MODEL_RTAX55:
 	case MODEL_RTAX58U_V2:
 	case MODEL_RTAX3000N:
@@ -2253,6 +2263,15 @@ phy_port_mapping get_phy_port_mapping(void)
 		.port[2] = { .phy_port_id = 2, .label_name = "L2", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
 		.port[3] = { .phy_port_id = 3, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
 		.port[4] = { .phy_port_id = -1, .label_name = "U1", .cap = PHY_PORT_CAP_USB, .max_rate = 5000, .ifname = NULL }
+#elif defined(RTAX9000)
+		.count = 7,
+		.port[0] = { .phy_port_id = 0, .label_name = "W0", .cap = PHY_PORT_CAP_WAN | PHY_PORT_CAP_WANLAN, .max_rate = 2500, .ifname = "eth0" },
+		.port[1] = { .phy_port_id = 5, .label_name = "L5", .cap = PHY_PORT_CAP_LAN, .max_rate = 2500, .ifname = "eth5" },
+		.port[2] = { .phy_port_id = 1, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
+		.port[3] = { .phy_port_id = 2, .label_name = "L2", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
+		.port[4] = { .phy_port_id = 3, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
+		.port[5] = { .phy_port_id = 4, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth4" },
+		.port[6] = { .phy_port_id = -1, .label_name = "U1", .cap = PHY_PORT_CAP_USB, .max_rate = 5000, .ifname = NULL }
 #elif defined(RTAX56U)
 		.count = 5,
 		.port[0] = { .phy_port_id = 0, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 1000, .ifname = "eth0" },
@@ -2319,6 +2338,11 @@ void append_owe_trans_vif()
 		add_to_list(wl_vif, wl_vifnames, sizeof(wl_vifnames));
 		nvram_set(tmp, wl_vifnames);
 		_dprintf("%s(%d): update wl%d_vifnames [%s] \n", __FUNCTION__, __LINE__, unit, wl_vifnames);
+	}
+	else {
+		snprintf(tmp, sizeof(tmp), "wl%d_owe_transition_ifname", unit);
+		if(strlen(nvram_safe_get(tmp)))
+			nvram_unset(tmp);
 	}
         unit++;
     }

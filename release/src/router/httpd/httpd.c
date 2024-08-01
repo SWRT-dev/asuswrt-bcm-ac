@@ -56,7 +56,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-//#include <sys/stat.h>
+#include <sys/stat.h>
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <ctype.h>
@@ -81,7 +81,7 @@ typedef unsigned int __u32;   // 1225 ham
 #define SIOCGETCPHYRD   0x89FE
 //#include "etioctl.h"
 
-#include <shutils.h>
+#include <sys/file.h>
 #include <swrt.h>
 
 #ifdef RTCONFIG_HTTPS
@@ -370,26 +370,40 @@ void Debug2File(const char *path, const char *fmt, ...)
 }
 #endif
 
-void sethost(char *host)
+void sethost(const char *host)
 {
-	char *cp;
+	char *p = host_name;
+	size_t len;
 
-	if(!host) return;
+	if (!host || *host == '\0')
+		goto error;
 
-	memset(host_name, 0, sizeof(host_name));
-	strlcpy(host_name, host, sizeof(host_name));
+	while (*host == '.') host++;
 
-	cp = host_name;
-	for ( cp = cp + 7; *cp && *cp != '\r' && *cp != '\n'; cp++ );
-	*cp = '\0';
+	len = strcspn(host, "\r\n");
+	while (len > 0 && strchr(" \t", host[len - 1]) != NULL)
+		len--;
+	if (len > sizeof(host_name) - 1)
+		goto error;
+
+	while (len-- > 0) {
+		int c = *host++;
+		if (((c | 0x20) < 'a' || (c | 0x20) > 'z') &&
+		    ((c < '0' || c > '9')) &&
+		    strchr(".-_:[]", c) == NULL) {
+			p = host_name;
+			break;
+		}
+		*p++ = c;
+	}
+
+error:
+	*p = '\0';
 }
 
 char *gethost(void)
 {
-	if(strlen(host_name)) {
-		return host_name;
-	}
-	else return(nvram_safe_get("lan_ipaddr"));
+	return host_name[0] ? host_name : nvram_safe_get("lan_ipaddr");
 }
 
 #include <sys/sysinfo.h>
@@ -993,7 +1007,7 @@ handle_request(void)
 	auth_result = 1;
 	url_do_auth = 0;
 	authorization = boundary = cookies = referer = useragent = NULL;
-	host_name[0] = 0;
+	host_name[0] = '\0';
 	bzero( line, sizeof line );
 
 	/* Parse the first line of the request. */
@@ -1486,7 +1500,7 @@ handle_request(void)
 				}
 #endif
 			}
-			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,"uploadIconFile.tar")) && !(strstr(file,"networkmap.tar")) && !(strstr(file,".CFG")) && !(strstr(file,".log")) && !check_if_file_exist(file)
+			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,"uploadIconFile.tar")) && !(strstr(file,"backup_jffs.tar")) && !(strstr(file,"networkmap.tar")) && !(strstr(file,".CFG")) && !(strstr(file,".log")) && !check_if_file_exist(file)
 #ifdef RTCONFIG_USB_MODEM
 					&& !strstr(file, "modemlog.txt")
 #endif
@@ -2640,6 +2654,7 @@ void erase_cert(void)
 {
 	unlink("/etc/cert.pem");
 	unlink("/etc/key.pem");
+	unlink(HTTPS_CA_JFFS);
 	nvram_set("https_crt_gen", "0");
 }
 
@@ -2705,7 +2720,7 @@ void start_ssl(int http_port)
 			}
 		}
 
-		if ((save)) {
+		if (save && nvram_get_int("le_enable") == 0) {
 			save_cert();
 		}
 
@@ -2741,7 +2756,7 @@ int check_current_ip_is_lan_or_wan()
 		if (inet_aton(nvram_safe_get("lan_ipaddr"), &lan) == 0 ||
 		    inet_aton(nvram_safe_get("lan_netmask"), &mask) == 0)
 			return -1;
-		return (lan.s_addr & mask.s_addr) == (login_uip_tmp.in.s_addr & mask.s_addr);
+		return ((lan.s_addr & mask.s_addr) == (login_uip_tmp.in.s_addr & mask.s_addr))?0:1;
 #ifdef RTCONFIG_IPV6
 	case AF_INET6:
 		/* IPv6 addresses are dynamic, must be bind to bind to interface */

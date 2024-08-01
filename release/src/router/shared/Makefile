@@ -2,7 +2,7 @@ include ../common.mak
 include $(SRCBASE)/.config
 include ../.config
 
-CFLAGS += -Os -Wall $(EXTRACFLAGS) -fPIC
+CFLAGS += $(if $(RTCONFIG_DEBUG),-g,-Os) -Wall $(EXTRACFLAGS) -fPIC
 #CFLAGS += $(PRIVATE_EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
 
@@ -250,6 +250,7 @@ OBJS += api-tclinux.o
 endif
 ifeq ($(RTCONFIG_EXT_RTL8365MB),y)
 CFLAGS += -I$(LINUXDIR)/drivers/char/rtl8365mb
+CFLAGS += -I$(SRCBASE)/common/include/proto
 OBJS += rtl_8365mb.o
 endif
 ifeq ($(RTCONFIG_EXT_RTL8370MB),y)
@@ -425,6 +426,12 @@ CFLAGS  += -I$(TOP)/sw-hw-auth
 vpath %.c $(TOP)/sw-hw-auth
 endif
 
+ifeq ($(RTCONFIG_TUNNEL),y)
+OBJS += aae_ipc.o
+CFLAGS  += -I$(TOP)/aaews
+vpath %.c $(TOP)/aaews
+endif
+
 ifeq ($(RTCONFIG_GEFORCENOW), y)
 OBJS += nvgfn.o
 endif
@@ -440,6 +447,11 @@ ifeq ($(or $(HND_ROUTER_AX_675X),$(HND_ROUTER_AX_6710),$(BCM_502L07P2)),y)
 ifneq ($(RTCONFIG_SDK502L07P1_121_37),y)
 OBJS += event_utils.o
 endif
+endif
+
+ifeq ($(or $(RTCONFIG_VPN_FUSION),$(RTCONFIG_TPVPN),$(RTCONFIG_IG_SITE2SITE),$(RTCONFIG_WIREGUARD)),y)
+OBJS += vpn_utils.o
+CFLAGS += -I$(TOP)/libvpn/
 endif
 
 ifeq ($(OPDBG),y)
@@ -501,6 +513,11 @@ endif
 nvpriv.o:
 ifneq ($(wildcard ./prebuild/nvpriv.o),)
 	@-cp -f ./prebuild/nvpriv.o .
+endif
+
+aae_ipc.o:
+ifeq ($(wildcard $(SRCBASE)/router/aaews/*.c),)
+	cp -f $(TOP)/aaews/prebuild/$(BUILD_NAME)/aae_ipc.o ./
 endif
 
 ifeq ($(RTCONFIG_USB),y)

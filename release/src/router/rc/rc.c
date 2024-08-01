@@ -37,6 +37,10 @@
 #include <sys/reboot.h>
 #endif
 
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+#include <json.h>
+#endif
+
 #if defined(RTCONFIG_SWRT)
 #include "swrt.h"
 #endif
@@ -46,6 +50,10 @@
 #endif
 
 #include <model.h>
+
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+#include <aae_ipc.h>
+#endif
 
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
@@ -605,6 +613,42 @@ static int rctest_main(int argc, char *argv[])
 #endif
 #endif
 #ifdef HND_ROUTER
+	else if (strcmp(argv[1], "dump_defaults")==0) {
+		struct nvram_tuple *t;
+		char *substr = NULL;
+		int total = 0;
+		FILE *fp;
+		char buf[256];
+
+		if(argv[2] && *argv[2])
+			substr = argv[2];
+
+		fp = fopen("/tmp/defaults.txt", "w");
+		if(!fp)
+			return 0;
+
+		_dprintf("dump router_defaults w/ substr[%s]\n", substr?:"[none]");
+
+		for (t = router_defaults; t->name; t++) {
+			if(substr) {
+				if(strncmp(t->name, substr, strlen(substr)) == 0) {
+					sprintf(buf, "%s\n", t->name);
+					fwrite(buf, 1, strlen(buf), fp);
+					total++;
+				}
+			} else {
+				sprintf(buf, "%s\n", t->name);
+				fwrite(buf, 1, strlen(buf), fp);
+				total++;
+			}
+		}
+		sprintf(buf, "totally printed %d defaults\n", total);
+		fwrite(buf, 1, strlen(buf), fp);
+		if(fp)
+			fclose(fp);
+
+		_dprintf("totally printed %d defaults\n", total);
+	}
 	else if (strcmp(argv[1], "regr")==0) {
 		unsigned int reg;
 		sscanf(argv[2], "%x", &reg);
@@ -805,6 +849,58 @@ static int rctest_main(int argc, char *argv[])
 		//	_dprintf("GetPhyStatus failed (%d): ", ret);
 		_dprintf("\n");
 	}
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+   	else if (strcmp(argv[1], "aae_refresh_userticket")==0) {
+        	char event[AAE_MAX_IPC_PACKET_SIZE];
+       	 	char out[AAE_MAX_IPC_PACKET_SIZE];
+        	snprintf(event, sizeof(event), AAE_DDNS_GENERIC_MSG, AAE_EID_DDNS_REFRESH_TOKEN);
+        	aae_sendIpcMsgAndWaitResp(MASTIFF_IPC_SOCKET_PATH, event, strlen(event), out, sizeof(out), 10);
+        	json_object *root = NULL;
+        	json_object *ddnsObj = NULL;
+        	json_object *eidObj = NULL;
+        	json_object *stsObj = NULL;
+        	root = json_tokener_parse((char *)out);
+        	json_object_object_get_ex(root, AAE_DDNS_PREFIX, &ddnsObj);
+        	json_object_object_get_ex(ddnsObj, AAE_IPC_EVENT_ID, &eidObj);
+        	json_object_object_get_ex(ddnsObj, AAE_IPC_STATUS, &stsObj);
+        	if (!ddnsObj || !eidObj || !stsObj)
+            		printf("Failed to aae_refresh_userticket\n");
+        	else {
+            		int eid = json_object_get_int(eidObj);
+            		const char *status = json_object_get_string(stsObj);
+            		if ((eid == AAE_EID_DDNS_REFRESH_TOKEN) && (!strcmp(status, "0")))
+                		printf("Success to aae_refresh_userticket\n");
+            		else
+                		printf("Failed to aae_refresh_userticket\n");
+        	}
+        	json_object_put(root);
+    	}
+	else if (strcmp(argv[1], "aae_refresh_deviceticket")==0) {
+        	char event[AAE_MAX_IPC_PACKET_SIZE];
+        	char out[AAE_MAX_IPC_PACKET_SIZE];
+        	snprintf(event, sizeof(event), AAE_NTC_GENERIC_MSG, AAE_EID_NTC_REFRESH_DEVICE_TICKET);
+        	aae_sendIpcMsgAndWaitResp(MASTIFF_IPC_SOCKET_PATH, event, strlen(event), out, sizeof(out), 10);
+        	json_object *root = NULL;
+        	json_object *ntcObj = NULL;
+        	json_object *eidObj = NULL;
+        	json_object *stsObj = NULL;
+        	root = json_tokener_parse((char *)out);
+        	json_object_object_get_ex(root, AAE_NTC_PREFIX, &ntcObj);
+        	json_object_object_get_ex(ntcObj, AAE_IPC_EVENT_ID, &eidObj);
+        	json_object_object_get_ex(ntcObj, AAE_IPC_STATUS, &stsObj);
+        	if (!ntcObj || !eidObj || !stsObj)
+            		printf("Failed to aae_refresh_deviceticket\n");
+        	else {
+            		int eid = json_object_get_int(eidObj);
+           	 	const char *status = json_object_get_string(stsObj);
+            		if ((eid == AAE_EID_NTC_REFRESH_DEVICE_TICKET) && (!strcmp(status, "0")))
+                		printf("Success to aae_refresh_deviceticket\n");
+            		else
+                		printf("Failed to aae_refresh_deviceticket\n");
+        	}
+        	json_object_put(root);
+    	}
+#endif
 	else if (strcmp(argv[1], "diag_stainfo")==0) {
 		char *stainfo_buf = NULL;
 		if(argv[2] && query_stainfo((!strcmp(argv[2], "all") ? NULL : argv[2]), &stainfo_buf) > 0){
@@ -1931,6 +2027,7 @@ static const applets_t applets[] = {
 	{ "netool", 			netool_main			},
 #endif
 #ifdef RTCONFIG_SOFTWIRE46
+	{ "auto46det", 			auto46det_main			},
 	{ "v6plusd", 			v6plusd_main			},
 	{ "ocnvcd", 			ocnvcd_main			},
 #endif
@@ -2077,7 +2174,7 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_ISP_CUSTOMIZE_TOOL
 	{ "tci",			tci_main		},
 #endif
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
 	{ "update_asus_ddns_token",		update_asus_ddns_token_main			},
 #endif
 #ifdef RTCONFIG_HND_ROUTER_AX
@@ -2893,6 +2990,12 @@ int main(int argc, char **argv)
 		_start_telnetd(1);
 		return 0;
 	}
+#if defined(K3)
+	else if(!strcmp(base, "k3screen")) {
+		start_k3screen();
+		return 0;
+	}
+#endif
 #ifdef RTCONFIG_SSH
 	else if (!strcmp(base, "run_sshd")) {
 		start_sshd();
@@ -3008,6 +3111,9 @@ int main(int argc, char **argv)
 			return add_multi_routes(0, -1);
 	}
 	else if (!strcmp(base, "led_ctrl")) {
+		if (argc != 3)
+			return 0;
+
 		return do_led_ctrl(atoi(argv[1]), atoi(argv[2]));
 	}
 	else if (!strcmp(base, "led_str_ctrl")) {
@@ -3354,6 +3460,10 @@ int main(int argc, char **argv)
 	}
 #endif
 #if RTCONFIG_SOFTWIRE46
+	else if (!strcmp(base, "init_wan46")) {
+		init_wan46();
+		return 0;
+	}
 	else if (!strcmp(base, "s46reset")) {
 		if (argc != 2) {
 			printf("Usage: %s <wan unit>.\n", argv[0]);
@@ -3538,3 +3648,4 @@ void exe_eu_wa_rr(void){
 
 }
 #endif
+

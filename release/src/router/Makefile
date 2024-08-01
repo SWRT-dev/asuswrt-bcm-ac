@@ -1278,6 +1278,12 @@ endif
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 obj-$(RTCONFIG_SAMBASRV) += samba-3.6.x_opwrt
 
+
+ifeq ($(RTCONFIG_AWSIOT),y)
+obj-$(RTCONFIG_AWSIOT) += aws-iot
+endif
+
+
 ifeq ($(RTCONFIG_NTFS),y)
 obj-$(RTCONFIG_OPEN_NTFS3G) += ntfs-3g
 obj-$(RTCONFIG_PARAGON_NTFS) += ufsd
@@ -1570,6 +1576,9 @@ obj-$(RTCONFIG_NFCM) += libnfnetlink-1.0.1
 obj-$(RTCONFIG_NFCM) += libmnl-1.0.4
 obj-$(RTCONFIG_NFCM) += libnetfilter_conntrack-1.0.7
 obj-$(RTCONFIG_NFCM) += libnetfilter_cttimeout-1.0.0
+
+# add the library 'ipaddr' to check IP addr is private or public
+obj-y += ipaddr
 
 obj-$(RTCONFIG_BLINK_LED) += bled
 obj-$(RTCONFIG_SWRT_I2CLED) += i2cled i2c-tools-3.1.2
@@ -3091,6 +3100,7 @@ openssl-1.1/Makefile:
 	cd openssl-1.1 && \
 	./Configure $(HOSTCONFIG) --prefix=/usr --openssldir=/etc --cross-compile-prefix=' ' \
 	$(if $(filter y,$(RTCONFIG_SFP) $(RTCONFIG_4M_SFP) $(RTCONFIG_8M_SFP)),-Os,-O2) \
+	$(if $(RTCONFIG_DEBUG),-g) \
 	-ffunction-sections -fdata-sections -Wl,--gc-sections \
 	shared $(OPENSSL_CIPHERS) no-async --api=1.0.0 \
 	    no-aria no-sm2 no-sm3 no-sm4 no-tests \
@@ -3110,17 +3120,17 @@ openssl-1.1-clean:
 openssl-1.1-install:
 ifneq ($(wildcard openssl-1.1/Makefile),)
 	install -D openssl-1.1/libcrypto.so.1.1 $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libcrypto.so.1.1
-	$(STRIP) $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libcrypto.so.1.1
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libcrypto.so.1.1)
 ifeq ($(or $(RTCONFIG_WEBDAV),$(RTCONFIG_FTP_SSL),$(RTCONFIG_OPENVPN),$(RTCONFIG_HTTPS)),y)
 	install -D openssl-1.1/libssl.so.1.1 $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libssl.so.1.1
-	$(STRIP) $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libssl.so.1.1
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libssl.so.1.1)
 endif
 ifeq ($(RTCONFIG_OPENSSL11),y)
 	cd $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib && rm -f libcrypto.so && ln -sf libcrypto.so.1.1 libcrypto.so
 	[ ! -f $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib/libssl.so.1.1 ] || \
 		cd $(INSTALLDIR)$(INSTALLSUBDIR)/usr/lib && rm -f libssl.so && ln -sf libssl.so.1.1 libssl.so
 	install -D openssl-1.1/apps/openssl $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/openssl
-	$(STRIP) $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/openssl
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/openssl)
 	chmod 0500 $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/openssl
 endif
 endif
@@ -4842,6 +4852,22 @@ nfcm-clean:
 	@$(MAKE) -C nfcm clean QCA=$(if $(QCA),y,n) HND=$(if $(HND_ROUTER),y,n)
 	rm -rf nfcm/stamp-h1
 
+ipaddr/stamp-h1:
+	touch $@
+
+ipaddr: ipaddr/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C ipaddr CC=$(CC)
+
+ipaddr-install: ipaddr
+	install -D ipaddr/libipaddr.so $(INSTALLDIR)/$</usr/lib/libipaddr.so
+	$(STRIP) $(INSTALLDIR)/$</usr/lib/libipaddr.so
+
+ipaddr-clean:
+	@$(SEP)
+	@$(MAKE) -C ipaddr clean
+	rm -rf ipaddr/stamp-h1
+
 libpcap/stamp-h1:
 	cd libpcap && $(CONFIGURE) --with-pcap=linux
 	touch $@
@@ -5345,11 +5371,12 @@ endif
 .PHONY: ffmpeg
 
 libogg/stamp-h1:
-	cd libogg && \
+	cd libogg && autoreconf -i -f && \
 	CFLAGS="-Os $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
 	LDFLAGS="-fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	$(CONFIGURE) --enable-shared --enable-static --prefix=''
 	touch $@
+	touch libogg/aclocal.m4
 
 libogg: libogg/stamp-h1
 	@$(MAKE) -C libogg all
@@ -6160,6 +6187,34 @@ lz4-install:
 	cd $(INSTALLDIR)/lz4/usr/lib && ln -sf liblz4.so.1.8.3 liblz4.so.1
 	cd $(INSTALLDIR)/lz4/usr/lib && ln -sf liblz4.so.1.8.3 liblz4.so
 
+libcap-ng/configure:
+	cd libcap-ng && autoreconf -i -f ; \
+	CFLAGS="-O3 -Wall $(EXTRACFLAGS)" $(CONFIGURE) --enable-shared \
+		--prefix=/usr \
+		--bindir=/usr/sbin \
+		--libdir=/usr/lib
+	touch $@
+
+libcap-ng: libcap-ng/configure
+	@$(SEP)
+	$(MAKE) -C $@
+
+libcap-ng-clean:
+	$(MAKE) -C libcap-ng clean
+	@rm -f libcap-ng/configure
+
+libcap-ng-install: libcap-ng
+	install -D libcap-ng/src/.libs/libcap-ng.so.0.0.0 $(INSTALLDIR)/libcap-ng/usr/lib/libcap-ng.so.0.0.0
+	$(STRIP) $(INSTALLDIR)/libcap-ng/usr/lib/libcap-ng.so.0.0.0
+	cd $(INSTALLDIR)/libcap-ng/usr/lib && ln -sf libcap-ng.so.0.0.0 libcap-ng.so.0 && \
+		ln -sf libcap-ng.so.0.0.0 libcap-ng.so
+ifneq ($(wildcard libcap-ng/src/.libs/libdrop_ambient.so.0.0.0),)
+	install -D libcap-ng/src/.libs/libdrop_ambient.so.0.0.0 $(INSTALLDIR)/libcap-ng/usr/lib/libdrop_ambient.so.0.0.0
+	$(STRIP) $(INSTALLDIR)/libcap-ng/usr/lib/libdrop_ambient.so.0.0.0
+	cd $(INSTALLDIR)/libcap-ng/usr/lib && ln -sf libdrop_ambient.so.0.0.0 libdrop_ambient.so.0 && \
+		ln -sf libdrop_ambient.so.0.0.0 libdrop_ambient.so
+endif
+
 openpam: openpam/Makefile
 	$(MAKE) -C $@ $(PARALLEL_BUILD) && $(MAKE) $@-stage
 
@@ -6391,6 +6446,26 @@ lighttpd-1.4.39-clean:
 	-@$(MAKE) -C lighttpd-1.4.39 clean
 	@rm -f lighttpd-1.4.39/stamp-h1
 
+aws-iot: shared aws-iot/Makefile
+
+aws-iot/Makefile:
+	$(MAKE)
+
+
+aws-iot-install:
+	cd aws-iot && \
+	install -d $(INSTALLDIR)/aws-iot/usr/lib/
+	install -d $(INSTALLDIR)/aws-iot/usr/lib/certs/
+	install -d $(INSTALLDIR)/aws-iot/jffs/awscerts/
+	install -D aws-iot/src/awsiot $(INSTALLDIR)/aws-iot/usr/sbin/awsiot
+	$(STRIP) $(INSTALLDIR)/aws-iot/usr/sbin/awsiot
+	install -D aws-iot/src/ipc/libawsiot_ipc.so $(INSTALLDIR)/aws-iot/usr/lib/libawsiot_ipc.so
+	$(STRIP) $(INSTALLDIR)/aws-iot/usr/lib/libawsiot_ipc.so
+
+
+aws-iot-clean:
+	-@$(MAKE) -C aws-iot clean
+
 pcre-8.12/stamp-h1:
 	cd pcre-8.12 && \
 	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
@@ -6437,7 +6512,7 @@ pcre-8.31-clean:
 libxml2/stamp-h1:
 	cd libxml2 && mkdir -p m4 && autoreconf -i -f && \
 	CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) \
-	CFLAGS="-Os -Wall $(EXTRACFLAGS)" LDFLAGS="-ldl $(EXTRALDFLAGS)" \
+	CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wall $(EXTRACFLAGS)" LDFLAGS="-ldl $(EXTRALDFLAGS)" \
 	./$(CONFIGURE) --prefix=/usr --without-python --disable-dependency-tracking \
 	--without-zlib
 	touch $@
@@ -6448,7 +6523,7 @@ libxml2: libxml2/stamp-h1
 libxml2-install: libxml2
 	@$(SEP)
 	install -D libxml2/.libs/libxml2.so.2 $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2
-	$(STRIP) $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2)
 	cd $(INSTALLDIR)/libxml2/usr/lib && ln -sf libxml2.so.2 libxml2.so
 
 libxml2-clean:
@@ -6736,17 +6811,18 @@ curl/Makefile: curl/configure
 		--disable-doh --disable-netrc --disable-dnsshuffle \
 		--disable-progress-meter \
 		$(if $(RTCONFIG_TR069),--with-libssh2=$(STAGEDIR)/usr,--without-zlib) \
-		$(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),--with-ssl=$(STAGEDIR)/usr --with-ca-fallback,--without-ssl) \
+		$(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),--with-ssl=$(TOP)/openssl --with-ca-fallback,--without-ssl) \
 		$(if $(RTCONFIG_MBEDTLS),--with-mbedtls=$(STAGEDIR)/usr,--without-mbedtls) \
 		$(if $(RTCONFIG_WOLFSSL),--with-wolfssl=$(STAGEDIR)/usr,--without-wolfssl) \
 		--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
-		CFLAGS="-Os -Wall -ffunction-sections -fdata-sections" \
+		CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wall -ffunction-sections -fdata-sections" \
 		CPPFLAGS="-I$(STAGEDIR)/usr/include" \
 		comma="," \
 		LDFLAGS="-Wl$(if $(RTCONFIG_TR069),$(comma)-rpath-link=$(STAGEDIR)/usr/lib,),--gc-sections \
 			   -Wl$(if $(RTCONFIG_TR069),$(comma)-rpath=$(STAGEDIR)/usr/lib,),--gc-sections \
 			   $(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
 		LIBS="-ldl $(if $(RTCONFIG_OPENSSL11),-lpthread,) \
+			   $(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),-lcrypto -lssl,) \
 			   $(if $(RTCONFIG_MBEDTLS),-lmbedcrypto -lmbedx509 -lmbedtls,) \
 			   $(if $(RTCONFIG_WOLFSSL),-lwolfssl,)"
 
@@ -6759,14 +6835,14 @@ curl: $(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),openssl,) $(if $(RTCONFIG_
 curl-install:
 	@$(SEP)
 	install -D curl/lib/.libs/libcurl.so.4.8.0 $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.8.0
-	$(STRIP) $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.8.0
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.8.0)
 	cd $(INSTALLDIR)/curl/usr/lib && \
 		ln -sf libcurl.so.4.8.0 libcurl.so && \
 		ln -sf libcurl.so.4.8.0 libcurl.so.4
 #ifeq ($(or $(RTCONFIG_SPEEDTEST),$(RTCONFIG_LETSENCRYPT)),y)
 	# for speedtest
 	install -D curl/src/.libs/curl $(INSTALLDIR)/curl/usr/sbin/curl
-	$(STRIP) $(INSTALLDIR)/curl/usr/sbin/curl
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/curl/usr/sbin/curl)
 #endif
 
 curl-clean:
@@ -8042,8 +8118,8 @@ asd: shared $(if $(BCM_502L07P2),ethctl_lib) nvram$(BCMEX)$(EX7) curl openssl li
 asd-install:
 	install -D asd/asd $(INSTALLDIR)/asd/usr/bin/asd
 	install -D asd/libasd.so $(INSTALLDIR)/asd/usr/lib/libasd.so
-	$(STRIP) $(INSTALLDIR)/asd/usr/bin/asd
-	$(STRIP) $(INSTALLDIR)/asd/usr/lib/libasd.so
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/asd/usr/bin/asd)
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/asd/usr/lib/libasd.so)
 
 asd-clean:
 	$(MAKE) -C asd clean
@@ -8068,7 +8144,7 @@ asusnatnl-install:
 	if [ -f asusnatnl/natnl/libasusnatnl.so ] ; then \
 		install -d $(INSTALLDIR)/asusnatnl/usr/lib/ ; \
 		install -D asusnatnl/natnl/libasusnatnl.so $(INSTALLDIR)/asusnatnl/usr/lib/libasusnatnl.so ; \
-		$(STRIP) -s $(INSTALLDIR)/asusnatnl/usr/lib/libasusnatnl.so ; \
+		$(if $(RTCONFIG_DEBUG),,$(STRIP) -s $(INSTALLDIR)/asusnatnl/usr/lib/libasusnatnl.so ; ) \
 	fi
 
 mastiff: shared $(if $(BCM_502L07P2),ethctl_lib) nvram${BCMEX}$(EX7) wb
@@ -8113,11 +8189,11 @@ aaews: wb
 aaews-install:
 	install -d $(INSTALLDIR)/wb/usr/lib/
 	install -D wb/libws.so $(INSTALLDIR)/wb/usr/lib/libws.so
-	$(STRIP) -s $(INSTALLDIR)/wb/usr/lib/libws.so
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) -s $(INSTALLDIR)/wb/usr/lib/libws.so)
 	install -D aaews/aaews $(INSTALLDIR)/wb/usr/sbin/aaews
-	$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/aaews
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/aaews)
 	install -D aaews/mastiff $(INSTALLDIR)/wb/usr/sbin/mastiff
-	$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/mastiff
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/mastiff)
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(HND_ROUTER),y)
 	install -D $(TOOLCHAIN)/arm-buildroot-linux-gnueabi/lib/libstdc++.so.6 $(INSTALLDIR)/ftpclient/usr/lib/libstdc++.so.6
@@ -8154,7 +8230,7 @@ uploader-install:
 	fi
 
 amas-utils: json-c openssl nvram${BCMEX}$(EX7)
-	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wall $(EXTRACFLAGS)" \
 	$(MAKE) -C $@
 
 amas-utils-clean:
@@ -8179,7 +8255,7 @@ else
 	cd $(TOP)/json-c && \
 	$(CONFIGURE) --prefix=/usr --enable-shared --disable-static \
 	ac_cv_func_realloc_0_nonnull=yes ac_cv_func_malloc_0_nonnull=yes \
-	CFLAGS="-Os -Wno-error $(EXTRACFLAGS) $(if $(RTCONFIG_DEBUG),-g)" \
+	CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wno-error $(EXTRACFLAGS)" \
 	LDFLAGS="$(EXTRALDFLAGS) -Wl,--as-needed -lm"
 	touch $@
 endif
