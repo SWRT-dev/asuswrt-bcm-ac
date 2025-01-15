@@ -41,6 +41,21 @@ index 293f404..787bb63 100644
      /*
      (nah, may be wrong, due to allignment)
  
+diff --git a/libfakeroot.c b/libfakeroot.c
+index 3e80e38..14e56bc 100644
+--- a/libfakeroot.c
++++ b/libfakeroot.c
+@@ -90,6 +90,10 @@
+ #define SEND_GET_XATTR64(a,b,c) send_get_xattr64(a,b)
+ #endif
+ 
++#ifndef _STAT_VER
++#define _STAT_VER 0
++#endif
++
+ /*
+    These INT_* (which stands for internal) macros should always be used when
+    the fakeroot library owns the storage of the stat variable.
 -- 
 2.11.0
 
