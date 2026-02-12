@@ -20,7 +20,6 @@
         }
 
 #define ASUSDDNS_IP_SERVER          "https://ns1.asuscomm.com"
-#define ASUSDDNS_IP_SERVER_CN       "https://ns1.asuscomm.cn"
 #define ASUSDDNS_REQ_TOKEN_PATH     "/ddnsv2/acquireToken.php"
 #define ASUSDDNS_REQ_TOKEN_RES      "/tmp/asusddns_res"
 
@@ -218,11 +217,7 @@ static int _acquire_token(const char *res_path, const int check_CA)
 			snprintf(ddns_url, sizeof(ddns_url), "https://%s%s",  nvram_safe_get("aae_ddnsinfo"), ASUSDDNS_REQ_TOKEN_PATH);
 		} else
 #endif
-		if(nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
-			snprintf(ddns_url, sizeof(ddns_url), "%s%s",  ASUSDDNS_IP_SERVER_CN, ASUSDDNS_REQ_TOKEN_PATH);
-		} else {
-			snprintf(ddns_url, sizeof(ddns_url), "%s%s",  ASUSDDNS_IP_SERVER, ASUSDDNS_REQ_TOKEN_PATH);
-		}
+		snprintf(ddns_url, sizeof(ddns_url), "%s%s",  ASUSDDNS_IP_SERVER, ASUSDDNS_REQ_TOKEN_PATH);
 
 		curl_easy_setopt(curl, CURLOPT_URL, ddns_url);
 

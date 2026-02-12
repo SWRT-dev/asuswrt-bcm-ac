@@ -327,10 +327,7 @@ function change_common_radio(o, s, v, r){
 				}
 				showhide("wildcard_field",0);
 			}else{
-				if(is_CN && ddns_server_x == ""){
-					$("#ddns_server_x").val("WWW.ASUS.COM.CN");
-				}
-				else if(document.form.ddns_server_x.value == "WWW.ORAY.COM"){
+				if(document.form.ddns_server_x.value == "WWW.ORAY.COM"){
 					if(ddns_updated == "1")
 						document.getElementById("ddns_hostname_info_tr").style.display = "";
 				}
