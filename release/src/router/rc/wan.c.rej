@@ -1,0 +1,99 @@
+diff a/release/src/router/rc/wan.c b/release/src/router/rc/wan.c	(rejected hunks)
+@@ -2742,6 +2804,11 @@ NOIP:
+ 	fclose(fp_servers);
+ 	file_unlock(lock);
+ 
++#ifdef RTCONFIG_VPN_FUSION
++	if (is_vpnc_dns_active())
++		vpnc_update_resolvconf(nvram_get_int("vpnc_default_wan"));
++#endif
++
+ #ifdef RTCONFIG_OPENVPN
+ 	if (ovpn_need_dnsmasq_restart())
+ 		start_dnsmasq();	// add strict-order
+@@ -3171,71 +3245,6 @@ static void adjust_netdev_if_of_wan_bled(int action, int wan_unit, char *wan_ifn
+ }
+ #endif
+ 
+-#ifdef RTCONFIG_SOFTWIRE46
+-int wan_hgw_detect(const int wan_unit, const char *wan_ifname, const char *prc)
+-{
+-	int ret = 0;
+-	int hgwret;
+-	int wan_proto;
+-	char cmd[2048], tmp[100], tmp1[100];
+-	char prefix[sizeof("wanXXXXXXXXX_")];
+-	char prefix_x[sizeof("wanXXXXXXXXX_")];
+-	char table[8] = "main";
+-
+-	snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
+-	wan_proto = get_wan_proto(prefix);
+-
+-	switch (wan_proto) {
+-	case WAN_MAPE:
+-		if (nvram_invmatch(ipv6_nvname_by_unit("ipv6_ra_route", wan_unit), "")) {
+-			eval("ip", "-6", "route", "add", "::/0", "via", nvram_safe_get(ipv6_nvname_by_unit("ipv6_ra_route", wan_unit)), "dev", (char*) wan_ifname);
+-			S46_DBG("[CMD]:[ip -6 route add ::/0 via %s dev %s]\n", nvram_safe_get(ipv6_nvname_by_unit("ipv6_ra_route", wan_unit)), wan_ifname);
+-		}
+-		break;
+-	case WAN_V6PLUS:
+-	case WAN_OCNVC:
+-		if (!strcmp(prc, "udhcpc_wan") && nvram_pf_get_int(prefix, "s46_hgw_case") == S46_CASE_INIT) {
+-			if (inet_addr_(nvram_safe_get(strcat_r(prefix, "gateway", tmp))) != INADDR_ANY) {
+-				snprintf(cmd, sizeof(cmd), "ip route replace %s dev %s proto kernel table %s", nvram_safe_get(strcat_r(prefix, "gateway", tmp)), wan_ifname, table);
+-				S46_DBG("[CMD]:[%s]\n", cmd);
+-				system(cmd);
+-			}
+-			snprintf(cmd, sizeof(cmd), "ip route replace default via %s dev %s table %s", nvram_safe_get(strcat_r(prefix, "gateway", tmp)), wan_ifname, table);
+-			S46_DBG("[CMD][%s]\n", cmd);
+-			system(cmd);
+-			system("ip route flush cache");
+-			hgwret = s46_ntt_hgw(wan_unit);
+-			/* Debug only */
+-			if (nvram_get("s46_debug_hgwret")) {
+-				S46_DBG("Using nvram s46_debug_hgwret val.\n");
+-				hgwret = nvram_get_int("s46_debug_hgwret");
+-			}
+-			if (hgwret == 1) {
+-				nvram_pf_set_int(prefix, "s46_hgw_case", S46_CASE_MAP_HGW_ON);
+-				wan6_up(get_wan6face());
+-				ret = 0;
+-			} else {
+-				if (hgwret < 0)
+-					S46_DBG("HGW did not respond[%d].\n", hgwret);
+-				snprintf(prefix_x, sizeof(prefix_x), "wan%d_x", wan_unit);
+-				nvram_set(strcat_r(prefix_x, "ipaddr", tmp), nvram_safe_get(strcat_r(prefix, "ipaddr", tmp1)));
+-				nvram_set(strcat_r(prefix_x, "gateway", tmp), nvram_safe_get(strcat_r(prefix, "gateway", tmp1)));
+-				nvram_set(strcat_r(prefix_x, "netmask", tmp), nvram_safe_get(strcat_r(prefix, "netmask", tmp1)));
+-				if (wan_proto != WAN_OCNVC)
+-					nvram_set(strcat_r(prefix_x, "dns", tmp), nvram_safe_get(strcat_r(prefix, "dns", tmp1)));
+-
+-				nvram_set(strcat_r(prefix, "gateway", tmp), "0.0.0.0");
+-				nvram_set(strcat_r(prefix, "dns", tmp), "0.0.0.0");
+-				nvram_pf_set_int(prefix, "s46_hgw_case", S46_CASE_MAP_HGW_OFF);
+-				S46_DBG("[%s] done.\n", wan_ifname);
+-				ret = 1;
+-			}
+-		}
+-	}
+-	return ret;
+-}
+-#endif
+-
+ #ifdef RTCONFIG_HND_ROUTER_AX
+ int is_starlink_wan(char *gateway)
+ {
+@@ -3716,6 +3730,13 @@ NOIP:
+ 		refresh_ntpc();
+ 	}
+ 
++#if defined(RTCONFIG_HTTPS)
++	/* Update WAN IP to server certificate if it changed and httpds is enabled on WAN. */
++	if (nvram_match("misc_http_x", "1")) {
++		update_srv_cert_if_wan_ip_changed(wan_unit);
++	}
++#endif
++
+ #ifdef RTCONFIG_VPN_FUSION
+ 	vpnc_set_internet_policy(1);
+ #endif

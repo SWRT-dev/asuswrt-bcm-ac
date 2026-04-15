@@ -484,6 +484,7 @@ var non_frameburst_support = isSupport("non_frameburst");
 var SwitchCtrl_support = isSupport("switchctrl");
 var dsl_support = isSupport("dsl");
 var sfpp_support = isSupport("sfp+");
+var sfpp2500m_support = isSupport("sfp+2.5g");
 var vdsl_support = isSupport("vdsl");
 var mswan_support = isSupport("mswan");
 var dualWAN_support = isSupport("dualwan");
@@ -526,6 +527,7 @@ var IPv6_Passthrough_support = isSupport("ipv6pt");
 var IPv6_Only_support = isSupport("v6only");
 var Softwire46_support = isSupport("s46");
 var ocnvc_support = isSupport("ocnvc");
+var dslite_support = isSupport("dslite");
 var ParentalCtrl2_support = isSupport("PARENTAL2");
 var pptpd_support = isSupport("pptpd"); 
 var openvpnd_support = isSupport("openvpnd"); 
@@ -741,9 +743,9 @@ if(tmo_support && isMobile()){
 	if(location.pathname != "/MobileQIS_Login.asp")
 		location.href = "MobileQIS_Login.asp";
 }
-	
+
 if(isMobile() && (based_modelid == "RT-AC88U" || based_modelid == "RT-AX88U" || based_modelid == "RT-AC86U" || based_modelid == "GT-AC2900" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "GT-AC5300" || based_modelid == "GT-AC9600" || based_modelid == "GT-AX11000" || based_modelid == "GT-AXE11000" || based_modelid == "GT-AX6000" || based_modelid == "GT-AX11000_PRO" || based_modelid == "GT-AXE16000"))
-	QISWIZARD = "QIS_wizard_m.htm";	
+	QISWIZARD = "QIS_wizard_m.htm";
 
 var stopFlag = 0;
 
@@ -4526,3 +4528,77 @@ function Get_Component_PWD_Strength_Meter(id){
 	return $pwd_strength_container;
 }
 
+function plainPasswordSwitch(obj, event){
+	(event === 'focus') ? (obj.type = 'text') : (obj.type = 'password');						
+}
+
+function checkPolicy() {
+
+    const applyRule = () => {
+        httpApi.privateEula.set("1", function(){
+            httpApi.securityUpdate.set(1);
+            httpApi.nvramSet({
+                "webs_update_enable": 1,
+                "action_mode": "apply",
+                "rc_service": "saveNvram"
+            },()=>{},false);
+        })
+    }
+
+    if (policy_status.EULA == "0") {
+        const policyModal = new PolicyUpdateModalComponent();
+        policyModal.show();
+    } else if (policy_status.EULA == 1 && ((policy_status.PP == 1 && policy_status.PP_time != "") || (policy_status.PP == 0 && policy_status.PP_time == ""))) {
+        const policyModal = new PolicyModalComponent({
+            policy: 'PP',
+            agreeCallback: applyRule,
+            submit_reload: 1
+        });
+        policyModal.show();
+    } else if (policy_status.TM == 1 && policy_status.TM_time == '') {
+        const policyModal = new PolicyModalComponent({
+            policy: "TM"
+        });
+        policyModal.show();
+    }
+}
+if (
+    !(window.appInterface || // from Android app
+        (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.appInterface) // for iOS app
+    )
+) {
+	setTimeout(() => {
+		if (typeof httpApi === 'undefined') {
+			const httpApi_script = document.createElement('script');
+			httpApi_script.src = '/js/httpApi.js';
+			document.head.appendChild(httpApi_script);
+			httpApi_script.onload = () => {
+				if (re_mode != 1) {
+					if (typeof policy_status === 'undefined') {
+						const policy_script = document.createElement('script');
+						policy_script.src = '/js/asus_policy.js';
+						document.head.appendChild(policy_script);
+						policy_script.onload = () => {
+							checkPolicy();
+						}
+					} else {
+						checkPolicy();
+					}
+				}
+			}
+		} else {
+			if (re_mode != 1) {
+				if (typeof policy_status === 'undefined') {
+					const policy_script = document.createElement('script');
+                    policy_script.src = '/js/asus_policy.js';
+                    document.head.appendChild(policy_script);
+                    policy_script.onload = () => {
+                        checkPolicy();
+                    }
+                } else {
+                    checkPolicy();
+                }
+            }
+        }
+    }, 1500);
+}

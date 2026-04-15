@@ -1,17 +1,17 @@
 /* Flushing buffers of a FILE stream.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
@@ -19,8 +19,10 @@
 /* Specification.  */
 #include <stdio.h>
 
-#if HAVE___FPURGE                   /* glibc >= 2.2, Haiku, Solaris >= 7, Android API >= 23 */
-# include <stdio_ext.h>
+#if HAVE___FPURGE                   /* glibc >= 2.2, Haiku, Solaris >= 7, UnixWare >= 7.1.4.MP4, Cygwin >= 1.7.10, Android API >= 23, musl libc */
+# if HAVE_STDIO_EXT_H
+#  include <stdio_ext.h>
+# endif
 #endif
 #include <stdlib.h>
 
@@ -29,13 +31,13 @@
 int
 fpurge (FILE *fp)
 {
-#if HAVE___FPURGE                   /* glibc >= 2.2, Haiku, Solaris >= 7, Android API >= 23, musl libc */
+#if HAVE___FPURGE                   /* glibc >= 2.2, Haiku, Solaris >= 7, UnixWare >= 7.1.4.MP4, Cygwin >= 1.7.10, Android API >= 23, musl libc */
 
   __fpurge (fp);
   /* The __fpurge function does not have a return value.  */
   return 0;
 
-#elif HAVE_FPURGE                   /* FreeBSD, NetBSD, OpenBSD, DragonFly, Mac OS X, Cygwin 1.7 */
+#elif HAVE_FPURGE                   /* FreeBSD, NetBSD, OpenBSD, DragonFly, Mac OS X, Cygwin >= 1.7 */
 
   /* Call the system's fpurge function.  */
 # undef fpurge
@@ -99,7 +101,7 @@ fpurge (FILE *fp)
   if (fp->_ptr != NULL)
     fp->_count = 0;
   return 0;
-# elif defined _IOERR               /* AIX, HP-UX, IRIX, OSF/1, Solaris, OpenServer, mingw, MSVC, NonStop Kernel, OpenVMS */
+# elif defined _IOERR               /* AIX, HP-UX, IRIX, OSF/1, Solaris, OpenServer, UnixWare, mingw, MSVC, NonStop Kernel, OpenVMS */
   fp_->_ptr = fp_->_base;
   if (fp_->_ptr != NULL)
     fp_->_cnt = 0;

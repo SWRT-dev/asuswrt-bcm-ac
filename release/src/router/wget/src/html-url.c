@@ -1,5 +1,6 @@
 /* Collect URLs from HTML source.
-   Copyright (C) 1998-2012, 2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2012, 2015, 2018-2024 Free Software Foundation,
+   Inc.
 
 This file is part of GNU Wget.
 
@@ -104,7 +105,7 @@ static struct known_tag {
   { TAG_FORM,    "form",        tag_handle_form },
   { TAG_FRAME,   "frame",       tag_find_urls },
   { TAG_IFRAME,  "iframe",      tag_find_urls },
-  { TAG_IMG,     "img",         tag_handle_img },
+  { TAG_IMG,     "img",         tag_handle_img }, // tag_find_urls() plus handling "srcset"
   { TAG_INPUT,   "input",       tag_find_urls },
   { TAG_LAYER,   "layer",       tag_find_urls },
   { TAG_LINK,    "link",        tag_handle_link },
@@ -117,7 +118,7 @@ static struct known_tag {
   { TAG_TH,      "th",          tag_find_urls },
   { TAG_VIDEO,   "video",       tag_find_urls },
   { TAG_AUDIO,   "audio",       tag_find_urls },
-  { TAG_SOURCE,  "source",      tag_find_urls }
+  { TAG_SOURCE,  "source",      tag_handle_img } // tag_find_urls() plus handling "srcset"
 };
 
 /* tag_url_attributes documents which attributes of which tags contain
@@ -169,7 +170,7 @@ static struct {
   { TAG_VIDEO,          "poster",       ATTR_INLINE },
   { TAG_AUDIO,          "src",          ATTR_INLINE },
   { TAG_AUDIO,          "poster",       ATTR_INLINE },
-  { TAG_SOURCE,         "src",          ATTR_INLINE }
+  { TAG_SOURCE,         "src",          ATTR_INLINE },
 };
 
 /* The lists of interesting tags and attributes are built dynamically,
@@ -528,8 +529,8 @@ tag_handle_link (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
   /* All <link href="..."> link references are external, except those
      known not to be, such as style sheet and shortcut icon:
 
-     <link rel="stylesheet" href="...">
-     <link rel="shortcut icon" href="...">
+     <link rel="stylesheet" href="..."> or <link rel="alternate stylesheet" href="...">
+     <link rel="shortcut icon" href="..."> or <link rel="icon" href="...">
   */
   if (href)
     {
@@ -540,12 +541,16 @@ tag_handle_link (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
           char *rel = find_attr (tag, "rel", NULL);
           if (rel)
             {
-              if (0 == c_strcasecmp (rel, "stylesheet"))
+              if (0 == c_strcasecmp (rel, "stylesheet") || 0 == c_strcasecmp (rel, "alternate stylesheet"))
                 {
                   up->link_inline_p = 1;
                   up->link_expect_css = 1;
                 }
-              else if (0 == c_strcasecmp (rel, "shortcut icon"))
+              else if (0 == c_strcasecmp (rel, "shortcut icon") || 0 == c_strcasecmp (rel, "icon"))
+                {
+                  up->link_inline_p = 1;
+                }
+              else if (0 == c_strcasecmp (rel, "manifest"))
                 {
                   up->link_inline_p = 1;
                 }
@@ -587,16 +592,16 @@ tag_handle_meta (int tagid _GL_UNUSED, struct taginfo *tag, struct map_context *
 
       struct urlpos *entry;
       int attrind;
-      int timeout = 0;
+      int timeout;
       char *p;
 
       char *refresh = find_attr (tag, "content", &attrind);
       if (!refresh)
         return;
 
-      for (p = refresh; c_isdigit (*p); p++)
-        timeout = 10 * timeout + *p - '0';
-      if (*p++ != ';')
+      timeout = strtol(refresh, &p, 10);
+
+      if (timeout < 0 || *p++ != ';')
         return;
 
       while (c_isspace (*p))
@@ -836,7 +841,8 @@ get_urls_html_fm (const char *file, const struct file_memory *fm,
 #endif
   xfree (meta_charset);
 
-  DEBUGP (("no-follow in %s: %d\n", file, ctx.nofollow));
+  DEBUGP (("nofollow in %s: %d\n", file, ctx.nofollow));
+
   if (meta_disallow_follow)
     *meta_disallow_follow = ctx.nofollow;
 
@@ -935,11 +941,9 @@ get_urls_file (const char *file)
       url = url_parse (url_text, &up_error_code, NULL, false);
       if (!url)
         {
-          char *error = url_error (url_text, up_error_code);
           logprintf (LOG_NOTQUIET, _("%s: Invalid URL %s: %s\n"),
-                     file, url_text, error);
+                     file, url_text, url_error (up_error_code));
           xfree (url_text);
-          xfree (error);
           inform_exit_status (URLERROR);
           continue;
         }
@@ -958,6 +962,7 @@ get_urls_file (const char *file)
   return head;
 }
 
+#if defined DEBUG_MALLOC || defined TESTING
 void
 cleanup_html_url (void)
 {
@@ -968,3 +973,4 @@ cleanup_html_url (void)
   if (interesting_attributes)
     hash_table_destroy (interesting_attributes);
 }
+#endif

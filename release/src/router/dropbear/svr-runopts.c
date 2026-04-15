@@ -64,6 +64,7 @@ static void printhelp(const char * progname) {
 					"-R		Create hostkeys as required\n" 
 #endif
 					"-F		Don't fork into background\n"
+					"-e		Pass on server process environment to child process\n"
 #ifdef DISABLE_SYSLOG
 					"(Syslog support not compiled in, using stderr)\n"
 #else
@@ -80,6 +81,7 @@ static void printhelp(const char * progname) {
 					"-s		Disable password logins\n"
 					"-g		Disable password logins for root\n"
 					"-B		Allow blank password logins\n"
+					"-t		Enable two-factor authentication (both password and public key required)\n"
 #endif
 					"-T		Maximum authentication tries (default %d)\n"
 #if DROPBEAR_SVR_LOCALTCPFWD
@@ -99,16 +101,17 @@ static void printhelp(const char * progname) {
 #if INETD_MODE
 					"-i		Start for inetd\n"
 #endif
-					"-W <receive_window_buffer> (default %d, larger may be faster, max 1MB)\n"
+					"-W <receive_window_buffer> (default %d, larger may be faster, max 10MB)\n"
 					"-K <keepalive>  (0 is never, default %d, in seconds)\n"
 					"-I <idle_timeout>  (0 is never, default %d, in seconds)\n"
+					"-z    disable QoS\n"
 #if DROPBEAR_PLUGIN
                                         "-A <authplugin>[,<options>]\n"
                                         "               Enable external public key auth through <authplugin>\n"
 #endif
 					"-V    Version\n"
 #if DEBUG_TRACE
-					"-v		verbose (compiled with DEBUG_TRACE)\n"
+					"-v    verbose (repeat for more verbose)\n"
 #endif
 					,DROPBEAR_VERSION, progname,
 #if DROPBEAR_DSS
@@ -137,6 +140,7 @@ void svr_getopts(int argc, char ** argv) {
 	char* keepalive_arg = NULL;
 	char* idle_timeout_arg = NULL;
 	char* maxauthtries_arg = NULL;
+	char* reexec_fd_arg = NULL;
 	char* keyfile = NULL;
 	char c;
 #if DROPBEAR_PLUGIN
@@ -157,12 +161,13 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.noauthpass = 0;
 	svr_opts.norootpass = 0;
 	svr_opts.allowblankpass = 0;
+	svr_opts.multiauthmethod = 0;
 	svr_opts.maxauthtries = MAX_AUTH_TRIES;
 	svr_opts.inetdmode = 0;
 	svr_opts.portcount = 0;
 	svr_opts.hostkey = NULL;
 	svr_opts.delay_hostkey = 0;
-	svr_opts.pidfile = DROPBEAR_PIDFILE;
+	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);
 #if DROPBEAR_SVR_LOCALTCPFWD
 	svr_opts.nolocaltcp = 0;
 #endif
@@ -173,6 +178,8 @@ void svr_getopts(int argc, char ** argv) {
         svr_opts.pubkey_plugin = NULL;
         svr_opts.pubkey_plugin_options = NULL;
 #endif
+	svr_opts.pass_on_env = 0;
+	svr_opts.reexec_childpipe = -1;
 
 #ifndef DISABLE_ZLIB
 	opts.compress_mode = DROPBEAR_COMPRESS_DELAYED;
@@ -195,6 +202,7 @@ void svr_getopts(int argc, char ** argv) {
 #if DROPBEAR_SVR_REMOTETCPFWD
 	opts.listen_fwd_all = 0;
 #endif
+	opts.disable_ip_tos = 0;
 
 	for (i = 1; i < (unsigned int)argc; i++) {
 		if (argv[i][0] != '-' || argv[i][1] == '\0')
@@ -223,6 +231,10 @@ void svr_getopts(int argc, char ** argv) {
 					opts.usingsyslog = 0;
 					break;
 #endif
+				case 'e':
+					svr_opts.pass_on_env = 1;
+					break;
+
 #if DROPBEAR_SVR_LOCALTCPFWD
 				case 'j':
 					svr_opts.nolocaltcp = 1;
@@ -241,9 +253,15 @@ void svr_getopts(int argc, char ** argv) {
 					svr_opts.inetdmode = 1;
 					break;
 #endif
+#if DROPBEAR_DO_REEXEC && NON_INETD_MODE
+				/* For internal use by re-exec */
+				case '2':
+					next = &reexec_fd_arg;
+					break;
+#endif
 				case 'p':
-				  nextisport = 1;
-				  break;
+					nextisport = 1;
+					break;
 				case 'P':
 					next = &svr_opts.pidfile;
 					break;
@@ -283,6 +301,9 @@ void svr_getopts(int argc, char ** argv) {
 				case 'B':
 					svr_opts.allowblankpass = 1;
 					break;
+				case 't':
+					svr_opts.multiauthmethod = 1;
+					break;
 #endif
 				case 'h':
 					printhelp(argv[0]);
@@ -298,12 +319,15 @@ void svr_getopts(int argc, char ** argv) {
 #endif
 #if DEBUG_TRACE
 				case 'v':
-					debug_trace = 1;
+					debug_trace++;
 					break;
 #endif
 				case 'V':
 					print_version();
 					exit(EXIT_SUCCESS);
+					break;
+				case 'z':
+					opts.disable_ip_tos = 1;
 					break;
 				default:
 					fprintf(stderr, "Invalid option -%c\n", c);
@@ -379,12 +403,9 @@ void svr_getopts(int argc, char ** argv) {
 		}
 	}
 #endif
-	
+
 	if (recv_window_arg) {
-		opts.recv_window = atol(recv_window_arg);
-		if (opts.recv_window == 0 || opts.recv_window > MAX_RECV_WINDOW) {
-			dropbear_exit("Bad recv window '%s'", recv_window_arg);
-		}
+		parse_recv_window(recv_window_arg);
 	}
 
 	if (maxauthtries_arg) {
@@ -396,7 +417,7 @@ void svr_getopts(int argc, char ** argv) {
 		svr_opts.maxauthtries = val;
 	}
 
-	
+
 	if (keepalive_arg) {
 		unsigned int val;
 		if (m_str_to_uint(keepalive_arg, &val) == DROPBEAR_FAILURE) {
@@ -416,70 +437,72 @@ void svr_getopts(int argc, char ** argv) {
 	if (svr_opts.forced_command) {
 		dropbear_log(LOG_INFO, "Forced command set to '%s'", svr_opts.forced_command);
 	}
+
+	if (reexec_fd_arg) {
+		if (m_str_to_uint(reexec_fd_arg, &svr_opts.reexec_childpipe) == DROPBEAR_FAILURE
+			|| svr_opts.reexec_childpipe < 0) {
+			dropbear_exit("Bad -2");
+		}
+	}
+
+#if INETD_MODE
+	if (svr_opts.inetdmode && (
+		opts.usingsyslog == 0
+#if DEBUG_TRACE
+		|| debug_trace
+#endif
+		)) {
+		/* log output goes to stderr which would get sent over the inetd network socket */
+		dropbear_exit("Dropbear inetd mode is incompatible with debug -v or non-syslog");
+	}
+#endif
+
+	if (svr_opts.multiauthmethod && svr_opts.noauthpass) {
+		dropbear_exit("-t and -s are incompatible");
+	}
+
 #if DROPBEAR_PLUGIN
-        if (pubkey_plugin) {
-            char *args = strchr(pubkey_plugin, ',');
-            if (args) {
-                *args='\0';
-                ++args;
-            }
-            svr_opts.pubkey_plugin = pubkey_plugin;
-            svr_opts.pubkey_plugin_options = args;
-        }
+	if (pubkey_plugin) {
+		svr_opts.pubkey_plugin = m_strdup(pubkey_plugin);
+		char *args = strchr(svr_opts.pubkey_plugin, ',');
+		if (args) {
+			*args='\0';
+			++args;
+		}
+		svr_opts.pubkey_plugin_options = args;
+	}
 #endif
 }
 
 static void addportandaddress(const char* spec) {
-	char *spec_copy = NULL, *myspec = NULL, *port = NULL, *address = NULL;
+	char *port = NULL, *address = NULL;
 
-	if (svr_opts.portcount < DROPBEAR_MAX_PORTS) {
-
-		/* We don't free it, it becomes part of the runopt state */
-		spec_copy = m_strdup(spec);
-		myspec = spec_copy;
-
-		if (myspec[0] == '[') {
-			myspec++;
-			port = strchr(myspec, ']');
-			if (!port) {
-				/* Unmatched [ -> exit */
-				dropbear_exit("Bad listen address");
-			}
-			port[0] = '\0';
-			port++;
-			if (port[0] != ':') {
-				/* Missing port -> exit */
-				dropbear_exit("Missing port");
-			}
-		} else {
-			/* search for ':', that separates address and port */
-			port = strrchr(myspec, ':');
-		}
-
-		if (!port) {
-			/* no ':' -> the whole string specifies just a port */
-			port = myspec;
-		} else {
-			/* Split the address/port */
-			port[0] = '\0'; 
-			port++;
-			address = myspec;
-		}
-
-		if (!address) {
-			/* no address given -> fill in the default address */
-			address = DROPBEAR_DEFADDRESS;
-		}
-
-		if (port[0] == '\0') {
-			/* empty port -> exit */
-			dropbear_exit("Bad port");
-		}
-		svr_opts.ports[svr_opts.portcount] = m_strdup(port);
-		svr_opts.addresses[svr_opts.portcount] = m_strdup(address);
-		svr_opts.portcount++;
-		m_free(spec_copy);
+	if (svr_opts.portcount >= DROPBEAR_MAX_PORTS) {
+		return;
 	}
+
+	if (split_address_port(spec, &address, &port) == DROPBEAR_FAILURE) {
+		dropbear_exit("Bad -p argument");
+	}
+
+	/* A bare port */
+	if (!port) {
+		port = address;
+		address = NULL;
+	}
+
+	if (!address) {
+		/* no address given -> fill in the default address */
+		address = m_strdup(DROPBEAR_DEFADDRESS);
+	}
+
+	if (port[0] == '\0') {
+		/* empty port -> exit */
+		dropbear_exit("Bad port");
+	}
+	svr_opts.ports[svr_opts.portcount] = port;
+	svr_opts.addresses[svr_opts.portcount] = address;
+	svr_opts.portcount++;
 }
 
 static void disablekey(int type) {
@@ -508,12 +531,14 @@ static void loadhostkey_helper(const char *name, void** src, void** dst, int fat
 /* Must be called after syslog/etc is working */
 static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 	sign_key * read_key = new_sign_key();
+	char *expand_path = expand_homedir_path(keyfile);
 	enum signkey_type type = DROPBEAR_SIGNKEY_ANY;
-	if (readhostkey(keyfile, read_key, &type) == DROPBEAR_FAILURE) {
+	if (readhostkey(expand_path, read_key, &type) == DROPBEAR_FAILURE) {
 		if (!svr_opts.delay_hostkey) {
-			dropbear_log(LOG_WARNING, "Failed loading %s", keyfile);
+			dropbear_log(LOG_WARNING, "Failed loading %s", expand_path);
 		}
 	}
+	m_free(expand_path);
 
 #if DROPBEAR_RSA
 	if (type == DROPBEAR_SIGNKEY_RSA) {
@@ -664,6 +689,12 @@ void load_all_hostkeys() {
 	} else {
 		any_keys = 1;
 	}
+#endif
+#if DROPBEAR_SK_ECDSA
+	disablekey(DROPBEAR_SIGNKEY_SK_ECDSA_NISTP256);
+#endif 
+#if DROPBEAR_SK_ED25519
+	disablekey(DROPBEAR_SIGNKEY_SK_ED25519);
 #endif
 
 	if (!any_keys) {

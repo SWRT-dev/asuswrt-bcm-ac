@@ -1,0 +1,88 @@
+diff a/release/src/router/www/sysdep/FUNCTION/QIS_V3/mobile/js/plugins.js b/release/src/router/www/sysdep/FUNCTION/QIS_V3/mobile/js/plugins.js	(rejected hunks)
+@@ -1726,6 +1939,25 @@ var isSupport = function(_ptn){
+ 		case "defpsk":
+ 			matchingResult = (ui_support["defpsk"] >= 1 && (httpApi.nvram_match_x("wifi_psk","","1").wifi_psk != "1")) ? true : false;
+ 			break;
++		case "MaxRule_SDN":
++			matchingResult = ui_support["MaxRule_SDN"] || false;
++			break;
++		case "SDN_Scenario":
++			matchingResult = (
++				isSupport("mtlancfg") && isSupport("BUSINESS") &&
++				systemVariable.isDefault && systemVariable.productid.indexOf('EBG') == -1 &&
++				isSwMode("RT")
++			) ? true : false;
++			break;
++		case "SDN_White_Theme":
++			matchingResult = false;
++			if(isSupport("mtlancfg") && isSupport("BUSINESS")){
++				matchingResult = true;
++			}
++			break;
++		case "apMode_detwan":
++			matchingResult = (systemVariable.productid == "EBA63") ? true : false;
++			break;
+ 		default:
+ 			matchingResult = ((ui_support[_ptn] > 0) || (systemVariable.productid.search(_ptn) !== -1)) ? true : false;
+ 			break;
+@@ -2156,10 +2482,59 @@ function adjust_popup_container_top(_obj, _offsetHeight){
+ 		$(_obj).css({top: (final_scrollTop + _offsetHeight)});
+ 	}
+ }
+-/* String replace &#39; with ' for dict */
+ function stringSafeGet(str){
+ 	return str.replace(new RegExp("&#39;", 'g'), "'");
+ }
+ var str_local_login_desc = stringSafeGet("<#Local_login_desc#>");
+ var str_find_st = stringSafeGet("<#HowFindST#>");
+ var str_HowFindPassword = stringSafeGet("<#HowFindPassword#>");
++function initialize_SDN(){
++	$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./RWD_UI/rwd_component.css">');
++	$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./SDN/sdn.css">');
++	$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./js/weekSchedule/schedule_ui.css">');
++	$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./pwdmeter.css">');
++	if(isSupport("SDN_White_Theme")){
++		$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./RWD_UI/rwd_component_WHITE.css">');
++		$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./SDN/sdn_WHITE.css">');
++		$('link').last().after('<link group="SDN_need_file" rel="stylesheet" type="text/css" href="./js/weekSchedule/schedule_ui_WHITE.css">');
++	}
++	$('<script />', { type : 'text/javascript', src : "./RWD_UI/rwd_component.js", group: "SDN_need_file"}).appendTo($('head'));
++	$('<script />', { type : 'text/javascript', src : "./SDN/sdn.js", group: "SDN_need_file"}).appendTo($('head'));
++	$('<script />', { type : 'text/javascript', src : "./popup.js", group: "SDN_need_file"}).appendTo($('head'));
++	$('<script />', { type : 'text/javascript', src : "./js/weekSchedule/schedule_ui.js", group: "SDN_need_file"}).appendTo($('head'));
++	$('<script />', { type : 'text/javascript', src : "./form.js", group: "SDN_need_file"}).appendTo($('head'));
++	setTimeout(function(){
++		if(isSupport("captivePortal") && isSupport("cp_freewifi")){
++			Get_FreeWiFi_template();
++		}
++		init_sdn_all_list();
++	},500);
++}
++var interval_cfg_pause = false;
++function set_cfg_pause(){
++	clearInterval(interval_cfg_pause);
++	if(!systemVariable.isDefault)
++		return;
++
++	postData();
++	interval_cfg_pause = setInterval(function(){
++		if(qisPostData.hasOwnProperty("cfg_pause")){
++			if(qisPostData.cfg_pause == "0"){
++				clearInterval(interval_cfg_pause);
++			}
++			else{
++				postData();
++			}
++		}
++		else{
++			postData();
++		}
++	},1000*60*10);
++
++	function postData(){
++		httpApi.nvramSet({
++			"action_mode" : "apply",
++			"cfg_pause" : 120
++		});
++	}
++}

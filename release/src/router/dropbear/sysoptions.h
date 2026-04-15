@@ -1,10 +1,10 @@
 /*******************************************************************
- * You shouldn't edit this file unless you know you need to. 
+ * You shouldn't edit this file unless you know you need to.
  * This file is only included from options.h
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2020.81"
+#define DROPBEAR_VERSION "2022.83"
 #endif
 
 #ifndef LOCAL_IDENT
@@ -31,6 +31,13 @@
 	#error "NON_INETD_MODE or INETD_MODE (or both) must be enabled."
 #endif
 
+/* Would probably work on freebsd but hasn't been tested */
+#if defined(HAVE_FEXECVE) && DROPBEAR_REEXEC && defined(__linux__)
+#define DROPBEAR_DO_REEXEC 1
+#else
+#define DROPBEAR_DO_REEXEC 0
+#endif
+
 /* A client should try and send an initial key exchange packet guessing
  * the algorithm that will match - saves a round trip connecting, has little
  * overhead if the guess was "wrong". */
@@ -52,7 +59,7 @@
 #define MIN_RSA_KEYLEN 1024
 #endif
 
-#define MAX_BANNER_SIZE 2000 /* this is 25*80 chars, any more is foolish */
+#define MAX_BANNER_SIZE 2050 /* this is 25*80 chars, any more is foolish */
 #define MAX_BANNER_LINES 20 /* How many lines the client will display */
 
 /* the number of NAME=VALUE pairs to malloc for environ, if we don't have
@@ -63,7 +70,6 @@
 #define MAX_TERM_LEN 200 /* max length of TERM name */
 
 #define MAX_HOST_LEN 254 /* max hostname len for tcp fwding */
-#define MAX_IP_LEN 15 /* strlen("255.255.255.255") == 15 */
 
 #define DROPBEAR_MAX_PORTS 10 /* max number of ports which can be specified,
 								 ipv4 and ipv6 don't count twice */
@@ -75,12 +81,21 @@
 
 #define _PATH_CP "/bin/cp"
 
+/* Default contents of /etc/shells if system getusershell() doesn't exist.
+ * Paths taken from getusershell(3) manpage. These can be customised
+ * on other platforms. One the commandline for CFLAGS it would look like eg
+  -DCOMPAT_USER_SHELLS='"/bin/sh","/apps/bin/sh","/data/bin/zsh"'
+ */
+#ifndef COMPAT_USER_SHELLS
+#define COMPAT_USER_SHELLS "/bin/sh","/bin/csh"
+#endif
+
 #define DROPBEAR_ESCAPE_CHAR '~'
 
 /* success/failure defines */
 #define DROPBEAR_SUCCESS 0
 #define DROPBEAR_FAILURE -1
- 
+
 #define DROPBEAR_PASSWORD_ENV "DROPBEAR_PASSWORD"
 
 #define DROPBEAR_NGROUP_MAX 1024
@@ -88,10 +103,16 @@
 /* Required for pubkey auth */
 #define DROPBEAR_SIGNKEY_VERIFY ((DROPBEAR_SVR_PUBKEY_AUTH) || (DROPBEAR_CLIENT))
 
+/* crypt(password) must take less time than the auth failure delay
+   (250ms set in svr-auth.c). On Linux the delay depends on
+   password length, 100 characters here was empirically derived.
+
+   If a longer password is allowed Dropbear cannot compensate
+   for the crypt time which will expose which usernames exist */
 #define DROPBEAR_MAX_PASSWORD_LEN 100
 
 #define SHA1_HASH_SIZE 20
-#define MD5_HASH_SIZE 16
+#define SHA256_HASH_SIZE 32
 #define MAX_HASH_SIZE 64 /* sha512 */
 
 #if DROPBEAR_CHACHA20POLY1305
@@ -113,19 +134,6 @@
 #ifndef DROPBEAR_SHA2_512_HMAC
 #define DROPBEAR_SHA2_512_HMAC 0
 #endif
-
-/* might be needed for compatibility with very old implementations */
-#ifndef DROPBEAR_MD5_HMAC
-#define DROPBEAR_MD5_HMAC 0
-#endif
-
-/* Twofish counter mode is disabled by default because it 
-has not been tested for interoperability with other SSH implementations.
-If you test it please contact the Dropbear author */
-#ifndef DROPBEAR_TWOFISH_CTR
-#define DROPBEAR_TWOFISH_CTR 0
-#endif
-
 
 #define DROPBEAR_ECC ((DROPBEAR_ECDH) || (DROPBEAR_ECDSA))
 
@@ -152,20 +160,37 @@ If you test it please contact the Dropbear author */
 #define DROPBEAR_RSA_SHA256 DROPBEAR_RSA
 #endif
 
+/* Miller-Rabin primality testing is sufficient for RSA but not DSS.
+ * It's a compile-time setting for libtommath, we can get a speedup
+ * for key generation if DSS is disabled.
+ * https://github.com/mkj/dropbear/issues/174#issuecomment-1267374858
+ */
+#if !DROPBEAR_DSS
+#define LTM_USE_ONLY_MR 1
+#endif
+
 /* hashes which will be linked and registered */
-#define DROPBEAR_SHA256 ((DROPBEAR_SHA2_256_HMAC) || (DROPBEAR_ECC_256) \
- 			|| (DROPBEAR_CURVE25519) || (DROPBEAR_DH_GROUP14_SHA256) \
-			|| (DROPBEAR_RSA_SHA256))
+#define DROPBEAR_SHA1 (DROPBEAR_RSA_SHA1 || DROPBEAR_DSS \
+				|| DROPBEAR_SHA1_HMAC || DROPBEAR_SHA1_96_HMAC \
+				|| DROPBEAR_DH_GROUP1 || DROPBEAR_DH_GROUP14_SHA1 )
+/* sha256 is always used for fingerprints and dbrandom */
+#define DROPBEAR_SHA256 1
 #define DROPBEAR_SHA384 (DROPBEAR_ECC_384)
 /* LTC SHA384 depends on SHA512 */
 #define DROPBEAR_SHA512 ((DROPBEAR_SHA2_512_HMAC) || (DROPBEAR_ECC_521) \
 			|| (DROPBEAR_SHA384) || (DROPBEAR_DH_GROUP16) \
 			|| (DROPBEAR_ED25519))
-#define DROPBEAR_MD5 (DROPBEAR_MD5_HMAC)
 
 #define DROPBEAR_DH_GROUP14 ((DROPBEAR_DH_GROUP14_SHA256) || (DROPBEAR_DH_GROUP14_SHA1))
 
 #define DROPBEAR_NORMAL_DH ((DROPBEAR_DH_GROUP1) || (DROPBEAR_DH_GROUP14) || (DROPBEAR_DH_GROUP16))
+
+#ifndef DROPBEAR_SK_ECDSA
+#define DROPBEAR_SK_ECDSA DROPBEAR_SK_KEYS
+#endif
+#ifndef DROPBEAR_SK_ED25519
+#define DROPBEAR_SK_ED25519 DROPBEAR_SK_KEYS
+#endif
 
 /* Dropbear only uses server-sig-algs, only needed if we have rsa-sha256 pubkey auth */
 #define DROPBEAR_EXT_INFO ((DROPBEAR_RSA_SHA256) \
@@ -192,7 +217,7 @@ If you test it please contact the Dropbear author */
 
 #define RECV_WINDOWEXTEND (opts.recv_window / 3) /* We send a "window extend" every
 								RECV_WINDOWEXTEND bytes */
-#define MAX_RECV_WINDOW (1024*1024) /* 1 MB should be enough */
+#define MAX_RECV_WINDOW (10*1024*1024) /* 10 MB should be enough */
 
 #define MAX_CHANNELS 1000 /* simple mem restriction, includes each tcp/x11
 							connection, so can't be _too_ small */
@@ -222,8 +247,6 @@ If you test it please contact the Dropbear author */
 
 
 #define DROPBEAR_AES ((DROPBEAR_AES256) || (DROPBEAR_AES128))
-
-#define DROPBEAR_TWOFISH ((DROPBEAR_TWOFISH256) || (DROPBEAR_TWOFISH128))
 
 #define DROPBEAR_AEAD_MODE ((DROPBEAR_CHACHA20POLY1305) || (DROPBEAR_ENABLE_GCM_MODE))
 
@@ -268,8 +291,7 @@ If you test it please contact the Dropbear author */
 	#error "You must define DROPBEAR_SVR_PUBKEY_AUTH in order to use plugins"
 #endif
 
-#if !(DROPBEAR_AES128 || DROPBEAR_3DES || DROPBEAR_AES256 || DROPBEAR_BLOWFISH \
-      || DROPBEAR_TWOFISH256 || DROPBEAR_TWOFISH128 || DROPBEAR_CHACHA20POLY1305)
+#if !(DROPBEAR_AES128 || DROPBEAR_3DES || DROPBEAR_AES256 || DROPBEAR_CHACHA20POLY1305)
 	#error "At least one encryption algorithm must be enabled. AES128 is recommended."
 #endif
 
@@ -358,5 +380,20 @@ If you test it please contact the Dropbear author */
 #define DROPBEAR_MSAN 0
 #endif
 
+#ifndef DEBUG_DSS_VERIFY
+#define DEBUG_DSS_VERIFY 0
+#endif
+
+#ifndef DROPBEAR_MULTI
+#define DROPBEAR_MULTI 0
+#endif
+
+/* Fuzzing expects all key types to be enabled */
+#if DROPBEAR_FUZZ
+#if defined(DROPBEAR_DSS)
+#undef DROPBEAR_DSS
+#endif
+#define DROPBEAR_DSS 1
+#endif
 
 /* no include guard for this file */

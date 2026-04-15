@@ -326,10 +326,25 @@ function get_cert_info(){
 }
 
 function apply_eula_check(){
-	if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.value.indexOf("WWW.ASUS.COM") != -1){
-		if(!ASUS_EULA.check("asus")) return false;
-	}
-	
+	if(document.form.ddns_enable_x.value == "1" && document.form.ddns_server_x.value.indexOf("WWW.ASUS.COM") != -1){
+		if(policy_status.PP==0||policy_status.PP_time==""){
+                const policyModal = new PolicyModalComponent({
+                    policy: "PP",
+                    submit_reload: 1,
+                    agreeCallback: applyRule,
+                    disagreeCallback: ()=>{
+                        alert(`<#ASUS_POLICY_Function_Confirm#>`);
+                    }
+                });
+                policyModal.show();
+                return false;
+            }else{
+                applyRule();
+            }
+        }else{
+            applyRule();
+        }
+
 	applyRule();
 }
 
@@ -1025,7 +1040,7 @@ function check_unregister_result(){
 					</span>
 					<input type="radio" value="2" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "2", "checked"); %>><#DDNS_https_cert_Import#>
 					<span id="self_signed" style="color:#FFF;">
-					<input type="radio" value="0" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "0", "checked"); %>><#wl_securitylevel_0#>
+					<input type="radio" value="0" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "0", "checked"); %>><#Auto#>
 					</span>	
 					<div id="cert_desc" style="color:#FFCC00; margin-top: 5px;">
 						<span id="le_desc"></span>
@@ -1055,9 +1070,6 @@ function check_unregister_result(){
 					<div style="display: flex;">
 						<div class="cert_status_title"><#vpn_openvpn_KC_expire#> :</div>
 						<div id="expireOn" class="cert_status_val"></div>
-					</div>
-					<div>
-						<input class="button_gen" onclick="save_cert_key();" type="button" value="<#btn_Export#>" />
 					</div>
 				</td>
 			</tr>

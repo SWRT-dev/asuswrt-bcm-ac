@@ -1,5 +1,5 @@
-# strtok_r.m4 serial 15
-dnl Copyright (C) 2002-2004, 2006-2007, 2009-2018 Free Software Foundation,
+# strtok_r.m4 serial 17
+dnl Copyright (C) 2002-2004, 2006-2007, 2009-2024 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -10,7 +10,7 @@ AC_DEFUN([gl_FUNC_STRTOK_R],
   dnl The strtok_r() declaration in lib/string.in.h uses 'restrict'.
   AC_REQUIRE([AC_C_RESTRICT])
 
-  AC_REQUIRE([gl_HEADER_STRING_H_DEFAULTS])
+  AC_REQUIRE([gl_STRING_H_DEFAULTS])
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_CHECK_FUNCS([strtok_r])
   if test $ac_cv_func_strtok_r = yes; then
@@ -42,11 +42,11 @@ AC_DEFUN([gl_FUNC_STRTOK_R],
          [gl_cv_func_strtok_r_works=yes],
          [gl_cv_func_strtok_r_works=no],
          [case "$host_os" in
-                           # Guess no on glibc systems.
-            *-gnu* | gnu*) gl_cv_func_strtok_r_works="guessing no" ;;
-                           # Guess yes on native Windows.
-            mingw*)        gl_cv_func_strtok_r_works="guessing yes" ;;
-            *)             gl_cv_func_strtok_r_works="guessing yes" ;;
+                               # Guess no on glibc systems.
+            *-gnu* | gnu*)     gl_cv_func_strtok_r_works="guessing no" ;;
+                               # Guess yes on native Windows.
+            mingw* | windows*) gl_cv_func_strtok_r_works="guessing yes" ;;
+            *)                 gl_cv_func_strtok_r_works="guessing yes" ;;
           esac
          ])
       ])

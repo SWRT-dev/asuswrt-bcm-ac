@@ -64,14 +64,6 @@ static const struct dropbear_cipher dropbear_aes256 =
 static const struct dropbear_cipher dropbear_aes128 = 
 	{&aes_desc, 16, 16};
 #endif
-#if DROPBEAR_TWOFISH256
-static const struct dropbear_cipher dropbear_twofish256 = 
-	{&twofish_desc, 32, 16};
-#endif
-#if DROPBEAR_TWOFISH128
-static const struct dropbear_cipher dropbear_twofish128 = 
-	{&twofish_desc, 16, 16};
-#endif
 #if DROPBEAR_3DES
 static const struct dropbear_cipher dropbear_3des = 
 	{&des3_desc, 24, 8};
@@ -122,10 +114,6 @@ static const struct dropbear_hash dropbear_sha2_256 =
 static const struct dropbear_hash dropbear_sha2_512 =
 	{&sha512_desc, 64, 64};
 #endif
-#if DROPBEAR_MD5_HMAC
-static const struct dropbear_hash dropbear_md5 = 
-	{&md5_desc, 16, 16};
-#endif
 
 const struct dropbear_hash dropbear_nohash =
 	{NULL, 16, 0}; /* used initially */
@@ -156,15 +144,6 @@ algo_type sshciphers[] = {
 #if DROPBEAR_AES256
 	{"aes256-ctr", 0, &dropbear_aes256, 1, &dropbear_mode_ctr},
 #endif
-#if DROPBEAR_TWOFISH_CTR
-/* twofish ctr is conditional as it hasn't been tested for interoperability, see options.h */
-#if DROPBEAR_TWOFISH256
-	{"twofish256-ctr", 0, &dropbear_twofish256, 1, &dropbear_mode_ctr},
-#endif
-#if DROPBEAR_TWOFISH128
-	{"twofish128-ctr", 0, &dropbear_twofish128, 1, &dropbear_mode_ctr},
-#endif
-#endif /* DROPBEAR_TWOFISH_CTR */
 #endif /* DROPBEAR_ENABLE_CTR_MODE */
 
 #if DROPBEAR_ENABLE_CBC_MODE
@@ -173,13 +152,6 @@ algo_type sshciphers[] = {
 #endif
 #if DROPBEAR_AES256
 	{"aes256-cbc", 0, &dropbear_aes256, 1, &dropbear_mode_cbc},
-#endif
-#if DROPBEAR_TWOFISH256
-	{"twofish256-cbc", 0, &dropbear_twofish256, 1, &dropbear_mode_cbc},
-	{"twofish-cbc", 0, &dropbear_twofish256, 1, &dropbear_mode_cbc},
-#endif
-#if DROPBEAR_TWOFISH128
-	{"twofish128-cbc", 0, &dropbear_twofish128, 1, &dropbear_mode_cbc},
 #endif
 #endif /* DROPBEAR_ENABLE_CBC_MODE */
 
@@ -210,9 +182,6 @@ algo_type sshhashes[] = {
 #if DROPBEAR_SHA2_512_HMAC
 	{"hmac-sha2-512", 0, &dropbear_sha2_512, 1, NULL},
 #endif
-#if DROPBEAR_MD5_HMAC
-	{"hmac-md5", 0, (void*)&dropbear_md5, 1, NULL},
-#endif
 	{NULL, 0, NULL, 0, NULL}
 };
 
@@ -239,6 +208,9 @@ algo_type ssh_nocompress[] = {
 algo_type sigalgs[] = {
 #if DROPBEAR_ED25519
 	{"ssh-ed25519", DROPBEAR_SIGNATURE_ED25519, NULL, 1, NULL},
+#if DROPBEAR_SK_ED25519
+	{"sk-ssh-ed25519@openssh.com", DROPBEAR_SIGNATURE_SK_ED25519, NULL, 1, NULL},
+#endif
 #endif
 #if DROPBEAR_ECDSA
 #if DROPBEAR_ECC_256
@@ -249,6 +221,9 @@ algo_type sigalgs[] = {
 #endif
 #if DROPBEAR_ECC_521
 	{"ecdsa-sha2-nistp521", DROPBEAR_SIGNATURE_ECDSA_NISTP521, NULL, 1, NULL},
+#endif
+#if DROPBEAR_SK_ECDSA
+	{"sk-ecdsa-sha2-nistp256@openssh.com", DROPBEAR_SIGNATURE_SK_ECDSA_NISTP256, NULL, 1, NULL},
 #endif
 #endif
 #if DROPBEAR_RSA
@@ -333,6 +308,12 @@ algo_type sshkex[] = {
 	{SSH_EXT_INFO_C, 0, NULL, 1, NULL},
 #endif
 #endif
+#if DROPBEAR_CLIENT
+	{SSH_STRICT_KEX_C, 0, NULL, 1, NULL},
+#endif
+#if DROPBEAR_SERVER
+	{SSH_STRICT_KEX_S, 0, NULL, 1, NULL},
+#endif
 	{NULL, 0, NULL, 0, NULL}
 };
 
@@ -359,7 +340,7 @@ void buf_put_algolist_all(buffer * buf, const algo_type localalgos[], int useall
 	len = buf->pos - startpos - 4;
 	buf_setpos(buf, startpos);
 	buf_putint(buf, len);
-	TRACE(("algolist add %d '%*s'", len, len, buf_getptr(buf, len)))
+	TRACE(("algolist add %d '%.*s'", len, len, buf_getptr(buf, len)))
 	buf_incrwritepos(buf, len);
 }
 
@@ -463,7 +444,7 @@ algo_type * buf_match_algo(buffer* buf, algo_type localalgos[],
 
 	/* get the comma-separated list from the buffer ie "algo1,algo2,algo3" */
 	algolist = buf_getstring(buf, &len);
-	TRACE(("buf_match_algo: %s", algolist))
+	DEBUG3(("buf_match_algo: %s", algolist))
 	remotecount = MAX_PROPOSED_ALGO;
 	get_algolist(algolist, len, remotenames, &remotecount);
 

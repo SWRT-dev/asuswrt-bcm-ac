@@ -1,19 +1,19 @@
-/* Copyright (C) 2002, 2004-2005, 2007, 2009-2018 Free Software Foundation,
+/* Copyright (C) 2002, 2004-2005, 2007, 2009-2024 Free Software Foundation,
    Inc.
    This file is part of the GNU C Library.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License along
-   with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _LIBC
 # include <config.h>
@@ -28,9 +28,10 @@
 #endif
 #include <limits.h>
 #include <string.h>
-#include <stdbool.h>
+#include <strings.h>
 
 #ifdef _LIBC
+# include <stdbool.h>
 # include "../locale/localeinfo.h"
 #endif
 
@@ -202,11 +203,12 @@ day_of_the_week (struct tm *tm)
      difference between this data in the one on TM and so determine
      the weekday.  */
   int corr_year = 1900 + tm->tm_year - (tm->tm_mon < 2);
+  int corr_quad = corr_year / 4;
   int wday = (-473
               + (365 * (tm->tm_year - 70))
-              + (corr_year / 4)
-              - ((corr_year / 4) / 25) + ((corr_year / 4) % 25 < 0)
-              + (((corr_year / 4) / 25) / 4)
+              + corr_quad
+              - ((corr_quad + (corr_quad < 0)) / 25 - (corr_quad < 0))
+              + ((corr_quad / 25) / 4)
               + __mon_yday[0][tm->tm_mon]
               + tm->tm_mday - 1);
   tm->tm_wday = ((wday % 7) + 7) % 7;
@@ -277,7 +279,7 @@ __strptime_internal (rp, fmt, tm, decided, era_cnt LOCALE_PARAM)
         }
 
       /* Any character but '%' must be matched by the same character
-         in the iput string.  */
+         in the input string.  */
       if (*fmt != '%')
         {
           match_char (*fmt++, *rp++);
@@ -682,7 +684,7 @@ __strptime_internal (rp, fmt, tm, decided, era_cnt LOCALE_PARAM)
              specify hours.  If fours digits are used, minutes are
              also specified.  */
           {
-            bool neg _GL_UNUSED;
+            _GL_UNUSED bool neg;
             int n;
 
             val = 0;
@@ -1100,23 +1102,23 @@ __strptime_internal (rp, fmt, tm, decided, era_cnt LOCALE_PARAM)
 
   if ((have_uweek || have_wweek) && have_wday)
     {
-      int save_wday = tm->tm_wday;
-      int save_mday = tm->tm_mday;
-      int save_mon = tm->tm_mon;
+      int saved_wday = tm->tm_wday;
+      int saved_mday = tm->tm_mday;
+      int saved_mon = tm->tm_mon;
       int w_offset = have_uweek ? 0 : 1;
 
       tm->tm_mday = 1;
       tm->tm_mon = 0;
       day_of_the_week (tm);
       if (have_mday)
-        tm->tm_mday = save_mday;
+        tm->tm_mday = saved_mday;
       if (have_mon)
-        tm->tm_mon = save_mon;
+        tm->tm_mon = saved_mon;
 
       if (!have_yday)
         tm->tm_yday = ((7 - (tm->tm_wday - w_offset)) % 7
                        + (week_no - 1) *7
-                       + save_wday - w_offset);
+                       + saved_wday - w_offset);
 
       if (!have_mday || !have_mon)
         {
@@ -1132,7 +1134,7 @@ __strptime_internal (rp, fmt, tm, decided, era_cnt LOCALE_PARAM)
                  - __mon_yday[__isleap(1900 + tm->tm_year)][t_mon - 1] + 1);
         }
 
-      tm->tm_wday = save_wday;
+      tm->tm_wday = saved_wday;
     }
 
   return (char *) rp;

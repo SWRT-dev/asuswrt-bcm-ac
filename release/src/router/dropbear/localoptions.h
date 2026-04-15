@@ -1,4 +1,4 @@
-/* ASUSWRT custom configuration */
+/* ASUSWRT-Merlin custom configuration */
 
 /* Override SSH 2.0 ident */
 #define LOCAL_IDENT "SSH-2.0-dropbear"
@@ -8,13 +8,6 @@
  * lasts for a single connection. Dropbear should be invoked with the -i flag
  * for inetd, and can only accept IPv4 connections. */
 #define INETD_MODE 0
-
-/* Enable "Netcat mode" option. This will forward standard input/output
- * to a remote TCP-forwarded connection */
-#define DROPBEAR_CLI_NETCAT 0
-
-/* Whether to support "-c" and "-m" flags to choose ciphers/MACs at runtime */
-#define DROPBEAR_USER_ALGO_LIST 0
 
 /* Specify the number of clients we will allow to be connected but
  * not yet authenticated. After this limit, connections are rejected */
@@ -41,6 +34,7 @@
 
 /* The default path. This will often get replaced by the shell */
 #define DEFAULT_PATH "/bin:/sbin:/usr/bin:/usr/sbin:/opt/bin:/opt/sbin:/opt/usr/bin:/opt/usr/sbin"
+#define DEFAULT_ROOT_PATH "/bin:/sbin:/usr/bin:/usr/sbin:/opt/bin:/opt/sbin:/opt/usr/bin:/opt/usr/sbin"
 
 /* Linux will attempt TCP fast open, falling back if not supported by the kernel.
  * Currently server is enabled but client is disabled by default until there

@@ -1,0 +1,142 @@
+diff a/release/src/router/rc/udhcpc.c b/release/src/router/rc/udhcpc.c	(rejected hunks)
+@@ -1623,20 +1632,22 @@ int s46_mapcalc(int wan_unit, int wan_proto, char *rules, char *peerbuf, size_t
+ 
+ static char *get_s46_ra_prefix(char *rules, char *addr, size_t addrsz)
+ {
+-	char *rule, *next_rule, *item, *next;
++	char *xrules, *rule, *next_rule, *item, *next;
+ 	char tmp[INET6_ADDRSTRLEN + 1];
+ 	char *s = "::/0";
+ 	int  size;
+ 
+-	if (!rules || *rules == '\0' || (rules = strdup(rules)) == NULL)
++	if (!rules || *rules == '\0' || (xrules = strdup(rules)) == NULL)
+ 		return NULL;
+ 
+-	for (rule = strtok_r(rules, " ", &next_rule); rule; rule = strtok_r(NULL, " ", &next_rule)) {
++	for (rule = strtok_r(xrules, " ", &next_rule); rule; rule = strtok_r(NULL, " ", &next_rule)) {
+ 		for (item = strtok_r(rule, ",", &next); item; item = strtok_r(NULL, ",", &next)) {
+ 			if (!strstr(item, s)) /* skip ::/0 */
+ 				if (sscanf(item, "%[^/]/%d", tmp, &size) == 2) {
+-					printf("prefx:[%s/%d]\n", tmp, size);
++					if (f_exists(S46_DEBUG))
++						S46_DBG("prefx:[%s/%d]\n", tmp, size);
+ 					snprintf(addr, addrsz, "%s/%d", tmp, size);
++					free(xrules);
+ 					return addr;
+ 				} else
+ 					continue;
+@@ -1645,27 +1656,78 @@ static char *get_s46_ra_prefix(char *rules, char *addr, size_t addrsz)
+ 			}
+ 		}
+ 	}
++	if (xrules)
++		free(xrules);
++
+ 	return NULL;
+ }
+ 
+ static char *get_s46_ra_routes(char *rules, char *addr, size_t addrsz)
+ {
+-	char *rule, *next_rule;
++	char *xrules, *rule, *next_rule;
+ 
+-	if (!rules || *rules == '\0' || (rules = strdup(rules)) == NULL)
++	if (!rules || *rules == '\0' || (xrules = strdup(rules)) == NULL)
+ 		return NULL;
+ 
+-	for (rule = strtok_r(rules, " ", &next_rule); rule; rule = strtok_r(NULL, " ", &next_rule)) {
++	for (rule = strtok_r(xrules, " ", &next_rule); rule; rule = strtok_r(NULL, " ", &next_rule)) {
+ 		/* only get first route at the moment */
+ 		if (sscanf(rule, "%*[^,],%[^,]", addr) == 1 ) {
+ 			S46_DBG("ra_routes:[%s]\n", addr);
++			free(xrules);
+ 			return addr;
+ 		}
+ 	}
++	if (xrules)
++		free(xrules);
++
+ 	return NULL;
+ }
+ #endif
+ 
++static int restart_telnet6_if_lan_v6addr_changed(void)
++{
++	int restart = 0, found = 0, l;
++	pid_t *pid, *list = NULL;
++	const char *p;
++	char *q, buf[128], path[sizeof("/proc/XXX/cmdline") + 10];
++	char lan_ipv6_addr[sizeof("0000:1111:2222:3333:4444:5555:6666:7777/128XXX")] = "";
++
++	if (!nvram_get_int("telnetd_enable"))
++		return 0;
++
++	if ((p = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_PREFIXLEN)) != NULL)
++		strlcpy(lan_ipv6_addr, p, sizeof(lan_ipv6_addr));
++	if ((q = strchr(lan_ipv6_addr, '/')) != NULL)
++		*q = '\0';
++	if (p == NULL)
++		return 0;
++
++	list = find_pid_by_name("telnetd");
++	for (pid = list; pid && *pid; ++pid) {
++		snprintf(path, sizeof(path), "/proc/%d/cmdline", *pid);
++		if ((l = f_read_string(path, buf, sizeof(buf))) <= 0)
++			continue;
++		for (q = buf; (q - buf) <= l; ++q) {
++			if (*q == '\0')
++				*q = ' ';
++		}
++		*q = '\0';
++		if ((q = strchr(buf, ':')) != NULL && strchr(q + 1, ':')) {
++			found++;
++			if (!strstr(buf, lan_ipv6_addr)) {
++				kill_pid_tk(*pid);
++				restart++;
++			}
++		}
++	}
++	if (list)
++		free(list);
++	if (!found || restart) {
++		notify_rc("start_telnetd6");
++	}
++	return 0;
++}
++
+ static int
+ bound6(char *wan_ifname, int bound)
+ {
+@@ -1689,18 +1751,14 @@ bound6(char *wan_ifname, int bound)
+ 
+ #ifdef RTCONFIG_SOFTWIRE46
+ 	int wan_proto = -1;
++	int ra_changed = 0;
++	char ra_prefix[INET6_ADDRSTRLEN + sizeof("/128")];
++	char ra_route[INET6_ADDRSTRLEN];
+ 
+ 	switch (wan_proto = get_wan_proto(prefix)) {
+ 		int i;
+-		char rbuf[32];
+ 	case WAN_MAPE:
+-		i = 0;
+-		S46_DBG("[wan_if]:[%s], [bound]:[%d]\n", wan_ifname, bound);
+-		while(environ[i] != NULL) {
+-			S46_DBG("ENV:[%s]\n", environ[i]);
+-			i++;
+-		}
+-		break;
++	case WAN_DSLITE:
+ 	case WAN_V6PLUS:
+ 	case WAN_OCNVC:
+ 		i = 0;
+@@ -2086,7 +2147,7 @@ start_dhcp6c(void)
+ 
+ #ifndef RT4GAC68U
+ 	if (getpid() != 1) {
+-		notify_rc("start_dhcp6c");
++		notify_rc_and_wait_1min("start_dhcp6c");
+ 		return 0;
+ 	}
+ #endif

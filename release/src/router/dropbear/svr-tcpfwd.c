@@ -39,8 +39,15 @@
 
 /* This is better than SSH_MSG_UNIMPLEMENTED */
 void recv_msg_global_request_remotetcp() {
-		TRACE(("recv_msg_global_request_remotetcp: remote tcp forwarding not compiled in"))
+	unsigned int wantreply = 0;
+
+	TRACE(("recv_msg_global_request_remotetcp: remote tcp forwarding not compiled in"))
+
+	buf_eatstring(ses.payload);
+	wantreply = buf_getbool(ses.payload);
+	if (wantreply) {
 		send_msg_request_failure();
+	}
 }
 
 /* */
@@ -52,9 +59,8 @@ static int newtcpdirect(struct Channel * channel);
 
 #if DROPBEAR_SVR_REMOTETCPFWD
 static const struct ChanType svr_chan_tcpremote = {
-	1, /* sepfds */
 	"forwarded-tcpip",
-	tcp_prio_inithandler,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -139,7 +145,7 @@ static int svr_cancelremotetcp() {
 	TRACE(("enter cancelremotetcp"))
 
 	bindaddr = buf_getstring(ses.payload, &addrlen);
-	if (addrlen > MAX_IP_LEN) {
+	if (addrlen > MAX_HOST_LEN) {
 		TRACE(("addr len too long: %d", addrlen))
 		goto out;
 	}
@@ -174,7 +180,7 @@ static int svr_remotetcpreq(int *allocated_listen_port) {
 	TRACE(("enter remotetcpreq"))
 
 	request_addr = buf_getstring(ses.payload, &addrlen);
-	if (addrlen > MAX_IP_LEN) {
+	if (addrlen > MAX_HOST_LEN) {
 		TRACE(("addr len too long: %d", addrlen))
 		goto out;
 	}
@@ -234,7 +240,6 @@ out:
 #if DROPBEAR_SVR_LOCALTCPFWD
 
 const struct ChanType svr_chan_tcpdirect = {
-	1, /* sepfds */
 	"direct-tcpip",
 	newtcpdirect, /* init */
 	NULL, /* checkclose */
@@ -284,11 +289,15 @@ static int newtcpdirect(struct Channel * channel) {
 		goto out;
 	}
 
-	snprintf(portstring, sizeof(portstring), "%u", destport);
-	channel->conn_pending = connect_remote(desthost, portstring, channel_connect_done, channel, NULL, NULL);
+	if (!svr_pubkey_allows_local_tcpfwd(desthost, destport)) {
+		TRACE(("leave newtcpdirect: local tcp forwarding not permitted to requested destination"));
+		goto out;
+	}
 
-	channel->prio = DROPBEAR_CHANNEL_PRIO_UNKNOWABLE;
-	
+	snprintf(portstring, sizeof(portstring), "%u", destport);
+	channel->conn_pending = connect_remote(desthost, portstring, channel_connect_done,
+		channel, NULL, NULL, DROPBEAR_PRIO_NORMAL);
+
 	err = SSH_OPEN_IN_PROGRESS;
 
 out:

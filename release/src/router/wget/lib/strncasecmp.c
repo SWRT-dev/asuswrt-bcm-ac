@@ -1,18 +1,18 @@
 /* strncasecmp.c -- case insensitive string comparator
-   Copyright (C) 1998-1999, 2005-2007, 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-1999, 2005-2007, 2009-2024 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -21,8 +21,6 @@
 
 #include <ctype.h>
 #include <limits.h>
-
-#define TOLOWER(Ch) (isupper (Ch) ? tolower (Ch) : (Ch))
 
 /* Compare no more than N bytes of strings S1 and S2, ignoring case,
    returning less than, equal to or greater than zero if S1 is
@@ -41,8 +39,8 @@ strncasecmp (const char *s1, const char *s2, size_t n)
 
   do
     {
-      c1 = TOLOWER (*p1);
-      c2 = TOLOWER (*p2);
+      c1 = tolower (*p1);
+      c2 = tolower (*p2);
 
       if (--n == 0 || c1 == '\0')
         break;
@@ -58,5 +56,5 @@ strncasecmp (const char *s1, const char *s2, size_t n)
     /* On machines where 'char' and 'int' are types of the same size, the
        difference of two 'unsigned char' values - including the sign bit -
        doesn't fit in an 'int'.  */
-    return (c1 > c2 ? 1 : c1 < c2 ? -1 : 0);
+    return _GL_CMP (c1, c2);
 }

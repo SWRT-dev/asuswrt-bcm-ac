@@ -1,26 +1,25 @@
 /* Program name management.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   it under the terms of the GNU Lesser General Public License as published by
+   the Free Software Foundation; either version 2.1 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
-/* Specification.  */
-#include "getprogname.h"
+/* Specification.  Also get __argv declaration.  */
+#include <stdlib.h>
 
 #include <errno.h> /* get program_invocation_name declaration */
-#include <stdlib.h> /* get __argv declaration */
 
 #ifdef _AIX
 # include <unistd.h>
@@ -43,7 +42,7 @@
 # include <string.h>
 #endif
 
-#ifdef __sgi
+#if defined __sgi || defined __osf__
 # include <string.h>
 # include <unistd.h>
 # include <stdio.h>
@@ -51,9 +50,14 @@
 # include <sys/procfs.h>
 #endif
 
-#include "dirname.h"
+#if defined __SCO_VERSION__ || defined __sysv5__
+# include <fcntl.h>
+# include <string.h>
+#endif
 
-#ifndef HAVE_GETPROGNAME             /* not Mac OS X, FreeBSD, NetBSD, OpenBSD >= 5.4, Cygwin */
+#include "basename-lgpl.h"
+
+#ifndef HAVE_GETPROGNAME  /* not Mac OS X, FreeBSD, NetBSD, OpenBSD >= 5.4, Solaris >= 11, Cygwin, Android API level >= 21 */
 char const *
 getprogname (void)
 {
@@ -70,10 +74,10 @@ getprogname (void)
     p = "?";
   return last_component (p);
 # elif HAVE_DECL___ARGV                                     /* mingw, MSVC */
-  /* https://msdn.microsoft.com/en-us/library/dn727674.aspx */
+  /* https://docs.microsoft.com/en-us/cpp/c-runtime-library/argc-argv-wargv */
   const char *p = __argv && __argv[0] ? __argv[0] : "?";
   return last_component (p);
-# elif HAVE_VAR___PROGNAME                                  /* OpenBSD, QNX */
+# elif HAVE_VAR___PROGNAME                                  /* OpenBSD, Android, QNX */
   /* https://man.openbsd.org/style.9 */
   /* http://www.qnx.de/developers/docs/6.5.0/index.jsp?topic=%2Fcom.qnx.doc.neutrino_lib_ref%2Fp%2F__progname.html */
   /* Be careful to declare this only when we absolutely need it
@@ -82,7 +86,11 @@ getprogname (void)
      malfunction (have zero length) with Fedora 25's glibc.  */
   extern char *__progname;
   const char *p = __progname;
+#  if defined __ANDROID__
+  return last_component (p);
+#  else
   return p && p[0] ? p : "?";
+#  endif
 # elif _AIX                                                 /* AIX */
   /* Idea by Bastien ROUCARIÈS,
      https://lists.gnu.org/r/bug-gnulib/2010-12/msg00095.html
@@ -204,7 +212,19 @@ getprogname (void)
                 {
                   char *s = strdup (last_component (buf.ps_pathptr));
                   if (s)
-                    p = s;
+                    {
+#  if defined __XPLINK__ && __CHARSET_LIB == 1
+                      /* The compiler option -qascii is in use.
+                         https://makingdeveloperslivesbetter.wordpress.com/2022/01/07/is-z-os-ascii-or-ebcdic-yes/
+                         https://www.ibm.com/docs/en/zos/2.5.0?topic=features-macros-related-compiler-option-settings
+                         So, convert the result from EBCDIC to ASCII.
+                         https://www.ibm.com/docs/en/zos/2.5.0?topic=functions-e2a-s-convert-string-from-ebcdic-ascii */
+                      if (__e2a_s (s) == (size_t)-1)
+                        free (s);
+                      else
+#  endif
+                        p = s;
+                    }
                   break;
                 }
             }
@@ -214,12 +234,16 @@ getprogname (void)
       free (buf.ps_pathptr);
     }
   return p;
-# elif defined __sgi                                        /* IRIX */
+# elif defined __sgi || defined __osf__                     /* IRIX or Tru64 */
   char filename[50];
   int fd;
 
-  sprintf (filename, "/proc/pinfo/%d", (int) getpid ());
-  fd = open (filename, O_RDONLY);
+  # if defined __sgi
+    sprintf (filename, "/proc/pinfo/%d", (int) getpid ());
+  # else
+    sprintf (filename, "/proc/%d", (int) getpid ());
+  # endif
+  fd = open (filename, O_RDONLY | O_CLOEXEC);
   if (0 <= fd)
     {
       prpsinfo_t buf;
@@ -229,17 +253,50 @@ getprogname (void)
         {
           char *name = buf.pr_fname;
           size_t namesize = sizeof buf.pr_fname;
+          /* It may not be NUL-terminated.  */
           char *namenul = memchr (name, '\0', namesize);
           size_t namelen = namenul ? namenul - name : namesize;
           char *namecopy = malloc (namelen + 1);
           if (namecopy)
             {
-              namecopy[namelen] = 0;
+              namecopy[namelen] = '\0';
               return memcpy (namecopy, name, namelen);
             }
         }
     }
   return NULL;
+# elif defined __SCO_VERSION__ || defined __sysv5__                /* SCO OpenServer6/UnixWare */
+  char buf[80];
+  int fd;
+  sprintf (buf, "/proc/%d/cmdline", getpid());
+  fd = open (buf, O_RDONLY);
+  if (0 <= fd)
+    {
+      size_t n = read (fd, buf, 79);
+      if (n > 0)
+        {
+          buf[n] = '\0'; /* Guarantee null-termination */
+          char *progname;
+          progname = strrchr (buf, '/');
+          if (progname)
+            {
+              progname = progname + 1; /* Skip the '/' */
+            }
+          else
+            {
+              progname = buf;
+            }
+          char *ret;
+          ret = malloc (strlen (progname) + 1);
+          if (ret)
+            {
+              strcpy (ret, progname);
+              return ret;
+            }
+        }
+      close (fd);
+    }
+  return "?";
 # else
 #  error "getprogname module not ported to this OS"
 # endif

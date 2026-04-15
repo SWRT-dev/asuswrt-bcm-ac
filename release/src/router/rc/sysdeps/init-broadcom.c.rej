@@ -1,0 +1,16 @@
+diff a/release/src/router/rc/sysdeps/init-broadcom.c b/release/src/router/rc/sysdeps/init-broadcom.c	(rejected hunks)
+@@ -2196,9 +2203,14 @@ void init_switch_pre()
+   #else
+ 	doSystem("ethswctl -c wan -i %s -o %s", wan_if_eth(), is_router_mode() ? "enable" : "disable");
+   #endif
++#if defined(TUFAX3000_V2) || defined(RTAXE7800)
++	if (is_router_mode())
++		doSystem("ethswctl -c wan -i %s -o enable", WAN_IF_ETH);
++#else
+ 	if (is_router_mode() && strcmp(WAN_IF_ETH, wan_if_eth()))
+ 		doSystem("ethswctl -c wan -i %s -o disable", WAN_IF_ETH);
+ #endif
++#endif
+ 
+ #if defined(TUFAX3000_V2) || defined(RTAXE7800)
+ 	doSystem("ethswctl -c softswitch -i %s -o %s", wan_if_eth(), is_router_mode() ? "disable" : "enable");

@@ -1,6 +1,6 @@
-# fflush.m4 serial 17
+# fflush.m4 serial 19
 
-# Copyright (C) 2007-2018 Free Software Foundation, Inc.
+# Copyright (C) 2007-2024 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -38,7 +38,8 @@ AC_DEFUN([gl_FUNC_FFLUSH_STDIN],
 #else /* on Windows with MSVC */
 # include <io.h>
 #endif
-       ]], [[FILE *f = fopen ("conftest.txt", "r");
+       ]GL_MDA_DEFINES],
+       [[FILE *f = fopen ("conftest.txt", "r");
          char buffer[10];
          int fd;
          int c;
@@ -57,7 +58,7 @@ AC_DEFUN([gl_FUNC_FFLUSH_STDIN],
          if (lseek (fd, 0, SEEK_CUR) != 5)
            { fclose (f); return 5; }
          /* Verify behaviour of fflush after ungetc. See
-            <http://www.opengroup.org/austin/aardvark/latest/xshbug3.txt>  */
+            <https://www.opengroup.org/austin/aardvark/latest/xshbug3.txt>  */
          /* Verify behaviour of fflush after a backup ungetc.  This fails on
             mingw.  */
          c = fgetc (f);
@@ -78,9 +79,9 @@ AC_DEFUN([gl_FUNC_FFLUSH_STDIN],
        [gl_cv_func_fflush_stdin=yes],
        [gl_cv_func_fflush_stdin=no],
        [case "$host_os" in
-                  # Guess no on native Windows.
-          mingw*) gl_cv_func_fflush_stdin="guessing no" ;;
-          *)      gl_cv_func_fflush_stdin=cross ;;
+                             # Guess no on native Windows.
+          mingw* | windows*) gl_cv_func_fflush_stdin="guessing no" ;;
+          *)                 gl_cv_func_fflush_stdin=cross ;;
         esac
        ])
      rm conftest.txt

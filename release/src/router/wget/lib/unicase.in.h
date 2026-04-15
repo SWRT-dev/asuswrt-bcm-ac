@@ -1,17 +1,17 @@
 /* Unicode character case mappings.
-   Copyright (C) 2002, 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2009-2024 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published
-   by the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _UNICASE_H
@@ -27,6 +27,12 @@
 
 /* Get uninorm_t.  */
 #include "uninorm.h"
+
+#if @HAVE_UNISTRING_WOE32DLL_H@
+# include <unistring/woe32dll.h>
+#else
+# define LIBUNISTRING_DLL_VARIABLE
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,15 +102,15 @@ extern const char *
 extern uint8_t *
        u8_toupper (const uint8_t *s, size_t n, const char *iso639_language,
                    uninorm_t nf,
-                   uint8_t *resultbuf, size_t *lengthp);
+                   uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_toupper (const uint16_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint16_t *resultbuf, size_t *lengthp);
+                    uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_toupper (const uint32_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint32_t *resultbuf, size_t *lengthp);
+                    uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Return the lowercase mapping of a string.
    The nf argument identifies the normalization form to apply after the
@@ -112,15 +118,15 @@ extern uint32_t *
 extern uint8_t *
        u8_tolower (const uint8_t *s, size_t n, const char *iso639_language,
                    uninorm_t nf,
-                   uint8_t *resultbuf, size_t *lengthp);
+                   uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_tolower (const uint16_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint16_t *resultbuf, size_t *lengthp);
+                    uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_tolower (const uint32_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint32_t *resultbuf, size_t *lengthp);
+                    uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Return the titlecase mapping of a string.
    The nf argument identifies the normalization form to apply after the
@@ -128,15 +134,15 @@ extern uint32_t *
 extern uint8_t *
        u8_totitle (const uint8_t *s, size_t n, const char *iso639_language,
                    uninorm_t nf,
-                   uint8_t *resultbuf, size_t *lengthp);
+                   uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_totitle (const uint16_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint16_t *resultbuf, size_t *lengthp);
+                    uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_totitle (const uint32_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint32_t *resultbuf, size_t *lengthp);
+                    uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* The case-mapping context given by a prefix string.  */
 typedef struct casing_prefix_context
@@ -147,7 +153,7 @@ typedef struct casing_prefix_context
         }
         casing_prefix_context_t;
 /* The case-mapping context of the empty prefix string.  */
-extern const casing_prefix_context_t unicase_empty_prefix_context;
+extern @GNULIB_UNICASE_EMPTY_PREFIX_CONTEXT_DLL_VARIABLE@ const casing_prefix_context_t unicase_empty_prefix_context;
 /* Return the case-mapping context of a given prefix string.  */
 extern casing_prefix_context_t
        u8_casing_prefix_context (const uint8_t *s, size_t n);
@@ -176,7 +182,7 @@ typedef struct casing_suffix_context
         }
         casing_suffix_context_t;
 /* The case-mapping context of the empty suffix string.  */
-extern const casing_suffix_context_t unicase_empty_suffix_context;
+extern @GNULIB_UNICASE_EMPTY_SUFFIX_CONTEXT_DLL_VARIABLE@ const casing_suffix_context_t unicase_empty_suffix_context;
 /* Return the case-mapping context of a given suffix string.  */
 extern casing_suffix_context_t
        u8_casing_suffix_context (const uint8_t *s, size_t n);
@@ -204,21 +210,21 @@ extern uint8_t *
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint8_t *resultbuf, size_t *lengthp);
+                      uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_ct_toupper (const uint16_t *s, size_t n,
                       casing_prefix_context_t prefix_context,
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint16_t *resultbuf, size_t *lengthp);
+                      uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_ct_toupper (const uint32_t *s, size_t n,
                       casing_prefix_context_t prefix_context,
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint32_t *resultbuf, size_t *lengthp);
+                      uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Return the lowercase mapping of a string that is surrounded by a prefix
    and a suffix.  */
@@ -228,21 +234,21 @@ extern uint8_t *
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint8_t *resultbuf, size_t *lengthp);
+                      uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_ct_tolower (const uint16_t *s, size_t n,
                       casing_prefix_context_t prefix_context,
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint16_t *resultbuf, size_t *lengthp);
+                      uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_ct_tolower (const uint32_t *s, size_t n,
                       casing_prefix_context_t prefix_context,
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint32_t *resultbuf, size_t *lengthp);
+                      uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Return the titlecase mapping of a string that is surrounded by a prefix
    and a suffix.  */
@@ -252,21 +258,21 @@ extern uint8_t *
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint8_t *resultbuf, size_t *lengthp);
+                      uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_ct_totitle (const uint16_t *s, size_t n,
                       casing_prefix_context_t prefix_context,
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint16_t *resultbuf, size_t *lengthp);
+                      uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_ct_totitle (const uint32_t *s, size_t n,
                       casing_prefix_context_t prefix_context,
                       casing_suffix_context_t suffix_context,
                       const char *iso639_language,
                       uninorm_t nf,
-                      uint32_t *resultbuf, size_t *lengthp);
+                      uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Return the case folded string.
    Comparing uN_casefold (S1) and uN_casefold (S2) with uN_cmp2() is equivalent
@@ -276,15 +282,15 @@ extern uint32_t *
 extern uint8_t *
        u8_casefold (const uint8_t *s, size_t n, const char *iso639_language,
                     uninorm_t nf,
-                    uint8_t *resultbuf, size_t *lengthp);
+                    uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_casefold (const uint16_t *s, size_t n, const char *iso639_language,
                      uninorm_t nf,
-                     uint16_t *resultbuf, size_t *lengthp);
+                     uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_casefold (const uint32_t *s, size_t n, const char *iso639_language,
                      uninorm_t nf,
-                     uint32_t *resultbuf, size_t *lengthp);
+                     uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 /* Likewise, for a string that is surrounded by a prefix and a suffix.  */
 extern uint8_t *
        u8_ct_casefold (const uint8_t *s, size_t n,
@@ -292,21 +298,21 @@ extern uint8_t *
                        casing_suffix_context_t suffix_context,
                        const char *iso639_language,
                        uninorm_t nf,
-                       uint8_t *resultbuf, size_t *lengthp);
+                       uint8_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint16_t *
        u16_ct_casefold (const uint16_t *s, size_t n,
                         casing_prefix_context_t prefix_context,
                         casing_suffix_context_t suffix_context,
                         const char *iso639_language,
                         uninorm_t nf,
-                        uint16_t *resultbuf, size_t *lengthp);
+                        uint16_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern uint32_t *
        u32_ct_casefold (const uint32_t *s, size_t n,
                         casing_prefix_context_t prefix_context,
                         casing_suffix_context_t suffix_context,
                         const char *iso639_language,
                         uninorm_t nf,
-                        uint32_t *resultbuf, size_t *lengthp);
+                        uint32_t *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Compare S1 and S2, ignoring differences in case and normalization.
    The nf argument identifies the normalization form to apply after the
@@ -336,16 +342,20 @@ extern int
    NF must be either UNINORM_NFC, UNINORM_NFKC, or NULL for no normalization.  */
 extern char *
        u8_casexfrm (const uint8_t *s, size_t n, const char *iso639_language,
-                    uninorm_t nf, char *resultbuf, size_t *lengthp);
+                    uninorm_t nf,
+                    char *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern char *
        u16_casexfrm (const uint16_t *s, size_t n, const char *iso639_language,
-                     uninorm_t nf, char *resultbuf, size_t *lengthp);
+                     uninorm_t nf,
+                     char *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern char *
        u32_casexfrm (const uint32_t *s, size_t n, const char *iso639_language,
-                     uninorm_t nf, char *resultbuf, size_t *lengthp);
+                     uninorm_t nf,
+                     char *_UC_RESTRICT resultbuf, size_t *lengthp);
 extern char *
        ulc_casexfrm (const char *s, size_t n, const char *iso639_language,
-                     uninorm_t nf, char *resultbuf, size_t *lengthp);
+                     uninorm_t nf,
+                     char *_UC_RESTRICT resultbuf, size_t *lengthp);
 
 /* Compare S1 and S2, ignoring differences in case and normalization, using the
    collation rules of the current locale.

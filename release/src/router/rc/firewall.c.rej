@@ -1,0 +1,43 @@
+diff a/release/src/router/rc/firewall.c b/release/src/router/rc/firewall.c	(rejected hunks)
+@@ -1955,12 +1963,23 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char
+ 				}
+ #endif
+ 				break;
++			case WAN_DSLITE:
++				break;
+ 			}
+ #endif
++#ifdef RTCONFIG_SOFTWIRE46
++			if (get_ipv4_service_by_unit(wan_ifunit(wan_if)) != WAN_DSLITE)
++#ifdef BCM_KF_NETFILTER
++				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE --mode %s\n", p, wan_if, wan_ip, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"));
++#else
++				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wan_if, wan_ip);
++#endif
++#else
+ #if defined(BCM_KF_NETFILTER) && !defined(BCM4912)
+ 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE --mode %s\n", p, wan_if, wan_ip, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"));
+ #else
+ 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wan_if, wan_ip);
++#endif
+ #endif
+ 		}
+ 
+@@ -5857,6 +5874,7 @@ TRACE_PT("writing Parental Control\n");
+ 					g_buf_init(); // need to modified
+ 
+ 					setting = filter_conv(protoptr, flagptr, iprange_ex_conv(srcip, srcipbuf), srcport, iprange_ex_conv(dstip, dstipbuf), dstport);
++					v4v6_ok = IPT_V4|IPT_V6;
+ 					if (srcip) v4v6_ok = ipt_addr_compact((*srcipbuf)?srcipbuf:srcip, v4v6_ok, (v4v6_ok == IPT_V4));
+ 					if (dstip) v4v6_ok = ipt_addr_compact((*dstipbuf)?dstipbuf:dstip, v4v6_ok, (v4v6_ok == IPT_V4));
+ 					for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
+@@ -5892,9 +5910,6 @@ TRACE_PT("writing Parental Control\n");
+ 				}
+ 				if(nv) free(nv);
+ 			}
+-
+-			//restore
+-			v4v6_ok = IPT_V4;
+ 		}
+ 
+ 		// ICMP

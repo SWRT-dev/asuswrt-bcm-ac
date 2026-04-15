@@ -1,30 +1,52 @@
 /* Declaration of functions and data types used for MD5 sum computing
    library functions.
-   Copyright (C) 1995-1997, 1999-2001, 2004-2006, 2008-2018 Free Software
+   Copyright (C) 1995-1997, 1999-2001, 2004-2006, 2008-2024 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
 
-   This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 3, or (at your option) any
-   later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _MD5_H
 #define _MD5_H 1
+
+/* This file uses HAVE_OPENSSL_MD5.  */
+#if !_GL_CONFIG_H_INCLUDED
+ #error "Please include config.h first."
+#endif
 
 #include <stdio.h>
 #include <stdint.h>
 
 # if HAVE_OPENSSL_MD5
-#  include <openssl/md5.h>
+#  ifndef OPENSSL_API_COMPAT
+#   define OPENSSL_API_COMPAT 0x10101000L /* FIXME: Use OpenSSL 1.1+ API.  */
+#  endif
+/* If <openssl/macros.h> would give a compile-time error, don't use OpenSSL.  */
+#  include <openssl/opensslv.h>
+#  if OPENSSL_VERSION_MAJOR >= 3
+#   include <openssl/configuration.h>
+#   if (OPENSSL_CONFIGURED_API \
+        < (OPENSSL_API_COMPAT < 0x900000L ? OPENSSL_API_COMPAT : \
+           ((OPENSSL_API_COMPAT >> 28) & 0xF) * 10000 \
+           + ((OPENSSL_API_COMPAT >> 20) & 0xFF) * 100 \
+           + ((OPENSSL_API_COMPAT >> 12) & 0xFF)))
+#    undef HAVE_OPENSSL_MD5
+#   endif
+#  endif
+#  if HAVE_OPENSSL_MD5
+#   include <openssl/md5.h>
+#  endif
 # endif
 
 #define MD5_DIGEST_SIZE 16
@@ -40,8 +62,12 @@
 #endif
 
 #ifndef __THROW
-# if defined __cplusplus && __GNUC_PREREQ (2,8)
-#  define __THROW       throw ()
+# if defined __cplusplus && (__GNUC_PREREQ (2,8) || __clang_major__ >= 4)
+#  if __cplusplus >= 201103L
+#   define __THROW      noexcept (true)
+#  else
+#   define __THROW      throw ()
+#  endif
 # else
 #  define __THROW
 # endif
@@ -105,13 +131,15 @@ extern void __md5_process_bytes (const void *buffer, size_t len,
    in first 16 bytes following RESBUF.  The result is always in little
    endian byte order, so that a byte-wise output yields to the wanted
    ASCII representation of the message digest.  */
-extern void *__md5_finish_ctx (struct md5_ctx *ctx, void *resbuf) __THROW;
+extern void *__md5_finish_ctx (struct md5_ctx *ctx, void *restrict resbuf)
+     __THROW;
 
 
 /* Put result from CTX in first 16 bytes following RESBUF.  The result is
    always in little endian byte order, so that a byte-wise output yields
    to the wanted ASCII representation of the message digest.  */
-extern void *__md5_read_ctx (const struct md5_ctx *ctx, void *resbuf) __THROW;
+extern void *__md5_read_ctx (const struct md5_ctx *ctx, void *restrict resbuf)
+     __THROW;
 
 
 /* Compute MD5 message digest for LEN bytes beginning at BUFFER.  The
@@ -119,9 +147,10 @@ extern void *__md5_read_ctx (const struct md5_ctx *ctx, void *resbuf) __THROW;
    output yields to the wanted ASCII representation of the message
    digest.  */
 extern void *__md5_buffer (const char *buffer, size_t len,
-                           void *resblock) __THROW;
+                           void *restrict resblock) __THROW;
 
 # endif
+
 /* Compute MD5 message digest for bytes read from STREAM.
    STREAM is an open file stream.  Regular files are handled more efficiently.
    The contents of STREAM from its current position to its end will be read.

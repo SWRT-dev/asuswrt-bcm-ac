@@ -1,5 +1,5 @@
-# servent.m4 serial 3
-dnl Copyright (C) 2008, 2010-2018 Free Software Foundation, Inc.
+# servent.m4 serial 5
+dnl Copyright (C) 2008, 2010-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,7 +15,7 @@ AC_DEFUN([gl_SERVENT],
   dnl - On BeOS, they are in libnet.
   dnl - On native Windows, they are in ws2_32.dll.
   dnl - Otherwise they are in libc.
-  AC_REQUIRE([gl_HEADER_SYS_SOCKET])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
+  AC_REQUIRE([gl_SYS_SOCKET_H])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
   SERVENT_LIB=
   gl_saved_libs="$LIBS"
   AC_SEARCH_LIBS([getservbyname], [socket network net],
@@ -28,7 +28,7 @@ AC_DEFUN([gl_SERVENT],
       AC_CACHE_CHECK([for getservbyname in winsock2.h and -lws2_32],
         [gl_cv_w32_getservbyname],
         [gl_cv_w32_getservbyname=no
-         gl_save_LIBS="$LIBS"
+         gl_saved_LIBS="$LIBS"
          LIBS="$LIBS -lws2_32"
          AC_LINK_IFELSE(
            [AC_LANG_PROGRAM(
@@ -40,7 +40,7 @@ AC_DEFUN([gl_SERVENT],
               ]],
               [[getservbyname(NULL,NULL);]])],
            [gl_cv_w32_getservbyname=yes])
-         LIBS="$gl_save_LIBS"
+         LIBS="$gl_saved_LIBS"
         ])
       if test "$gl_cv_w32_getservbyname" = "yes"; then
         SERVENT_LIB="-lws2_32"

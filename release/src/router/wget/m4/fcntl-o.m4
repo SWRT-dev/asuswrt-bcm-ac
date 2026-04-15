@@ -1,5 +1,5 @@
-# fcntl-o.m4 serial 6
-dnl Copyright (C) 2006, 2009-2018 Free Software Foundation, Inc.
+# fcntl-o.m4 serial 8
+dnl Copyright (C) 2006, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -32,6 +32,7 @@ AC_DEFUN([gl_FCNTL_O_FLAGS],
            # defined sleep(n) _sleep ((n) * 1000)
            #endif
            #include <fcntl.h>
+           ]GL_MDA_DEFINES[
            #ifndef O_NOATIME
             #define O_NOATIME 0
            #endif
@@ -116,9 +117,9 @@ AC_DEFUN([gl_FCNTL_O_FLAGS],
          *) gl_cv_header_working_fcntl_h='no';;
         esac],
        [case "$host_os" in
-                  # Guess 'no' on native Windows.
-          mingw*) gl_cv_header_working_fcntl_h='no' ;;
-          *)      gl_cv_header_working_fcntl_h=cross-compiling ;;
+                             # Guess 'no' on native Windows.
+          mingw* | windows*) gl_cv_header_working_fcntl_h='no' ;;
+          *)                 gl_cv_header_working_fcntl_h=cross-compiling ;;
         esac
        ])
     ])

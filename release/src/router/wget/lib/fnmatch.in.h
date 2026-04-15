@@ -1,21 +1,21 @@
 /* Substitute for and wrapper around <fnmatch.h>.
-   Copyright (C) 1991-1993, 1996-1999, 2001-2003, 2005, 2007, 2009-2018 Free
+   Copyright (C) 1991-1993, 1996-1999, 2001-2003, 2005, 2007, 2009-2024 Free
    Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _@GUARD_PREFIX@_FNMATCH_H
 
@@ -31,6 +31,11 @@
 
 #ifndef _@GUARD_PREFIX@_FNMATCH_H
 #define _@GUARD_PREFIX@_FNMATCH_H
+
+/* This file uses GNULIB_POSIXCHECK, HAVE_RAW_DECL_*.  */
+#if !_GL_CONFIG_H_INCLUDED
+ #error "Please include config.h first."
+#endif
 
 /* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
 
@@ -79,6 +84,7 @@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define fnmatch rpl_fnmatch
 #  endif
+#  define GNULIB_defined_fnmatch_function 1
 _GL_FUNCDECL_RPL (fnmatch, int,
                   (const char *pattern, const char *name, int flags)
                   _GL_ARG_NONNULL ((1, 2)));
@@ -86,6 +92,7 @@ _GL_CXXALIAS_RPL (fnmatch, int,
                   (const char *pattern, const char *name, int flags));
 # else
 #  if !@HAVE_FNMATCH@
+#   define GNULIB_defined_fnmatch_function 1
 _GL_FUNCDECL_SYS (fnmatch, int,
                   (const char *pattern, const char *name, int flags)
                   _GL_ARG_NONNULL ((1, 2)));
@@ -93,7 +100,7 @@ _GL_FUNCDECL_SYS (fnmatch, int,
 _GL_CXXALIAS_SYS (fnmatch, int,
                   (const char *pattern, const char *name, int flags));
 # endif
-# if !GNULIB_FNMATCH_GNU
+# if !GNULIB_FNMATCH_GNU && __GLIBC__ >= 2
 _GL_CXXALIASWARN (fnmatch);
 # endif
 #elif defined GNULIB_POSIXCHECK

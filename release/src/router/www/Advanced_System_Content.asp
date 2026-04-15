@@ -652,7 +652,13 @@ function validForm(){
 			$('input[name="usb_idle_timeout"]').prop("disabled", true);
 		}
 	}
-	
+
+	if(document.form.time_zone_select.value == "select"){
+		alert(`<#JS_fieldblank#>`);
+		document.form.time_zone_select.focus();
+		return false;
+	}
+
 	if((document.form.time_zone_select.value.search("DST") >= 0 || document.form.time_zone_select.value.search("TDT") >= 0)			// DST area
 			&& document.form.dst_start_m.value == document.form.dst_end_m.value
 			&& document.form.dst_start_w.value == document.form.dst_end_w.value
@@ -829,6 +835,7 @@ function corrected_timezone(){
 }
 
 var timezones = [
+	["select",      "<#Select_menu_default#>"],
 	["UTC12",	"(GMT-12:00) <#TZ01#>"],
 	["UTC11",	"(GMT-11:00) <#TZ02#>"],
 	["UTC10",	"(GMT-10:00) <#TZ03#>"],
@@ -852,9 +859,9 @@ var timezones = [
 	["NST3.30DST",	"(GMT-03:30) <#TZ20#>"],
 	["EBST3",	"(GMT-03:00) <#TZ21#>"],	//EBST3DST_1
 	["UTC3",	"(GMT-03:00) <#TZ22#>"],
+	["UTC3DST",     "(GMT-03:00) <#TZ87#>"],        //UTC2DST
 	["UTC2_1",	"(GMT-02:00) <#TZ23#>"],	//EBST3DST_2
 	["UTC2",	"(GMT-02:00) <#TZ24#>"],
-	["UTC2DST",	"(GMT-02:00) <#TZ87#>"],
 	["EUT1DST",	"(GMT-01:00) <#TZ25#>"],
 	["UTC1",	"(GMT-01:00) <#TZ26#>"],
 	["GMT0",	"(GMT) <#TZ27#>"],
@@ -913,7 +920,7 @@ var timezones = [
 	["UTC-8_1",     "(GMT+08:00) <#TZ70#>"],
 	["UTC-9_1",	"(GMT+09:00) <#TZ70_1#>"],
 	["UTC-9_3",	"(GMT+09:00) <#TZ72#>"],
-	["JST",		"(GMT+09:00) <#TZ71#>"],
+	["JST-9",	"(GMT+09:00) <#TZ71#>"],
 	["CST-9.30",	"(GMT+09:30) <#TZ73#>"],
 	["UTC-9.30DST",	"(GMT+09:30) <#TZ74#>"],
 	["UTC-10DST_1",	"(GMT+10:00) <#TZ75#>"],
@@ -1044,13 +1051,22 @@ function hide_https_lanport(_value){
 		$("#https_download_cert").css("display", "");
 		if(orig_http_enable == "0"){
 			$("#download_cert_btn").css("display", "none");
+			$("#clear_server_cert_btn").css("display", "none");
 			$("#clear_cert_btn").css("display", "none");
 			$("#download_cert_desc").css("display", "");
 		}
 		else{
-			$("#download_cert_btn").css("display", "");
-			$("#clear_cert_btn").css("display", "");
-			$("#download_cert_desc").css("display", "none");
+			if (le_enable == "0") {
+				$("#download_cert_btn").css("display", "");
+				$("#clear_server_cert_btn").css("display", "");
+				$("#clear_cert_btn").css("display", "");
+				$("#download_cert_desc").css("display", "");
+			} else {
+				$("#download_cert_btn").css("display", "none");
+				$("#clear_server_cert_btn").css("display", "none");
+				$("#clear_cert_btn").css("display", "none");
+				$("#download_cert_desc").css("display", "none");
+			}
 		}
 	}
 	else{
@@ -2472,8 +2488,11 @@ function check_password_length(obj){
 				<tr id="https_download_cert" style="display: none;">
 					<th><#Local_access_certificate_download#></th>
 					<td>
-						<input id="download_cert_btn" class="button_gen" onclick="save_cert_key();" type="button" value="<#btn_Export#>" />
-						<input id="clear_cert_btn" class="button_gen" style="margin-left:10px" onclick="clear_cert_key();" type="button" value="<#CTL_renew#>" />
+					    <div style="display: flex;">
+                            <input id="download_cert_btn" class="button_gen" onclick="save_cert_key();" type="button" value="<#btn_Export#>" />
+                            <input id="clear_server_cert_btn" class="button_gen" style="margin-left:10px" onclick="clear_server_cert_key();" type="button" value="<#CTL_renew#> <#vpn_openvpn_KC_SA#>" /><!-- untranslated -->
+                            <input id="clear_cert_btn" class="button_gen" style="margin-left:10px" onclick="clear_cert_key();" type="button" value="<#CTL_renew#> Root Certificate" /><!-- untranslated -->
+						</div>
 						<span id="download_cert_desc"><#Local_access_certificate_desc#></span><a id="creat_cert_link" href="" style="font-family:Lucida Console;text-decoration:underline;color:#FFCC00; margin-left: 5px;" target="_blank">FAQ</a>
 					</td>
 				</tr>

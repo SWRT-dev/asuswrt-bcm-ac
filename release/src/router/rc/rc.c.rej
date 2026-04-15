@@ -1,0 +1,19 @@
+diff a/release/src/router/rc/rc.c b/release/src/router/rc/rc.c	(rejected hunks)
+@@ -2076,12 +2121,17 @@ static const applets_t applets[] = {
+ #if defined(RTCONFIG_FRS_LIVE_UPDATE)
+ 	{ "firmware_check_update",	firmware_check_update_main	},
+ #endif
++#ifdef RTCONFIG_FRS_FEEDBACK
++	{ "sendfeedback",	start_sendfeedback },
++#endif
+ #ifdef RTAC68U
+ 	{ "firmware_enc_crc",		firmware_enc_crc_main		},
+ 	{ "fw_check",			fw_check_main			},
+ #endif
+ #if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
+ 	{ "ledg",			ledg_main			},
++#endif
++#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
+ 	{ "ledbtn",			ledbtn_main			},
+ #endif
+ #if defined(DSL_AX82U)

@@ -1,5 +1,5 @@
-# locale-zh.m4 serial 14
-dnl Copyright (C) 2003, 2005-2018 Free Software Foundation, Inc.
+# locale-zh.m4 serial 18
+dnl Copyright (C) 2003, 2005-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -7,13 +7,12 @@ dnl with or without modifications, as long as this notice is preserved.
 dnl From Bruno Haible.
 
 dnl Determine the name of a chinese locale with GB18030 encoding.
-AC_DEFUN([gt_LOCALE_ZH_CN],
+AC_DEFUN_ONCE([gt_LOCALE_ZH_CN],
 [
   AC_REQUIRE([AC_CANONICAL_HOST])
   AC_REQUIRE([AM_LANGINFO_CODESET])
   AC_CACHE_CHECK([for a transitional chinese locale], [gt_cv_locale_zh_CN], [
-    AC_LANG_CONFTEST([AC_LANG_SOURCE([
-changequote(,)dnl
+    AC_LANG_CONFTEST([AC_LANG_SOURCE([[
 #include <locale.h>
 #include <stdlib.h>
 #include <time.h>
@@ -83,8 +82,7 @@ int main ()
   return 0;
 #endif
 }
-changequote([,])dnl
-      ])])
+      ]])])
     if AC_TRY_EVAL([ac_link]) && test -s conftest$ac_exeext; then
       case "$host_os" in
         # Handle native Windows specially, because there setlocale() interprets
@@ -93,7 +91,7 @@ changequote([,])dnl
         # "ge"(!) or "deu"(!) as "German" or "German_Germany.1252",
         # "ja" as "Japanese" or "Japanese_Japan.932",
         # and similar.
-        mingw*)
+        mingw* | windows*)
           # Test for the hypothetical native Windows locale name.
           if (LC_ALL=Chinese_China.54936 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
             gt_cv_locale_zh_CN=Chinese_China.54936
@@ -135,5 +133,11 @@ changequote([,])dnl
     rm -fr conftest*
   ])
   LOCALE_ZH_CN=$gt_cv_locale_zh_CN
+  case $LOCALE_ZH_CN in #(
+    '' | *[[[:space:]\"\$\'*@<:@]]*)
+      dnl This locale name might cause trouble with sh or make.
+      AC_MSG_WARN([invalid locale "$LOCALE_ZH_CN"; assuming "none"])
+      LOCALE_ZH_CN=none;;
+  esac
   AC_SUBST([LOCALE_ZH_CN])
 ])

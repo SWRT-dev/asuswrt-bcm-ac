@@ -1,0 +1,9 @@
+diff a/release/src/router/www/state.js b/release/src/router/www/state.js	(rejected hunks)
+@@ -577,6 +579,7 @@ var ipsec_cli_support = isSupport("ipsec_cli");
+ //var traffic_analyzer_support = isSupport("traffic_analyzer");
+ var traffic_analyzer_support = bwdpi_support;
+ var traffic_limiter_support = isSupport("traffic_limiter");
++var dns_dpi_support = isSupport("dns_dpi");
+ var force_upgrade_support = isSupport("fupgrade");
+ var odm_support = isSupport("odm");
+ var adBlock_support = isSupport("adBlock");

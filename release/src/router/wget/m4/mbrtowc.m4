@@ -1,5 +1,5 @@
-# mbrtowc.m4 serial 31  -*- coding: utf-8 -*-
-dnl Copyright (C) 2001-2002, 2004-2005, 2008-2018 Free Software Foundation,
+# mbrtowc.m4 serial 44  -*- coding: utf-8 -*-
+dnl Copyright (C) 2001-2002, 2004-2005, 2008-2024 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -8,6 +8,8 @@ dnl with or without modifications, as long as this notice is preserved.
 AC_DEFUN([gl_FUNC_MBRTOWC],
 [
   AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+  AC_REQUIRE([gl_PTHREADLIB])
+  AC_CHECK_HEADERS_ONCE([threads.h])
 
   AC_REQUIRE([AC_TYPE_MBSTATE_T])
   gl_MBSTATE_T_BROKEN
@@ -16,15 +18,8 @@ AC_DEFUN([gl_FUNC_MBRTOWC],
   if test $ac_cv_func_mbrtowc = no; then
     HAVE_MBRTOWC=0
     AC_CHECK_DECLS([mbrtowc],,, [[
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
-#include <wchar.h>
-]])
+      #include <wchar.h>
+    ]])
     if test $ac_cv_have_decl_mbrtowc = yes; then
       dnl On Minix 3.1.8, the system's <wchar.h> declares mbrtowc() although
       dnl it does not have the function. Avoid a collision with gnulib's
@@ -39,6 +34,7 @@ AC_DEFUN([gl_FUNC_MBRTOWC],
       gl_MBRTOWC_NULL_ARG2
       gl_MBRTOWC_RETVAL
       gl_MBRTOWC_NUL_RETVAL
+      gl_MBRTOWC_STORES_INCOMPLETE
       gl_MBRTOWC_EMPTY_INPUT
       gl_MBRTOWC_C_LOCALE
       case "$gl_cv_func_mbrtowc_null_arg1" in
@@ -69,6 +65,13 @@ AC_DEFUN([gl_FUNC_MBRTOWC],
            REPLACE_MBRTOWC=1
            ;;
       esac
+      case "$gl_cv_func_mbrtowc_stores_incomplete" in
+        *no) ;;
+        *) AC_DEFINE([MBRTOWC_STORES_INCOMPLETE_BUG], [1],
+             [Define if the mbrtowc function stores a wide character when reporting incomplete input.])
+           REPLACE_MBRTOWC=1
+           ;;
+      esac
       case "$gl_cv_func_mbrtowc_empty_input" in
         *yes) ;;
         *) AC_DEFINE([MBRTOWC_EMPTY_INPUT_BUG], [1],
@@ -77,15 +80,37 @@ AC_DEFUN([gl_FUNC_MBRTOWC],
            REPLACE_MBRTOWC=1
            ;;
       esac
-      case $gl_cv_C_locale_sans_EILSEQ in
+      case "$gl_cv_func_mbrtowc_C_locale_sans_EILSEQ" in
         *yes) ;;
-        *) AC_DEFINE([C_LOCALE_MAYBE_EILSEQ], [1],
-             [Define to 1 if the C locale may have encoding errors.])
+        *) AC_DEFINE([MBRTOWC_IN_C_LOCALE_MAYBE_EILSEQ], [1],
+             [Define if the mbrtowc function may signal encoding errors in the C locale.])
            REPLACE_MBRTOWC=1
            ;;
       esac
     fi
   fi
+  if test $REPLACE_MBSTATE_T = 1; then
+    case "$host_os" in
+      mingw* | windows*)
+        MBRTOWC_LIB=
+        ;;
+      *)
+        gl_WEAK_SYMBOLS
+        case "$gl_cv_have_weak" in
+          *yes) MBRTOWC_LIB= ;;
+          *)    MBRTOWC_LIB="$LIBPTHREAD" ;;
+        esac
+        ;;
+    esac
+  else
+    MBRTOWC_LIB=
+  fi
+  dnl MBRTOWC_LIB is expected to be '-pthread' or '-lpthread' on AIX
+  dnl with gcc or xlc, and empty otherwise.
+  AC_SUBST([MBRTOWC_LIB])
+  dnl For backward compatibility.
+  LIB_MBRTOWC="$MBRTOWC_LIB"
+  AC_SUBST([LIB_MBRTOWC])
 ])
 
 dnl Test whether mbsinit() and mbrtowc() need to be overridden in a way that
@@ -94,14 +119,22 @@ dnl Result is REPLACE_MBSTATE_T.
 dnl When this is set to 1, we replace both mbsinit() and mbrtowc(), in order to
 dnl avoid inconsistencies.
 
-AC_DEFUN([gl_MBSTATE_T_BROKEN],
+AC_DEFUN_ONCE([gl_MBSTATE_T_BROKEN],
 [
   AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+  AC_REQUIRE([AC_CANONICAL_HOST])
 
   AC_REQUIRE([AC_TYPE_MBSTATE_T])
   AC_CHECK_FUNCS_ONCE([mbsinit])
   AC_CHECK_FUNCS_ONCE([mbrtowc])
-  if test $ac_cv_func_mbsinit = yes && test $ac_cv_func_mbrtowc = yes; then
+  dnl On native Windows, we know exactly how mbsinit() behaves and don't need
+  dnl to override it, even if - like on MSVC - mbsinit() is only defined as
+  dnl an inline function, not as a global function.
+  if case "$host_os" in
+       mingw* | windows*) true ;;
+       *) test $ac_cv_func_mbsinit = yes ;;
+     esac \
+    && test $ac_cv_func_mbrtowc = yes; then
     gl_MBRTOWC_INCOMPLETE_STATE
     gl_MBRTOWC_SANITYCHECK
     REPLACE_MBSTATE_T=0
@@ -126,6 +159,7 @@ AC_DEFUN([gl_MBRTOWC_INCOMPLETE_STATE],
 [
   AC_REQUIRE([AC_PROG_CC])
   AC_REQUIRE([gt_LOCALE_JA])
+  AC_REQUIRE([gt_LOCALE_FR_UTF8])
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_CACHE_CHECK([whether mbrtowc handles incomplete characters],
     [gl_cv_func_mbrtowc_incomplete_state],
@@ -145,13 +179,6 @@ changequote([,])dnl
           [AC_LANG_SOURCE([[
 #include <locale.h>
 #include <string.h>
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
 #include <wchar.h>
 int main ()
 {
@@ -171,6 +198,32 @@ int main ()
           [gl_cv_func_mbrtowc_incomplete_state=yes],
           [gl_cv_func_mbrtowc_incomplete_state=no],
           [:])
+      else
+        if test $LOCALE_FR_UTF8 != none; then
+          AC_RUN_IFELSE(
+            [AC_LANG_SOURCE([[
+#include <locale.h>
+#include <string.h>
+#include <wchar.h>
+int main ()
+{
+  if (setlocale (LC_ALL, "$LOCALE_FR_UTF8") != NULL)
+    {
+      const char input[] = "B\303\274\303\237er"; /* "Büßer" */
+      mbstate_t state;
+      wchar_t wc;
+
+      memset (&state, '\0', sizeof (mbstate_t));
+      if (mbrtowc (&wc, input + 1, 1, &state) == (size_t)(-2))
+        if (mbsinit (&state))
+          return 2;
+    }
+  return 0;
+}]])],
+          [gl_cv_func_mbrtowc_incomplete_state=yes],
+          [gl_cv_func_mbrtowc_incomplete_state=no],
+          [:])
+        fi
       fi
     ])
 ])
@@ -202,13 +255,6 @@ changequote([,])dnl
 #include <locale.h>
 #include <stdlib.h>
 #include <string.h>
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
 #include <wchar.h>
 int main ()
 {
@@ -262,13 +308,6 @@ changequote([,])dnl
 #include <locale.h>
 #include <stdlib.h>
 #include <string.h>
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
 #include <wchar.h>
 int main ()
 {
@@ -331,13 +370,6 @@ changequote([,])dnl
           [AC_LANG_SOURCE([[
 #include <locale.h>
 #include <string.h>
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
 #include <wchar.h>
 int main ()
 {
@@ -381,32 +413,28 @@ AC_DEFUN([gl_MBRTOWC_RETVAL],
       dnl is present.
 changequote(,)dnl
       case "$host_os" in
-                                   # Guess no on HP-UX, Solaris, native Windows.
-        hpux* | solaris* | mingw*) gl_cv_func_mbrtowc_retval="guessing no" ;;
-                                   # Guess yes otherwise.
-        *)                         gl_cv_func_mbrtowc_retval="guessing yes" ;;
+          # Guess no on HP-UX, Solaris, native Windows.
+        hpux* | solaris* | mingw* | windows*)
+          gl_cv_func_mbrtowc_retval="guessing no" ;;
+          # Guess yes otherwise.
+        *)
+          gl_cv_func_mbrtowc_retval="guessing yes" ;;
       esac
 changequote([,])dnl
       if test $LOCALE_FR_UTF8 != none || test $LOCALE_JA != none \
-         || { case "$host_os" in mingw*) true;; *) false;; esac; }; then
+         || { case "$host_os" in mingw* | windows*) true;; *) false;; esac; }; then
         AC_RUN_IFELSE(
           [AC_LANG_SOURCE([[
 #include <locale.h>
 #include <string.h>
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
 #include <wchar.h>
 int main ()
 {
   int result = 0;
   int found_some_locale = 0;
   /* This fails on Solaris.  */
-  if (setlocale (LC_ALL, "$LOCALE_FR_UTF8") != NULL)
+  if (strcmp ("$LOCALE_FR_UTF8", "none") != 0
+      && setlocale (LC_ALL, "$LOCALE_FR_UTF8") != NULL)
     {
       char input[] = "B\303\274\303\237er"; /* "Büßer" */
       mbstate_t state;
@@ -422,7 +450,8 @@ int main ()
       found_some_locale = 1;
     }
   /* This fails on HP-UX 11.11.  */
-  if (setlocale (LC_ALL, "$LOCALE_JA") != NULL)
+  if (strcmp ("$LOCALE_JA", "none") != 0
+      && setlocale (LC_ALL, "$LOCALE_JA") != NULL)
     {
       char input[] = "B\217\253\344\217\251\316er"; /* "Büßer" */
       mbstate_t state;
@@ -521,13 +550,6 @@ changequote([,])dnl
           [AC_LANG_SOURCE([[
 #include <locale.h>
 #include <string.h>
-/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be included before
-   <wchar.h>.
-   BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h> must be
-   included before <wchar.h>.  */
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
 #include <wchar.h>
 int main ()
 {
@@ -550,6 +572,112 @@ int main ()
     ])
 ])
 
+dnl Test whether mbrtowc stores a wide character when reporting incomplete
+dnl input.
+
+AC_DEFUN([gl_MBRTOWC_STORES_INCOMPLETE],
+[
+  AC_REQUIRE([AC_PROG_CC])
+  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
+  AC_CACHE_CHECK([whether mbrtowc stores incomplete characters],
+    [gl_cv_func_mbrtowc_stores_incomplete],
+    [
+     dnl Initial guess, used when cross-compiling or when no suitable locale
+     dnl is present.
+changequote(,)dnl
+     case "$host_os" in
+                          # Guess yes on native Windows.
+       mingw* | windows*) gl_cv_func_mbrtowc_stores_incomplete="guessing yes" ;;
+       *)                 gl_cv_func_mbrtowc_stores_incomplete="guessing no" ;;
+     esac
+changequote([,])dnl
+     case "$host_os" in
+       mingw* | windows*)
+         AC_RUN_IFELSE(
+           [AC_LANG_SOURCE([[
+#include <locale.h>
+#include <string.h>
+#include <wchar.h>
+int main ()
+{
+  int result = 0;
+  if (setlocale (LC_ALL, "French_France.65001") != NULL)
+    {
+      wchar_t wc = (wchar_t) 0xBADFACE;
+      mbstate_t state;
+
+      memset (&state, '\0', sizeof (mbstate_t));
+      if (mbrtowc (&wc, "\303", 1, &state) == (size_t)(-2)
+          && wc != (wchar_t) 0xBADFACE)
+        result |= 1;
+    }
+  if (setlocale (LC_ALL, "Japanese_Japan.932") != NULL)
+    {
+      wchar_t wc = (wchar_t) 0xBADFACE;
+      mbstate_t state;
+
+      memset (&state, '\0', sizeof (mbstate_t));
+      if (mbrtowc (&wc, "\226", 1, &state) == (size_t)(-2)
+          && wc != (wchar_t) 0xBADFACE)
+        result |= 2;
+    }
+  if (setlocale (LC_ALL, "Chinese_Taiwan.950") != NULL)
+    {
+      wchar_t wc = (wchar_t) 0xBADFACE;
+      mbstate_t state;
+
+      memset (&state, '\0', sizeof (mbstate_t));
+      if (mbrtowc (&wc, "\245", 1, &state) == (size_t)(-2)
+          && wc != (wchar_t) 0xBADFACE)
+        result |= 4;
+    }
+  if (setlocale (LC_ALL, "Chinese_China.936") != NULL)
+    {
+      wchar_t wc = (wchar_t) 0xBADFACE;
+      mbstate_t state;
+
+      memset (&state, '\0', sizeof (mbstate_t));
+      if (mbrtowc (&wc, "\261", 1, &state) == (size_t)(-2)
+          && wc != (wchar_t) 0xBADFACE)
+        result |= 8;
+    }
+  return result;
+}]])],
+           [gl_cv_func_mbrtowc_stores_incomplete=no],
+           [gl_cv_func_mbrtowc_stores_incomplete=yes],
+           [:])
+         ;;
+       *)
+         AC_REQUIRE([gt_LOCALE_FR_UTF8])
+         if test $LOCALE_FR_UTF8 != none; then
+           AC_RUN_IFELSE(
+             [AC_LANG_SOURCE([[
+#include <locale.h>
+#include <string.h>
+#include <wchar.h>
+int main ()
+{
+  if (setlocale (LC_ALL, "$LOCALE_FR_UTF8") != NULL)
+    {
+      wchar_t wc = (wchar_t) 0xBADFACE;
+      mbstate_t state;
+
+      memset (&state, '\0', sizeof (mbstate_t));
+      if (mbrtowc (&wc, "\303", 1, &state) == (size_t)(-2)
+          && wc != (wchar_t) 0xBADFACE)
+        return 1;
+    }
+  return 0;
+}]])],
+             [gl_cv_func_mbrtowc_stores_incomplete=no],
+             [gl_cv_func_mbrtowc_stores_incomplete=yes],
+             [:])
+         fi
+         ;;
+     esac
+    ])
+])
+
 dnl Test whether mbrtowc returns the correct value on empty input.
 
 AC_DEFUN([gl_MBRTOWC_EMPTY_INPUT],
@@ -558,31 +686,28 @@ AC_DEFUN([gl_MBRTOWC_EMPTY_INPUT],
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_CACHE_CHECK([whether mbrtowc works on empty input],
     [gl_cv_func_mbrtowc_empty_input],
-    [
-      dnl Initial guess, used when cross-compiling or when no suitable locale
-      dnl is present.
-changequote(,)dnl
-      case "$host_os" in
-                              # Guess no on AIX and glibc systems.
-        aix* | *-gnu* | gnu*) gl_cv_func_mbrtowc_empty_input="guessing no" ;;
-                              # Guess yes on native Windows.
-        mingw*)               gl_cv_func_mbrtowc_empty_input="guessing yes" ;;
-        *)                    gl_cv_func_mbrtowc_empty_input="guessing yes" ;;
-      esac
-changequote([,])dnl
-      AC_RUN_IFELSE(
-        [AC_LANG_SOURCE([[
-           #include <wchar.h>
-           static wchar_t wc;
-           static mbstate_t mbs;
-           int
-           main (void)
-           {
-             return mbrtowc (&wc, "", 0, &mbs) != (size_t) -2;
-           }]])],
-        [gl_cv_func_mbrtowc_empty_input=yes],
-        [gl_cv_func_mbrtowc_empty_input=no],
-        [:])
+    [AC_RUN_IFELSE(
+       [AC_LANG_SOURCE([[
+          #include <wchar.h>
+          static wchar_t wc;
+          static mbstate_t mbs;
+          int
+          main (void)
+          {
+            return mbrtowc (&wc, "", 0, &mbs) != (size_t) -2;
+          }]])],
+       [gl_cv_func_mbrtowc_empty_input=yes],
+       [gl_cv_func_mbrtowc_empty_input=no],
+       [case "$host_os" in
+                                # Guess no on AIX and glibc systems.
+          aix* | *-gnu* | gnu*) gl_cv_func_mbrtowc_empty_input="guessing no" ;;
+                                # Guess no on Android.
+          linux*-android*)      gl_cv_func_mbrtowc_empty_input="guessing no" ;;
+                                # Guess no on native Windows.
+          mingw* | windows*)    gl_cv_func_mbrtowc_empty_input="guessing no" ;;
+          *)                    gl_cv_func_mbrtowc_empty_input="guessing yes" ;;
+        esac
+       ])
     ])
 ])
 
@@ -590,18 +715,17 @@ dnl Test whether mbrtowc reports encoding errors in the C locale.
 dnl Although POSIX was never intended to allow this, the GNU C Library
 dnl and other implementations do it.  See:
 dnl https://sourceware.org/bugzilla/show_bug.cgi?id=19932
+dnl POSIX has now clarified it:
+dnl <https://pubs.opengroup.org/onlinepubs/9699919799/functions/mbrtowc.html>
+dnl says: "In the POSIX locale an [EILSEQ] error cannot occur since all byte
+dnl values are valid characters."
 
 AC_DEFUN([gl_MBRTOWC_C_LOCALE],
 [
   AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_CACHE_CHECK([whether the C locale is free of encoding errors],
-    [gl_cv_C_locale_sans_EILSEQ],
-    [
-     dnl Initial guess, used when cross-compiling or when no suitable locale
-     dnl is present.
-     gl_cv_C_locale_sans_EILSEQ="guessing no"
-
-     AC_RUN_IFELSE(
+    [gl_cv_func_mbrtowc_C_locale_sans_EILSEQ],
+    [AC_RUN_IFELSE(
        [AC_LANG_PROGRAM(
           [[#include <limits.h>
             #include <locale.h>
@@ -622,20 +746,27 @@ AC_DEFUN([gl_MBRTOWC_C_LOCALE],
               }
             return 0;
           ]])],
-      [gl_cv_C_locale_sans_EILSEQ=yes],
-      [gl_cv_C_locale_sans_EILSEQ=no],
-      [case "$host_os" in
-                 # Guess yes on native Windows.
-         mingw*) gl_cv_C_locale_sans_EILSEQ="guessing yes" ;;
-       esac
-      ])
+       [gl_cv_func_mbrtowc_C_locale_sans_EILSEQ=yes],
+       [gl_cv_func_mbrtowc_C_locale_sans_EILSEQ=no],
+       [case "$host_os" in
+                             # Guess yes on native Windows.
+          mingw* | windows*) gl_cv_func_mbrtowc_C_locale_sans_EILSEQ="guessing yes" ;;
+          *)                 gl_cv_func_mbrtowc_C_locale_sans_EILSEQ="$gl_cross_guess_normal" ;;
+        esac
+       ])
     ])
 ])
 
-# Prerequisites of lib/mbrtowc.c.
+# Prerequisites of lib/mbrtowc.c and lib/lc-charset-dispatch.c.
 AC_DEFUN([gl_PREREQ_MBRTOWC], [
   AC_REQUIRE([AC_C_INLINE])
   :
+])
+
+# Prerequisites of lib/mbtowc-lock.c.
+AC_DEFUN([gl_PREREQ_MBTOWC_LOCK],
+[
+  gl_VISIBILITY
 ])
 
 
@@ -650,14 +781,7 @@ AC_DEFUN([AC_FUNC_MBRTOWC],
     [gl_cv_func_mbrtowc],
     [AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
-            [[/* Tru64 with Desktop Toolkit C has a bug: <stdio.h> must be
-                 included before <wchar.h>.
-                 BSD/OS 4.0.1 has a bug: <stddef.h>, <stdio.h> and <time.h>
-                 must be included before <wchar.h>.  */
-              #include <stddef.h>
-              #include <stdio.h>
-              #include <time.h>
-              #include <wchar.h>]],
+            [[#include <wchar.h>]],
             [[wchar_t wc;
               char const s[] = "";
               size_t n = 1;

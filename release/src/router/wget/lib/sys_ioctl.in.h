@@ -1,18 +1,18 @@
 /* Substitute for and wrapper around <sys/ioctl.h>.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _@GUARD_PREFIX@_SYS_IOCTL_H
 
@@ -28,6 +28,11 @@
 
 #ifndef _@GUARD_PREFIX@_SYS_IOCTL_H
 #define _@GUARD_PREFIX@_SYS_IOCTL_H
+
+/* This file uses GNULIB_POSIXCHECK, HAVE_RAW_DECL_*.  */
+#if !_GL_CONFIG_H_INCLUDED
+ #error "Please include config.h first."
+#endif
 
 /* AIX 5.1 and Solaris 10 declare ioctl() in <unistd.h> and in <stropts.h>,
    but not in <sys/ioctl.h>.
@@ -62,7 +67,9 @@ _GL_FUNCDECL_SYS (ioctl, int,
 _GL_CXXALIAS_SYS (ioctl, int,
                   (int fd, int request, ... /* {void *,char *} arg */));
 # endif
+# if __GLIBC__ >= 2
 _GL_CXXALIASWARN (ioctl);
+# endif
 #elif @SYS_IOCTL_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
 # undef ioctl
 # define ioctl ioctl_used_without_requesting_gnulib_module_ioctl

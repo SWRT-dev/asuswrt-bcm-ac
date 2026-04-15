@@ -1,19 +1,19 @@
 /* Getopt for GNU.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library and is also part of gnulib.
    Patches to this file should be submitted to both projects.
 
    The GNU C Library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public
+   modify it under the terms of the GNU Lesser General Public
    License as published by the Free Software Foundation; either
-   version 3 of the License, or (at your option) any later version.
+   version 2.1 of the License, or (at your option) any later version.
 
    The GNU C Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public
+   You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <https://www.gnu.org/licenses/>.  */
 
@@ -21,7 +21,7 @@
 # include <config.h>
 #endif
 
-#include "getopt.h"
+#include <getopt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -223,8 +223,9 @@ process_long_option (int argc, char **argv, const char *optstring,
     {
       /* Didn't find an exact match, so look for abbreviations.  */
       unsigned char *ambig_set = NULL;
-      int ambig_malloced = 0;
-      int ambig_fallback = 0;
+      /* Use simpler fallback diagnostic if ambig_set == &ambig_fallback.  */
+      unsigned char ambig_fallback;
+      void *ambig_malloced = NULL;
       int indfound = -1;
 
       for (p = longopts, option_index = 0; p->name; p++, option_index++)
@@ -242,39 +243,42 @@ process_long_option (int argc, char **argv, const char *optstring,
 		     || pfound->val != p->val)
 	      {
 		/* Second or later nonexact match found.  */
-		if (!ambig_fallback)
+		if (ambig_set != &ambig_fallback)
 		  {
 		    if (!print_errors)
 		      /* Don't waste effort tracking the ambig set if
 			 we're not going to print it anyway.  */
-		      ambig_fallback = 1;
+		      ambig_set = &ambig_fallback;
 		    else if (!ambig_set)
 		      {
 			if (__libc_use_alloca (n_options))
 			  ambig_set = alloca (n_options);
-			else if ((ambig_set = malloc (n_options)) == NULL)
-			  /* Fall back to simpler error message.  */
-			  ambig_fallback = 1;
 			else
-			  ambig_malloced = 1;
+			  {
+			    ambig_malloced = malloc (n_options);
+			    /* Fall back to simpler diagnostic if
+			       memory allocation fails.  */
+			    ambig_set = (ambig_malloced ? ambig_malloced
+					 : &ambig_fallback);
+			  }
 
-			if (ambig_set)
+			if (ambig_set != &ambig_fallback)
 			  {
 			    memset (ambig_set, 0, n_options);
 			    ambig_set[indfound] = 1;
 			  }
 		      }
-		    if (ambig_set)
+		    if (ambig_set && ambig_set != &ambig_fallback)
 		      ambig_set[option_index] = 1;
 		  }
 	      }
 	  }
 
-      if (ambig_set || ambig_fallback)
+      if (ambig_set)
 	{
 	  if (print_errors)
 	    {
-	      if (ambig_fallback)
+	      if (ambig_set == &ambig_fallback)
 		fprintf (stderr, _("%s: option '%s%s' is ambiguous\n"),
 			 argv[0], prefix, d->__nextchar);
 	      else
@@ -296,8 +300,7 @@ process_long_option (int argc, char **argv, const char *optstring,
 		  funlockfile (stderr);
 		}
 	    }
-	  if (ambig_malloced)
-	    free (ambig_set);
+	  free (ambig_malloced);
 	  d->__nextchar += strlen (d->__nextchar);
 	  d->optind++;
 	  d->optopt = 0;
@@ -378,8 +381,8 @@ process_long_option (int argc, char **argv, const char *optstring,
 /* Initialize internal data upon the first call to getopt.  */
 
 static const char *
-_getopt_initialize (int argc _GL_UNUSED,
-		    char **argv _GL_UNUSED, const char *optstring,
+_getopt_initialize (_GL_UNUSED int argc,
+		    _GL_UNUSED char **argv, const char *optstring,
 		    struct _getopt_data *d, int posixly_correct)
 {
   /* Start processing options with ARGV-element 1 (since ARGV-element 0

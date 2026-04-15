@@ -1,0 +1,55 @@
+diff a/release/src/router/rc/init.c b/release/src/router/rc/init.c	(rejected hunks)
+@@ -3802,6 +3830,9 @@ int init_nvram(void)
+ #if 0
+ 	conf_swmode_support(model);
+ #endif
++#ifdef RTCONFIG_OPENVPN
++	nvram_set("vpn_upload_state", "");
++#endif
+ #ifdef RTCONFIG_SSH
+ 	if(nvram_get_int("sshd_port")>0 && nvram_get_int("sshd_port_x")<=0)
+ 		nvram_set("sshd_port_x", nvram_safe_get("sshd_port"));
+@@ -3859,7 +3897,6 @@ int init_nvram(void)
+ 		nvram_set("lan_ipaddr", nvram_safe_get("lan_ipaddr_rt"));
+ 		nvram_set("lan_netmask", nvram_safe_get("lan_netmask_rt"));
+ 	}
+-	ovpn_defaults();
+ #endif
+ 
+ 	nvram_unset("wanduck_start_detect");
+@@ -17970,6 +18021,10 @@ int init_nvram(void)
+         add_rc_support("dnssec");
+ #endif
+ 
++#ifdef RTCONFIG_DNSSEC
++        add_rc_support("dnssec");
++#endif
++
+ #ifdef RTCONFIG_OPENPLUS_TFAT
+ #if defined(RTAC58U)
+ 	if(!strncmp(nvram_safe_get("odmpid"), "RT-ACRH", 7))
+@@ -18625,24 +18680,6 @@ int init_nvram2(void)
+ 	}
+ #endif
+ 
+-#ifdef RTCONFIG_OPENVPN
+-/* Initialize OpenVPN state flags */
+-
+-	for (i = 1; i <= OVPN_CLIENT_MAX; i++) {
+-		sprintf(varname, "vpn_client%d_state", i);
+-		nvram_set(varname, "0");
+-
+-		sprintf(varname, "vpn_client%d_errno", i);
+-		nvram_set(varname, "0");
+-	}
+-
+-	nvram_set("vpn_server1_state", "0");
+-	nvram_set("vpn_server2_state", "0");
+-	nvram_set("vpn_server1_errno", "0");
+-	nvram_set("vpn_server2_errno", "0");
+-	nvram_set("vpn_upload_state", "");
+-#endif
+-
+ /* Remove potentially outdated data */
+ 	nvram_unset("webs_state_info");
+ 	nvram_unset("webs_state_info_am");

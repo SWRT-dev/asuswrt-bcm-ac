@@ -19,7 +19,7 @@ dbclient \- lightweight SSH client
 
 .SH DESCRIPTION
 .B dbclient
-is a small SSH client 
+is the client part of Dropbear SSH
 .SH OPTIONS
 .TP
 .TP
@@ -44,27 +44,27 @@ from OpenSSH with dropbearconvert(1). The default path ~/.ssh/id_dropbear is use
 .TP
 .B \-L\fR [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Local port forwarding.
-Forward the port
+Forward 
 .I listenport
-on the local host through the SSH connection to port
+on the local host through the SSH connection to 
 .I port
-on the host
+on 
 .IR host .
 .TP
 .B \-R\fR [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Remote port forwarding.
-Forward the port
+Forward 
 .I listenport
-on the remote host through the SSH connection to port
+on the remote host through the SSH connection to 
 .I port
-on the host
+on 
 .IR host .
 .TP
 .B \-l \fIuser
 Username.
 Login as
 .I user
-on the remote host.
+on the remote host. An alternative is to specify user@host.
 .TP
 .B \-t
 Allocate a PTY. This is the default when no command is given, it gives a full
@@ -72,7 +72,7 @@ interactive remote session. The main effect is that keystrokes are sent remotely
 immediately as opposed to local line-based editing.
 .TP
 .B \-T
-Don't allocate a PTY. This is the default a command is given. See -t.
+Don't allocate a PTY. This is the default when a command is given. See -t.
 .TP
 .B \-N
 Don't request a remote shell or run any commands. Any command arguments are ignored.
@@ -94,7 +94,18 @@ is performed at all, this is usually undesirable.
 .B \-A
 Forward agent connections to the remote host. dbclient will use any
 OpenSSH-style agent program if available ($SSH_AUTH_SOCK will be set) for
-public key authentication.  Forwarding is only enabled if -A is specified.
+public key authentication.  Forwarding is only enabled if \fI-A\fR is specified.
+
+Beware that a forwarded agent connection will allow the remote server to have
+the same authentication credentials as you have used locally. A compromised
+remote server could use that to log in to other servers. 
+
+In many situations Dropbear's multi-hop mode is a better and more secure alternative
+to agent forwarding, avoiding having to trust the intermediate server.
+
+If the SSH agent program is set to prompt when a key is used, the 
+\fI-o DisableTrivialAuth\fR option can prevent UI confusion.
+
 .TP
 .B \-W \fIwindowsize
 Specify the per-channel receive window buffer size. Increasing this 
@@ -110,6 +121,9 @@ if 0 disables keepalives. If no response is received for 3 consecutive keepalive
 .TP
 .B \-I \fIidle_timeout
 Disconnect the session if no traffic is transmitted or received for \fIidle_timeout\fR seconds.
+.TP
+.B \-z
+By default Dropbear will send network traffic with the \fBAF21\fR setting for QoS, letting network devices give it higher priority. Some devices may have problems with that, \fI-z\fR can be used to disable it.
 .TP
 
 .\" TODO: how to avoid a line break between these two -J arguments?
@@ -149,10 +163,20 @@ The following options have currently been implemented:
 .RS
 .TP
 .B ExitOnForwardFailure
-Specifies whether dbclient should terminate the connection if it cannot set up all requested local and remote port forwardings. The argument must be “yes” or “no”.  The default is “no”.
+Specifies whether dbclient should terminate the connection if it cannot set up all requested local and remote port forwardings. The argument must be "yes" or "no".  The default is "no".
 .TP
 .B UseSyslog
 Send dbclient log messages to syslog in addition to stderr.
+.TP
+.B Port
+Specify a listening port, like the \fI-p\fR argument.
+.TP
+.B DisableTrivialAuth
+Disallow a server immediately
+giving successful authentication (without presenting any password/pubkey prompt).
+This avoids a UI confusion issue where it may appear that the user is accepting
+a SSH agent prompt from their local machine, but are actually accepting a prompt
+sent immediately by the remote server. 
 .RE
 .TP
 .B \-s 

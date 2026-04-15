@@ -1,15 +1,13 @@
-# serial 21
+# serial 25
 
 dnl From Jim Meyering.
 dnl A wrapper around AC_FUNC_GETGROUPS.
 
-# Copyright (C) 1996-1997, 1999-2004, 2008-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-1997, 1999-2004, 2008-2024 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
-
-m4_version_prereq([2.70], [] ,[
 
 # This is taken from the following Autoconf patch:
 # https://git.savannah.gnu.org/gitweb/?p=autoconf.git;a=commitdiff;h=7fbb553727ed7e0e689a17594b58559ecf3ea6e9
@@ -22,7 +20,7 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
 
   # If we don't yet have getgroups, see if it's in -lbsd.
   # This is reported to be necessary on an ITOS 3000WS running SEIUX 3.1.
-  ac_save_LIBS=$LIBS
+  gl_saved_LIBS=$LIBS
   if test $ac_cv_func_getgroups = no; then
     AC_CHECK_LIB(bsd, getgroups, [GETGROUPS_LIB=-lbsd])
   fi
@@ -42,8 +40,10 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
          [case "$host_os" in # ((
                            # Guess yes on glibc systems.
             *-gnu* | gnu*) ac_cv_func_getgroups_works="guessing yes" ;;
-                           # If we don't know, assume the worst.
-            *)             ac_cv_func_getgroups_works="guessing no" ;;
+                           # Guess yes on musl systems.
+            *-musl*)       ac_cv_func_getgroups_works="guessing yes" ;;
+                           # If we don't know, obey --enable-cross-guesses.
+            *)             ac_cv_func_getgroups_works="$gl_cross_guess_normal" ;;
           esac
          ])
       ])
@@ -56,10 +56,8 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
         [Define to 1 if your system has a working `getgroups' function.])
       ;;
   esac
-  LIBS=$ac_save_LIBS
+  LIBS=$gl_saved_LIBS
 ])# AC_FUNC_GETGROUPS
-
-])
 
 AC_DEFUN([gl_FUNC_GETGROUPS],
 [
@@ -81,7 +79,8 @@ AC_DEFUN([gl_FUNC_GETGROUPS],
       AC_DEFINE([GETGROUPS_ZERO_BUG], [1], [Define this to 1 if
         getgroups(0,NULL) does not return the number of groups.])
     else
-      dnl Detect FreeBSD bug; POSIX requires getgroups(-1,ptr) to fail.
+      dnl Detect Mac OS X and FreeBSD bug; POSIX requires getgroups(-1,ptr)
+      dnl to fail.
       AC_CACHE_CHECK([whether getgroups handles negative values],
         [gl_cv_func_getgroups_works],
         [AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
@@ -95,8 +94,10 @@ AC_DEFUN([gl_FUNC_GETGROUPS],
           [case "$host_os" in
                             # Guess yes on glibc systems.
              *-gnu* | gnu*) gl_cv_func_getgroups_works="guessing yes" ;;
-                            # If we don't know, assume the worst.
-             *)             gl_cv_func_getgroups_works="guessing no" ;;
+                            # Guess yes on musl systems.
+             *-musl*)       gl_cv_func_getgroups_works="guessing yes" ;;
+                            # If we don't know, obey --enable-cross-guesses.
+             *)             gl_cv_func_getgroups_works="$gl_cross_guess_normal" ;;
            esac
           ])])
       case "$gl_cv_func_getgroups_works" in

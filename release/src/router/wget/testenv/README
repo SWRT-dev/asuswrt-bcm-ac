@@ -99,6 +99,10 @@ Environment Variables:
   If it is set to "1", valgrind memcheck is enabled with hard coded options.
   This variable is set by ./configure --enable-valgrind-tests.
 * SSL_TESTS: This must be set to run any https tests.
+* WGET_PATH: Set this environment variable to a path to wget binary on which you
+  want to run tests. This is useful for OS distributions, which want to reuse
+  upstream tests for testing wget build that they distribute. If the variable is
+  not set, the "../src/wget" binary is used by tests.
 
 
 File Structure:
@@ -140,7 +144,7 @@ Various variables used consistently across all tests are:
     list of files downloaded from Server[2], etc.  They must be relative URLs,
     i.e., not start with "/".
     * Files: This variable defines the files that exist in the Server's
-    filesystem. The Files variable is a list of lists of WgetFile objects.
+    file system. The Files variable is a list of lists of WgetFile objects.
     This means that File[0] is a list of WgetFile objects that lie on Server[0],
     File[1] a list of files on Server[1] and so on.
     * Existing_Files: This is a list of files that already exist in the
@@ -220,6 +224,9 @@ executed. The currently supported options are:
     file. While all Download URL's are passed to Urls, a notable exception is
     when in-url authentication is used. In such a case, the URL is specified in
     the WgetCommands string.
+    * EnvironmentVariables: A dictionary with key-value items, which will be
+    defined as environment variables during the execution of wget command in
+    test.
 
 Post-Test Hooks:
 ================================================================================

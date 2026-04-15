@@ -2746,6 +2746,11 @@ _dprintf("restart_nas_services(%d): test 6.\n", getpid());
 			}
 		}
 		file_unlock(lock);
+#ifdef RTCONFIG_FRS_FEEDBACK
+#ifdef RTCONFIG_DBLOG
+		start_dblog(0);
+#endif /* RTCONFIG_DBLOG */
+#endif /* RTCONFIG_FRS_FEEDBACK */
 	}
 #endif
 	else if (strncmp(interface ? : "", "8/", 2) == 0) {	/* usb storage */
@@ -3778,6 +3783,7 @@ void start_dms(void)
 				"port=%d\n"
 				"friendly_name=%s\n"
 				"db_dir=%s\n"
+				"log_dir=%s\n"
 				"enable_tivo=%s\n"
 				"strict_dlna=%s\n"
 				"inotify=yes\n"
@@ -3786,6 +3792,7 @@ void start_dms(void)
 				nvram_safe_get("lan_ifname"),
 				(port < 0) || (port >= 0xffff) ? 0 : port,
 				friendly_name,
+				dbdir,
 				dbdir,
 				nvram_get_int("dms_tivo") ? "yes" : "no",
 				nvram_get_int("dms_stdlna") ? "yes" : "no");

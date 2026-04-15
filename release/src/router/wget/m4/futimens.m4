@@ -1,7 +1,7 @@
-# serial 7
+# serial 11
 # See if we need to provide futimens replacement.
 
-dnl Copyright (C) 2009-2018 Free Software Foundation, Inc.
+dnl Copyright (C) 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -11,10 +11,14 @@ dnl with or without modifications, as long as this notice is preserved.
 AC_DEFUN([gl_FUNC_FUTIMENS],
 [
   AC_REQUIRE([gl_SYS_STAT_H_DEFAULTS])
+  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-  AC_CHECK_FUNCS_ONCE([futimens])
+  gl_CHECK_FUNCS_ANDROID([futimens], [[#include <sys/stat.h>]])
   if test $ac_cv_func_futimens = no; then
     HAVE_FUTIMENS=0
+    case "$gl_cv_onwards_func_futimens" in
+      future*) REPLACE_FUTIMENS=1 ;;
+    esac
   else
     AC_CACHE_CHECK([whether futimens works],
       [gl_cv_func_futimens_works],
@@ -23,7 +27,8 @@ AC_DEFUN([gl_FUNC_FUTIMENS],
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
-]], [[struct timespec ts[2];
+]GL_MDA_DEFINES],
+     [[struct timespec ts[2];
       int fd = creat ("conftest.file", 0600);
       struct stat st;
       if (fd < 0) return 1;
@@ -44,10 +49,21 @@ AC_DEFUN([gl_FUNC_FUTIMENS],
       ]])],
          [gl_cv_func_futimens_works=yes],
          [gl_cv_func_futimens_works=no],
-         [gl_cv_func_futimens_works="guessing yes"])
+         [case "$host_os" in
+                           # Guess no on glibc systems.
+            *-gnu* | gnu*) gl_cv_func_futimens_works="guessing no" ;;
+                           # Guess no on musl systems.
+            *-musl*)       gl_cv_func_futimens_works="guessing no" ;;
+                           # Guess yes otherwise.
+            *)             gl_cv_func_futimens_works="guessing yes" ;;
+          esac
+         ])
       rm -f conftest.file])
-    if test "$gl_cv_func_futimens_works" = no; then
-      REPLACE_FUTIMENS=1
-    fi
+    case "$gl_cv_func_futimens_works" in
+      *yes) ;;
+      *)
+        REPLACE_FUTIMENS=1
+        ;;
+    esac
   fi
 ])

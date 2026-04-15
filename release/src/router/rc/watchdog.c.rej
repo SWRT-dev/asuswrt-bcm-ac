@@ -1,0 +1,41 @@
+diff a/release/src/router/rc/watchdog.c b/release/src/router/rc/watchdog.c	(rejected hunks)
+@@ -112,6 +112,9 @@
+ #if defined(RTCONFIG_QCA_PLC_UTILS) || defined(RTCONFIG_QCA_PLC2)
+ #include <plc_utils.h>
+ #endif
++#ifdef RTCONFIG_BCMWL6
++extern int restore_defaults_g;
++#endif
+ 
+ #define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
+ #define RESET_WAIT		2		/* seconds */
+@@ -6997,7 +7010,7 @@ void ddns_check(void)
+ 	}
+ 
+ 	if (nvram_match("ddns_regular_check", "1")&& !nvram_match("ddns_server_x", "WWW.ASUS.COM") && !nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
+-		int period = nvram_get_int("ddns_regular_period");
++		int period = nvram_get_int("ddns_regular_period"); //minute(s)
+ 		if (period < 30) period = 60;
+ 		if (ddns_check_count >= (period*2)) {
+ 			regular_ddns_check();
+@@ -7019,8 +7032,9 @@ void ddns_check(void)
+ #endif
+ 	}
+ 
+-	if (wan_unit == last_unit) { //Only Time-out, connect_fail, -1 (in asusddns) or not auth_fail (not in asusddns)
++	if (wan_unit == last_unit) { /* DDNS has already been run, ddns_last_wan_unit has been set. */
+ 		if ( nvram_match("ddns_server_x", "WWW.ASUS.COM") || nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
++			/* Only Time-out, connect_fail, -1 (in asusddns) or not auth_fail (not in asusddns) */
+ 			if ( !( !strcmp(nvram_safe_get("ddns_return_code_chk"),"Time-out") ||
+ 				!strcmp(nvram_safe_get("ddns_return_code_chk"),"connect_fail") ||
+ 				strstr(nvram_safe_get("ddns_return_code_chk"), "-1") ) )
+@@ -10160,6 +10242,9 @@ wdp:
+ 			system("sh /tmp/mnt/sda1/auto_test.sh");
+ 		}
+ #endif
++#ifdef RTCONFIG_FRS_FEEDBACK
++	feedback_check();
++#endif /* RTCONFIG_FRS_FEEDBACK */
+ }
+ 
+ #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))

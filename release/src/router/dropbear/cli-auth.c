@@ -32,12 +32,6 @@
 #include "packet.h"
 #include "runopts.h"
 
-void cli_authinitialise() {
-
-	memset(&ses.authstate, 0, sizeof(ses.authstate));
-}
-
-
 /* Send a "none" auth request to get available methods */
 void cli_auth_getmethods() {
 	TRACE(("enter cli_auth_getmethods"))
@@ -85,6 +79,11 @@ void recv_msg_userauth_banner() {
 	TRACE(("enter recv_msg_userauth_banner"))
 	if (ses.authstate.authdone) {
 		TRACE(("leave recv_msg_userauth_banner: banner after auth done"))
+		return;
+	}
+
+	if (cli_opts.quiet) {
+		TRACE(("not showing banner"))
 		return;
 	}
 
@@ -266,7 +265,10 @@ void recv_msg_userauth_success() {
 	/* This function can validly get called multiple times
 	if DROPBEAR_CLI_IMMEDIATE_AUTH is set */
 
-	TRACE(("received msg_userauth_success"))
+	DEBUG1(("received msg_userauth_success"))
+	if (cli_opts.disable_trivial_auth && cli_ses.is_trivial_auth) {
+		dropbear_exit("trivial authentication not allowed");
+	}
 	/* Note: in delayed-zlib mode, setting authdone here 
 	 * will enable compression in the transport layer */
 	ses.authstate.authdone = 1;
@@ -294,18 +296,6 @@ int cli_auth_try() {
 	}
 #endif
 
-#if DROPBEAR_CLI_PASSWORD_AUTH
-	if (!finished && (ses.authstate.authtypes & AUTH_TYPE_PASSWORD)) {
-		if (ses.keys->trans.algo_crypt->cipherdesc == NULL) {
-			fprintf(stderr, "Sorry, I won't let you use password auth unencrypted.\n");
-		} else {
-			cli_auth_password();
-			finished = 1;
-			cli_ses.lastauthtype = AUTH_TYPE_PASSWORD;
-		}
-	}
-#endif
-
 #if DROPBEAR_CLI_INTERACT_AUTH
 	if (!finished && (ses.authstate.authtypes & AUTH_TYPE_INTERACT)) {
 		if (ses.keys->trans.algo_crypt->cipherdesc == NULL) {
@@ -316,6 +306,18 @@ int cli_auth_try() {
 				cli_ses.lastauthtype = AUTH_TYPE_INTERACT;
 				finished = 1;
 			}
+		}
+	}
+#endif
+
+#if DROPBEAR_CLI_PASSWORD_AUTH
+	if (!finished && (ses.authstate.authtypes & AUTH_TYPE_PASSWORD)) {
+		if (ses.keys->trans.algo_crypt->cipherdesc == NULL) {
+			fprintf(stderr, "Sorry, I won't let you use password auth unencrypted.\n");
+		} else {
+			cli_auth_password();
+			finished = 1;
+			cli_ses.lastauthtype = AUTH_TYPE_PASSWORD;
 		}
 	}
 #endif

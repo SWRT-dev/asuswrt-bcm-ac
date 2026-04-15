@@ -1,10 +1,10 @@
 /* Creation of subprocesses, communicating via pipes.
-   Copyright (C) 2001-2003, 2006, 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2003, 2006, 2008-2024 Free Software Foundation, Inc.
    Written by Bruno Haible <haible@clisp.cons.org>, 2001.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -23,8 +23,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include <stdbool.h>
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +39,19 @@ extern "C" {
 
    After finishing communication, the caller should call wait_subprocess()
    to get rid of the subprocess in the process table.
+
+   progname is the name of the program to be executed by the subprocess, used
+   for error messages.
+   prog_path is the file name of the program to be executed by the subprocess.
+   If it contains no slashes, a search is conducted in $PATH.  An operating
+   system dependent suffix is added, if necessary.
+   prog_argv is the array of strings that the subprocess shall receive in
+   argv[].  It is a NULL-terminated array.  prog_argv[0] should normally be
+   identical to prog_path.
+
+   If directory is not NULL, the subprocess is started in that directory.  If
+   prog_path is a relative file name, it resolved before changing to that
+   directory.  The current directory of the current process remains unchanged.
 
    If slave_process is true, the child process will be terminated when its
    creator receives a catchable fatal signal or exits normally.  If
@@ -83,7 +94,9 @@ extern "C" {
  * signal and the EPIPE error code.
  */
 extern pid_t create_pipe_out (const char *progname,
-                              const char *prog_path, char **prog_argv,
+                              const char *prog_path,
+                              const char * const *prog_argv,
+                              const char *directory,
                               const char *prog_stdout, bool null_stderr,
                               bool slave_process, bool exit_on_error,
                               int fd[1]);
@@ -96,7 +109,9 @@ extern pid_t create_pipe_out (const char *progname,
  *
  */
 extern pid_t create_pipe_in (const char *progname,
-                             const char *prog_path, char **prog_argv,
+                             const char *prog_path,
+                             const char * const *prog_argv,
+                             const char *directory,
                              const char *prog_stdin, bool null_stderr,
                              bool slave_process, bool exit_on_error,
                              int fd[1]);
@@ -124,7 +139,9 @@ extern pid_t create_pipe_in (const char *progname,
  *    input.  But you are currently busy reading from it.
  */
 extern pid_t create_pipe_bidi (const char *progname,
-                               const char *prog_path, char **prog_argv,
+                               const char *prog_path,
+                               const char * const *prog_argv,
+                               const char *directory,
                                bool null_stderr,
                                bool slave_process, bool exit_on_error,
                                int fd[2]);

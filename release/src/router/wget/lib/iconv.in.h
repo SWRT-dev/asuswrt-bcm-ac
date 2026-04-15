@@ -1,19 +1,19 @@
 /* A GNU-like <iconv.h>.
 
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _@GUARD_PREFIX@_ICONV_H
 
@@ -27,6 +27,11 @@
 
 #ifndef _@GUARD_PREFIX@_ICONV_H
 #define _@GUARD_PREFIX@_ICONV_H
+
+/* This file uses GNULIB_POSIXCHECK, HAVE_RAW_DECL_*.  */
+#if !_GL_CONFIG_H_INCLUDED
+ #error "Please include config.h first."
+#endif
 
 /* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
 
@@ -80,17 +85,22 @@ _GL_WARN_ON_USE (iconv_open, "iconv_open is not working correctly everywhere - "
 #  endif
 _GL_FUNCDECL_RPL (iconv, size_t,
                   (iconv_t cd,
-                   @ICONV_CONST@ char **inbuf, size_t *inbytesleft,
-                   char **outbuf, size_t *outbytesleft));
+                   @ICONV_CONST@ char **restrict inbuf,
+                   size_t *restrict inbytesleft,
+                   char **restrict outbuf, size_t *restrict outbytesleft));
 _GL_CXXALIAS_RPL (iconv, size_t,
                   (iconv_t cd,
-                   @ICONV_CONST@ char **inbuf, size_t *inbytesleft,
-                   char **outbuf, size_t *outbytesleft));
+                   @ICONV_CONST@ char **restrict inbuf,
+                   size_t *restrict inbytesleft,
+                   char **restrict outbuf, size_t *restrict outbytesleft));
 # else
-_GL_CXXALIAS_SYS (iconv, size_t,
-                  (iconv_t cd,
-                   @ICONV_CONST@ char **inbuf, size_t *inbytesleft,
-                   char **outbuf, size_t *outbytesleft));
+/* Need to cast, because on some versions of Solaris, ICONV_CONST does
+   not have the right value for C++.  */
+_GL_CXXALIAS_SYS_CAST (iconv, size_t,
+                       (iconv_t cd,
+                        @ICONV_CONST@ char **restrict inbuf,
+                        size_t *restrict inbytesleft,
+                        char **restrict outbuf, size_t *restrict outbytesleft));
 # endif
 _GL_CXXALIASWARN (iconv);
 # ifndef ICONV_CONST

@@ -9,10 +9,7 @@ The same applies if you are compiling just a client.
 
 ---
 
-The following are set in options.h:
-
-	- You can safely disable blowfish and twofish ciphers, and MD5 hmac, without
-	  affecting interoperability
+The following are set in localoptions.h:
 
 	- If you're compiling statically, you can turn off host lookups
 
@@ -49,5 +46,11 @@ cases these flags actually seem to increase size, so experiment before
 deciding.
 
 Of course using small C libraries such as uClibc and dietlibc can also help.
+
+---
+
+Libtommath has its own default CFLAGS to improve speed. You can use
+./configure LTM_CFLAGS=-Os
+to reduce size at the expense of speed.
 
 If you have any queries, mail me and I'll see if I can help.

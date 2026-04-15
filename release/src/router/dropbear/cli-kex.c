@@ -229,6 +229,8 @@ static void ask_to_confirm(const unsigned char* keyblob, unsigned int keybloblen
 		fclose(tty);
 	} else {
 		response = getc(stdin);
+		/* flush stdin buffer */
+		while ((getchar()) != '\n');
 	}
 
 	if (response == 'y') {
@@ -371,7 +373,7 @@ static void checkhostkey(const unsigned char* keyblob, unsigned int keybloblen) 
 
 		if (ret == DROPBEAR_SUCCESS) {
 			/* Good matching key */
-			TRACE(("good matching key"))
+			DEBUG1(("server match %s", fingerprint))
 			goto out;
 		}
 

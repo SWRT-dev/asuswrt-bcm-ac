@@ -1,7 +1,7 @@
-/* $Id: natpmp.c,v 1.57 2019/09/24 11:48:01 nanard Exp $ */
+/* $Id: natpmp.c,v 1.58 2022/10/16 06:03:56 nanard Exp $ */
 /* MiniUPnP project
- * (c) 2007-2019 Thomas Bernard
- * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
+ * (c) 2007-2022 Thomas Bernard
+ * http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 #include <stdio.h>
@@ -17,6 +17,7 @@
 #include <sys/uio.h>
 
 #include "macros.h"
+#include "rw_unaligned.h"
 #include "config.h"
 #include "natpmp.h"
 #include "upnpglobalvars.h"
@@ -108,11 +109,9 @@ static void FillPublicAddressResponse(unsigned char * resp, in_addr_t senderaddr
 			syslog(LOG_ERR, "Failed to get IP for interface %s", ext_if_name);
 			resp[3] = 3;	/* Network Failure (e.g. NAT box itself
 			                 * has not obtained a DHCP lease) */
-#if 0
 		} else if (addr_is_reserved(&addr)) {
 			resp[3] = 3;	/* Network Failure, box has not obtained
 			                   public IP address */
-#endif
 		} else {
 			inet_pton(AF_INET, tmp, resp+8); /* ok */
 		}
@@ -351,7 +350,7 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 						}
 						break;
 					}
-					if(!check_upnp_rule_against_permissions(upnppermlist, num_upnpperm, eport, senderaddr->sin_addr, iport)) {
+					if(!check_upnp_rule_against_permissions(upnppermlist, num_upnpperm, eport, senderaddr->sin_addr, iport, "NAT-PMP")) {
 						eport++;
 						if(eport == 0) eport++; /* skip port zero */
 						continue;

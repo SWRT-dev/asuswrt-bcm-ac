@@ -1,0 +1,10 @@
+diff a/release/src/router/www/sysdep/FUNCTION/QIS_V3/mobile/css/qis.css b/release/src/router/www/sysdep/FUNCTION/QIS_V3/mobile/css/qis.css	(rejected hunks)
+@@ -295,7 +300,7 @@ a{
+ 	background-color:rgba(79,79,79,62);
+ 	padding-left:11px;"	
+ }
+-#welcome_button{
++.welcome_button{
+ 	cursor:pointer;
+ 	width:600px;
+ 	max-width:600px;

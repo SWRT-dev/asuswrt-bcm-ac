@@ -1,9 +1,9 @@
-/* $Id: options.h,v 1.32 2020/04/09 18:40:42 nanard Exp $ */
+/* $Id: options.h,v 1.35 2024/03/11 23:17:56 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * MiniUPnP project
  * http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
  * author: Ryan Wagoner
- * (c) 2006-2020 Thomas Bernard
+ * (c) 2006-2024 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -57,9 +57,12 @@ enum upnpconfigoptions {
 	UPNPPCPMAXLIFETIME,		/* maximum lifetime for PCP mapping */
 	UPNPPCPALLOWTHIRDPARTY,		/* allow third-party requests */
 #ifdef USE_NETFILTER
+	UPNPTABLENAME,
+	UPNPNATTABLENAME,
 	UPNPFORWARDCHAIN,
 	UPNPNATCHAIN,
 	UPNPNATPOSTCHAIN,
+	UPNPNFFAMILYSPLIT,
 #endif
 #ifdef USE_PF
 	UPNPANCHOR,				/* anchor */
@@ -72,12 +75,15 @@ enum upnpconfigoptions {
 	UPNPSECUREMODE,			/* secure_mode */
 #ifdef ENABLE_LEASEFILE
 	UPNPLEASEFILE,			/* lease_file */
+#ifdef ENABLE_UPNPPINHOLE
+	UPNPLEASEFILE6,			/* lease_file v6 */
 #endif
 #ifdef ENABLE_AURASYNC
 	UPNPENABLEAURASYNC,
 #endif
 #ifdef ENABLE_NVGFN
 	UPNPENABLENVGFN,
+#endif
 #endif
 	UPNPMINISSDPDSOCKET,	/* minissdpdsocket */
 #ifdef IGD_V2
@@ -90,7 +96,7 @@ enum upnpconfigoptions {
  * parse and store the option file values
  * returns: 0 success, -1 failure */
 int
-readoptionsfile(const char * fname);
+readoptionsfile(const char * fname, int debug_flag);
 
 /* freeoptions()
  * frees memory allocated to option values */

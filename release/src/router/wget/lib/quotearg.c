@@ -1,10 +1,10 @@
 /* quotearg.c - quote arguments for output
 
-   Copyright (C) 1998-2002, 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2002, 2004-2024 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -29,6 +29,7 @@
 #include "quotearg.h"
 #include "quote.h"
 
+#include "attribute.h"
 #include "minmax.h"
 #include "xalloc.h"
 #include "c-strcaseeq.h"
@@ -37,12 +38,11 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uchar.h>
 #include <wchar.h>
-#include <wctype.h>
 
 #include "gettext.h"
 #define _(msgid) gettext (msgid)
@@ -53,14 +53,6 @@
 #endif
 
 #define INT_BITS (sizeof (int) * CHAR_BIT)
-
-#ifndef FALLTHROUGH
-# if __GNUC__ < 7
-#  define FALLTHROUGH ((void) 0)
-# else
-#  define FALLTHROUGH __attribute__ ((__fallthrough__))
-# endif
-#endif
 
 struct quoting_options
 {
@@ -539,12 +531,9 @@ quotearg_buffer_restyled (char *buffer, size_t buffersize,
         case '<':
         case '=': /* sometimes special in 0th or (with "set -k") later args */
         case '>': case '[':
-        case '^': /* special in old /bin/sh, e.g. SunOS 4.1.4 */
+        case '^': /* special in old /bin/sh, e.g., Solaris 10 */
         case '`': case '|':
-          /* A shell special character.  In theory, '$' and '`' could
-             be the first bytes of multibyte characters, which means
-             we should check them with mbrtowc, but in practice this
-             doesn't happen so it's not worth worrying about.  */
+          /* A shell special character.  */
           if (quoting_style == shell_always_quoting_style
               && elide_outer_quotes)
             goto force_outer_quoting_style;
@@ -619,18 +608,18 @@ quotearg_buffer_restyled (char *buffer, size_t buffersize,
             else
               {
                 mbstate_t mbstate;
-                memset (&mbstate, 0, sizeof mbstate);
+                mbszero (&mbstate);
 
                 m = 0;
                 printable = true;
                 if (argsize == SIZE_MAX)
                   argsize = strlen (arg);
 
-                do
+                for (;;)
                   {
-                    wchar_t w;
-                    size_t bytes = mbrtowc (&w, &arg[i + m],
-                                            argsize - (i + m), &mbstate);
+                    char32_t w;
+                    size_t bytes = mbrtoc32 (&w, &arg[i + m],
+                                             argsize - (i + m), &mbstate);
                     if (bytes == 0)
                       break;
                     else if (bytes == (size_t) -1)
@@ -647,6 +636,10 @@ quotearg_buffer_restyled (char *buffer, size_t buffersize,
                       }
                     else
                       {
+                        #if !GNULIB_MBRTOC32_REGULAR
+                        if (bytes == (size_t) -3)
+                          bytes = 0;
+                        #endif
                         /* Work around a bug with older shells that "see" a '\'
                            that is really the 2nd byte of a multibyte character.
                            In practice the problem is limited to ASCII
@@ -667,12 +660,15 @@ quotearg_buffer_restyled (char *buffer, size_t buffersize,
                                 }
                           }
 
-                        if (! iswprint (w))
+                        if (! c32isprint (w))
                           printable = false;
                         m += bytes;
                       }
+                    #if !GNULIB_MBRTOC32_REGULAR
+                    if (mbsinit (&mbstate))
+                    #endif
+                      break;
                   }
-                while (! mbsinit (&mbstate));
               }
 
             c_and_shell_quote_compat = printable;
@@ -794,7 +790,6 @@ quotearg_buffer (char *buffer, size_t buffersize,
   return r;
 }
 
-/* Equivalent to quotearg_alloc (ARG, ARGSIZE, NULL, O).  */
 char *
 quotearg_alloc (char const *arg, size_t argsize,
                 struct quoting_options const *o)
@@ -871,7 +866,8 @@ quotearg_free (void)
    OPTIONS specifies the quoting options.
    The returned value points to static storage that can be
    reused by the next call to this function with the same value of N.
-   N must be nonnegative.  N is deliberately declared with type "int"
+   N must be nonnegative; it is typically small, and must be
+   less than MIN (INT_MAX, IDX_MAX).  The type of N is signed
    to allow for future extensions (using negative values).  */
 static char *
 quotearg_n_options (int n, char const *arg, size_t argsize,
@@ -881,22 +877,21 @@ quotearg_n_options (int n, char const *arg, size_t argsize,
 
   struct slotvec *sv = slotvec;
 
-  if (n < 0)
+  int nslots_max = MIN (INT_MAX, IDX_MAX);
+  if (! (0 <= n && n < nslots_max))
     abort ();
 
   if (nslots <= n)
     {
       bool preallocated = (sv == &slotvec0);
-      int nmax = MIN (INT_MAX, MIN (PTRDIFF_MAX, SIZE_MAX) / sizeof *sv) - 1;
+      idx_t new_nslots = nslots;
 
-      if (nmax < n)
-        xalloc_die ();
-
-      slotvec = sv = xrealloc (preallocated ? NULL : sv, (n + 1) * sizeof *sv);
+      slotvec = sv = xpalloc (preallocated ? NULL : sv, &new_nslots,
+                              n - nslots + 1, nslots_max, sizeof *sv);
       if (preallocated)
         *sv = slotvec0;
-      memset (sv + nslots, 0, (n + 1 - nslots) * sizeof *sv);
-      nslots = n + 1;
+      memset (sv + nslots, 0, (new_nslots - nslots) * sizeof *sv);
+      nslots = new_nslots;
     }
 
   {

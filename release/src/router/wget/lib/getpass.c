@@ -1,21 +1,24 @@
-/* Copyright (C) 1992-2001, 2003-2007, 2009-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2001, 2003-2007, 2009-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3, or (at your option)
-   any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License along
-   with this program; if not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _LIBC
+/* Don't use __attribute__ __nonnull__ in this compilation unit.  Otherwise gcc
+   warns for the null checks on 'prompt' below.  */
+# define _GL_ARG_NONNULL(params)
 # include <config.h>
 #endif
 
@@ -24,8 +27,6 @@
 #include <stdio.h>
 
 #if !(defined _WIN32 && !defined __CYGWIN__)
-
-# include <stdbool.h>
 
 # if HAVE_DECL___FSETLOCKING && HAVE___FSETLOCKING
 #  if HAVE_STDIO_EXT_H
@@ -96,7 +97,7 @@ getpass (const char *prompt)
   /* Try to write to and read from the terminal if we can.
      If we can't open the terminal, use stderr and stdin.  */
 
-  tty = fopen ("/dev/tty", "w+");
+  tty = fopen ("/dev/tty", "w+e");
   if (tty == NULL)
     {
       in = stdin;
@@ -124,9 +125,12 @@ getpass (const char *prompt)
     }
 # endif
 
-  /* Write the prompt.  */
-  fputs_unlocked (prompt, out);
-  fflush_unlocked (out);
+  if (prompt)
+    {
+      /* Write the prompt.  */
+      fputs_unlocked (prompt, out);
+      fflush_unlocked (out);
+    }
 
   /* Read the password.  */
   nread = getline (&buf, &bufsize, in);

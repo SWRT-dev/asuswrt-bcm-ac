@@ -1,408 +1,154 @@
 # Danish messages for GNU wget
 # This file is distributed under the same license as the wget package.
-# Copyright (C) 1998 Free Software Foundation, Inc.
+# Copyright (C) 1998, 2023 Free Software Foundation, Inc.
 #
-# Keld J¯rn Simonsen <keld@dkuug.dk>, 2000-2002,2011.
-# Ask Hjorth Larsen <asklarsen@gmail.com>, 2010.
+# Keld J√∏rn Simonsen <keld@dkuug.dk>, 2000-2002,2011.
+# Ask Hjorth Larsen <asklarsen@gmail.com>, 2010, 2023.
 #
 # Reviewed: 2001-10-20 Thorbjoern Ravn Andersen <ravn@unixsnedkeren.dk>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: wget 1.12-pre7\n"
+"Project-Id-Version: wget-1.21.4\n"
 "Report-Msgid-Bugs-To: bug-wget@gnu.org\n"
-"POT-Creation-Date: 2018-12-26 21:10+0100\n"
-"PO-Revision-Date: 2011-01-09 07:03+0100\n"
-"Last-Translator: Keld Simonsen <keld@keldix.com>\n"
+"POT-Creation-Date: 2024-03-10 15:08+0100\n"
+"PO-Revision-Date: 2023-10-29 19:27+0100\n"
+"Last-Translator: Ask Hjorth Larsen <asklarsen@gmail.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: lib/error.c:195
-msgid "Unknown system error"
-msgstr "Ukendt systemfejl"
-
-#: lib/gai_strerror.c:57
-#, fuzzy
-msgid "Address family for hostname not supported"
-msgstr "IPv6-adresser underst¯ttes ikke"
-
-#: lib/gai_strerror.c:58 src/host.c:371
-msgid "Temporary failure in name resolution"
-msgstr "Midlertidig fejl i navneevaluering"
-
-#: lib/gai_strerror.c:59
-msgid "Bad value for ai_flags"
-msgstr ""
-
-#: lib/gai_strerror.c:60
-#, fuzzy
-msgid "Non-recoverable failure in name resolution"
-msgstr "Midlertidig fejl i navneevaluering"
-
-#: lib/gai_strerror.c:61
-msgid "ai_family not supported"
-msgstr ""
-
-#: lib/gai_strerror.c:62
-msgid "Memory allocation failure"
-msgstr ""
-
-#: lib/gai_strerror.c:63
-msgid "No address associated with hostname"
-msgstr ""
-
-#: lib/gai_strerror.c:64
-msgid "Name or service not known"
-msgstr ""
-
-#: lib/gai_strerror.c:65
-msgid "Servname not supported for ai_socktype"
-msgstr ""
-
-#: lib/gai_strerror.c:66
-#, fuzzy
-msgid "ai_socktype not supported"
-msgstr "IPv6-adresser underst¯ttes ikke"
-
-#: lib/gai_strerror.c:67
-#, fuzzy
-msgid "System error"
-msgstr "Ukendt systemfejl"
-
-#: lib/gai_strerror.c:68
-msgid "Argument buffer too small"
-msgstr ""
-
-#: lib/gai_strerror.c:70
-msgid "Processing request in progress"
-msgstr ""
-
-#: lib/gai_strerror.c:71
-msgid "Request canceled"
-msgstr ""
-
-#: lib/gai_strerror.c:72
-msgid "Request not canceled"
-msgstr ""
-
-#: lib/gai_strerror.c:73
-msgid "All requests done"
-msgstr ""
-
-#: lib/gai_strerror.c:74
-msgid "Interrupted by a signal"
-msgstr ""
-
-#: lib/gai_strerror.c:75
-msgid "Parameter string not correctly encoded"
-msgstr ""
-
-#: lib/gai_strerror.c:87 src/host.c:373
-msgid "Unknown error"
-msgstr "Ukendt fejl"
-
-#: lib/getopt.c:278
-#, fuzzy, c-format
-msgid "%s: option '%s%s' is ambiguous\n"
-msgstr "%s: flaget '%s' er flertydig\n"
-
-#: lib/getopt.c:284
-#, fuzzy, c-format
-msgid "%s: option '%s%s' is ambiguous; possibilities:"
-msgstr "%s: flaget '%s' er flertydig\n"
-
-#: lib/getopt.c:319
-#, fuzzy, c-format
-msgid "%s: unrecognized option '%s%s'\n"
-msgstr "%s: ukendt flag '%c%s'\n"
-
-#: lib/getopt.c:345
-#, fuzzy, c-format
-msgid "%s: option '%s%s' doesn't allow an argument\n"
-msgstr "%s: flaget '%c%s' tillader ikke et argument\n"
-
-#: lib/getopt.c:360
-#, fuzzy, c-format
-msgid "%s: option '%s%s' requires an argument\n"
-msgstr "%s: flaget '--%s' krÊver et argument\n"
-
-#: lib/getopt.c:621
-#, c-format
-msgid "%s: invalid option -- '%c'\n"
-msgstr "%s: ugyldigt flag -- %c\n"
-
-#: lib/getopt.c:636 lib/getopt.c:682
-#, c-format
-msgid "%s: option requires an argument -- '%c'\n"
-msgstr "%s: flaget krÊver et argument -- %c\n"
-
-#. TRANSLATORS:
-#. Get translations for open and closing quotation marks.
-#. The message catalog should translate "`" to a left
-#. quotation mark suitable for the locale, and similarly for
-#. "'".  For example, a French Unicode local should translate
-#. these to U+00AB (LEFT-POINTING DOUBLE ANGLE
-#. QUOTATION MARK), and U+00BB (RIGHT-POINTING DOUBLE ANGLE
-#. QUOTATION MARK), respectively.
-#.
-#. If the catalog has no translation, we will try to
-#. use Unicode U+2018 (LEFT SINGLE QUOTATION MARK) and
-#. Unicode U+2019 (RIGHT SINGLE QUOTATION MARK).  If the
-#. current locale is not Unicode, locale_quoting_style
-#. will quote 'like this', and clocale_quoting_style will
-#. quote "like this".  You should always include translations
-#. for "`" and "'" even if U+2018 and U+2019 are appropriate
-#. for your locale.
-#.
-#. If you don't know what to put here, please see
-#. <https://en.wikipedia.org/wiki/Quotation_marks_in_other_languages>
-#. and use glyphs suitable for your language.
-#: lib/quotearg.c:362
-msgid "`"
-msgstr "'"
-
-#: lib/quotearg.c:363
-msgid "'"
-msgstr "'"
-
-#: lib/regcomp.c:135
-msgid "Success"
-msgstr ""
-
-#: lib/regcomp.c:138
-msgid "No match"
-msgstr ""
-
-#: lib/regcomp.c:141
-msgid "Invalid regular expression"
-msgstr ""
-
-#: lib/regcomp.c:144
-msgid "Invalid collation character"
-msgstr ""
-
-#: lib/regcomp.c:147
-#, fuzzy
-msgid "Invalid character class name"
-msgstr "VÊrtsnavnet er ugyldigt"
-
-#: lib/regcomp.c:150
-msgid "Trailing backslash"
-msgstr ""
-
-#: lib/regcomp.c:153
-#, fuzzy
-msgid "Invalid back reference"
-msgstr "Ugyldigt brugernavn"
-
-#: lib/regcomp.c:156
-msgid "Unmatched [, [^, [:, [., or [="
-msgstr ""
-
-#: lib/regcomp.c:159
-msgid "Unmatched ( or \\("
-msgstr ""
-
-#: lib/regcomp.c:162
-msgid "Unmatched \\{"
-msgstr ""
-
-#: lib/regcomp.c:165
-msgid "Invalid content of \\{\\}"
-msgstr ""
-
-#: lib/regcomp.c:168
-#, fuzzy
-msgid "Invalid range end"
-msgstr "Ugyldigt brugernavn"
-
-#: lib/regcomp.c:171
-#, fuzzy
-msgid "Memory exhausted"
-msgstr "hukommelse opbrugt"
-
-#: lib/regcomp.c:174
-msgid "Invalid preceding regular expression"
-msgstr ""
-
-#: lib/regcomp.c:177
-msgid "Premature end of regular expression"
-msgstr ""
-
-#: lib/regcomp.c:180
-msgid "Regular expression too big"
-msgstr ""
-
-#: lib/regcomp.c:183
-msgid "Unmatched ) or \\)"
-msgstr ""
-
-#: lib/regcomp.c:688
-msgid "No previous regular expression"
-msgstr ""
-
-#: lib/spawn-pipe.c:141 lib/spawn-pipe.c:144 lib/spawn-pipe.c:265
-#: lib/spawn-pipe.c:268
-#, c-format
-msgid "cannot create pipe"
-msgstr ""
-
-#: lib/spawn-pipe.c:235 lib/spawn-pipe.c:349 lib/wait-process.c:282
-#: lib/wait-process.c:356
-#, c-format
-msgid "%s subprocess failed"
-msgstr ""
-
-#: lib/w32spawn.h:49
-#, c-format
-msgid "_open_osfhandle failed"
-msgstr ""
-
-#: lib/w32spawn.h:90
-#, c-format
-msgid "cannot restore fd %d: dup2 failed"
-msgstr ""
-
-#: lib/wait-process.c:223 lib/wait-process.c:255 lib/wait-process.c:317
-#, c-format
-msgid "%s subprocess"
-msgstr ""
-
-#: lib/wait-process.c:274 lib/wait-process.c:346
-#, c-format
-msgid "%s subprocess got fatal signal %d"
-msgstr ""
-
-#: lib/xalloc-die.c:34
-msgid "memory exhausted"
-msgstr "hukommelse opbrugt"
-
-#: src/connect.c:200
+#: src/connect.c:201
 #, c-format
 msgid "%s: unable to resolve bind address %s; disabling bind.\n"
 msgstr "%s: kan ikke evaluere bindingsadressen %s; deaktiverer binding.\n"
 
-#: src/connect.c:281
+#: src/connect.c:282
 #, c-format
 msgid "Connecting to %s|%s|:%d... "
-msgstr "Tilslutter %s|%s|:%d... "
+msgstr "Tilslutter %s|%s|:%d ‚Ä¶ "
 
-#: src/connect.c:289
+#: src/connect.c:290
 #, c-format
 msgid "Connecting to %s:%d... "
-msgstr "Tilslutter %s:%d... "
+msgstr "Tilslutter %s:%d ‚Ä¶ "
 
-#: src/connect.c:292
-#, fuzzy, c-format
+#: src/connect.c:293
+#, c-format
 msgid "Connecting to [%s]:%d... "
-msgstr "Tilslutter %s:%d... "
+msgstr "Tilslutter [%s]:%d ‚Ä¶ "
 
-#: src/connect.c:328
+#: src/connect.c:329
 #, c-format
 msgid "setsockopt SO_RCVBUF failed: %s\n"
-msgstr ""
+msgstr "setsockopt SO_RCVBUF mislykkedes: %s\n"
 
-#: src/connect.c:356
+#: src/connect.c:357
 msgid "connected.\n"
 msgstr "forbundet.\n"
 
-#: src/connect.c:375 src/host.c:914 src/host.c:952
+#: src/connect.c:376 src/host.c:915 src/host.c:953
 #, c-format
 msgid "failed: %s.\n"
 msgstr "mislykkedes: %s.\n"
 
-#: src/connect.c:399 src/http.c:2108
+#: src/connect.c:400 src/http.c:2111
 #, c-format
 msgid "%s: unable to resolve host address %s\n"
-msgstr "%s: kan ikke evaluere vÊrtsadresse %s\n"
+msgstr "%s: kan ikke evaluere v√¶rtsadresse %s\n"
 
-#: src/connect.c:469
+#: src/connect.c:470
 #, c-format
 msgid "setsockopt SO_REUSEADDR failed: %s\n"
-msgstr ""
+msgstr "setsockopt SO_REUSEADDR mislykkedes: %s\n"
 
-#: src/connect.c:690 src/connect.c:737
+#: src/connect.c:694 src/connect.c:756
 #, c-format
 msgid "Too many fds open.  Cannot use select on a fd >= %d\n"
 msgstr ""
+"Der er for mange √•bne fildeskriptorer.  Kan ikke bruge select p√• fd >= %d\n"
 
-#: src/convert.c:198
-#, fuzzy, c-format
+#: src/convert.c:201
+#, c-format
 msgid "Converted links in %d files in %s seconds.\n"
-msgstr "Konverterede %d filer pÂ %s sekunder.\n"
+msgstr "Konverterede links i %d filer p√• %s sekunder.\n"
 
-#: src/convert.c:227
-#, fuzzy, c-format
+#: src/convert.c:230
+#, c-format
 msgid "Converting links in %s... "
-msgstr "Konverterer %s... "
+msgstr "Konverterer links i %s ‚Ä¶ "
 
-#: src/convert.c:240
+#: src/convert.c:243
 msgid "nothing to do.\n"
-msgstr "ingenting at g¯re.\n"
+msgstr "ingenting at g√∏re.\n"
 
-#: src/convert.c:248 src/convert.c:272
+#: src/convert.c:246
+#, c-format
+msgid "%d.\n"
+msgstr "%d.\n"
+
+#: src/convert.c:252 src/convert.c:276
 #, c-format
 msgid "Cannot convert links in %s: %s\n"
-msgstr "Kan ikke konvertere lÊnker i %s: %s\n"
+msgstr "Kan ikke konvertere l√¶nker i %s: %s\n"
 
-#: src/convert.c:263
+#: src/convert.c:267
 #, c-format
 msgid "Unable to delete %s: %s\n"
 msgstr "Kan ikke slette %s: %s\n"
 
-#: src/convert.c:578
+#: src/convert.c:586
 #, c-format
 msgid "Cannot back up %s as %s: %s\n"
 msgstr "Kan ikke sikkerhedskopiere %s som %s: %s\n"
 
-#: src/cookies.c:310
-#, fuzzy, c-format
+#: src/cookies.c:311
+#, c-format
 msgid "Unable to get cookie for %s\n"
-msgstr "Kan ikke slette %s: %s\n"
+msgstr "Kan ikke hente cookie for %s\n"
 
-#: src/cookies.c:457
+#: src/cookies.c:464
 #, c-format
 msgid "Syntax error in Set-Cookie: %s at position %d.\n"
-msgstr "Syntaksfejl i Set-Cookie: %s pÂ position %d.\n"
+msgstr "Syntaksfejl i Set-Cookie: %s p√• position %d.\n"
 
-#: src/cookies.c:771
-#, fuzzy, c-format
+#: src/cookies.c:777
+#, c-format
 msgid "Cookie coming from %s attempted to set domain to "
-msgstr "Cookie, der kommer fra %s, fors¯gte at sÊtte domÊne til %s\n"
+msgstr "Cookie, der kommer fra %s, fors√∏gte at s√¶tte dom√¶ne til "
 
-#: src/cookies.c:774 src/spider.c:92
+#: src/cookies.c:780 src/spider.c:94
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: src/cookies.c:1225 src/cookies.c:1346
+#: src/cookies.c:1259 src/cookies.c:1380
 #, c-format
 msgid "Cannot open cookies file %s: %s\n"
-msgstr "Kan ikke Âbne cookiefil %s: %s\n"
+msgstr "Kan ikke √•bne cookiefil %s: %s\n"
 
-#: src/cookies.c:1383
+#: src/cookies.c:1417
 #, c-format
 msgid "Error writing to %s: %s\n"
 msgstr "Fejl ved skrivning til %s: %s\n"
 
-#: src/cookies.c:1386
+#: src/cookies.c:1420
 #, c-format
 msgid "Error closing %s: %s\n"
 msgstr "Fejl ved lukning af %s: %s\n"
 
 #: src/ftp-ls.c:1045
 msgid "Unsupported listing type, trying Unix listing parser.\n"
-msgstr "Ikke-underst¯ttet listningstype, pr¯ver Unix-listningsfortolker.\n"
+msgstr "Ikke-underst√∏ttet listningstype, pr√∏ver Unix-listningsfortolker.\n"
 
 #: src/ftp-ls.c:1096 src/ftp-ls.c:1098
 #, c-format
 msgid "Index of /%s on %s:%d"
-msgstr "Indeks for /%s pÂ %s:%d"
+msgstr "Indeks for /%s p√• %s:%d"
 
 #: src/ftp-ls.c:1123
 #, c-format
@@ -437,14 +183,14 @@ msgstr " (%s byte)"
 #: src/ftp.c:225
 #, c-format
 msgid "Length: %s"
-msgstr "LÊngde: %s"
+msgstr "L√¶ngde: %s"
 
-#: src/ftp.c:231 src/http.c:4030
+#: src/ftp.c:231 src/http.c:4090
 #, c-format
 msgid ", %s (%s) remaining"
 msgstr ", %s (%s) resterende"
 
-#: src/ftp.c:235 src/http.c:4034
+#: src/ftp.c:235 src/http.c:4094
 #, c-format
 msgid ", %s remaining"
 msgstr ", %s resterende"
@@ -454,17 +200,17 @@ msgid " (unauthoritative)\n"
 msgstr " (ikke endegyldigt)\n"
 
 #: src/ftp.c:403
-msgid "Could not initialize SSL. It will be disabled."
-msgstr ""
+msgid "Could not initialize SSL. It will be disabled.\n"
+msgstr "Kunne ikke initialisere SSL. SSL deaktiveres.\n"
 
 #: src/ftp.c:485
 #, c-format
 msgid "Logging in as %s ... "
-msgstr "Logger ind som %s ... "
+msgstr "Logger ind som %s ‚Ä¶ "
 
-#: src/ftp.c:504 src/ftp.c:590 src/ftp.c:657 src/ftp.c:722 src/ftp.c:956
-#: src/ftp.c:1009 src/ftp.c:1056 src/ftp.c:1119 src/ftp.c:1180 src/ftp.c:1278
-#: src/ftp.c:1328
+#: src/ftp.c:504 src/ftp.c:590 src/ftp.c:657 src/ftp.c:722 src/ftp.c:963
+#: src/ftp.c:1016 src/ftp.c:1063 src/ftp.c:1126 src/ftp.c:1187 src/ftp.c:1285
+#: src/ftp.c:1335
 msgid "Error in server response, closing control connection.\n"
 msgstr "Fejl i svar fra server, lukker kontrolforbindelsen.\n"
 
@@ -472,8 +218,8 @@ msgstr "Fejl i svar fra server, lukker kontrolforbindelsen.\n"
 msgid "Error in server greeting.\n"
 msgstr "Fejl i velkomsthilsen fra server.\n"
 
-#: src/ftp.c:518 src/ftp.c:730 src/ftp.c:964 src/ftp.c:1064 src/ftp.c:1129
-#: src/ftp.c:1190 src/ftp.c:1288 src/ftp.c:1338
+#: src/ftp.c:518 src/ftp.c:730 src/ftp.c:971 src/ftp.c:1071 src/ftp.c:1136
+#: src/ftp.c:1197 src/ftp.c:1295 src/ftp.c:1345
 msgid "Write failed, closing control connection.\n"
 msgstr "Fejl ved skrivning, lukker kontrolforbindelsen.\n"
 
@@ -491,51 +237,54 @@ msgstr "Logget ind!\n"
 
 #: src/ftp.c:556
 msgid "Server did not accept the 'PBSZ 0' command.\n"
-msgstr ""
+msgstr "Serveren accepterede ikke kommandoen ‚ÄúPBSZ 0‚Äù.\n"
 
 #: src/ftp.c:566
 #, c-format
 msgid "Server did not accept the 'PROT %c' command.\n"
-msgstr ""
+msgstr "Serveren accepterede ikke kommandoen ‚ÄúPROT %c‚Äù.\n"
 
 #: src/ftp.c:598
 msgid "Server error, can't determine system type.\n"
 msgstr "Serverfejl, kan ikke bestemme systemtype.\n"
 
-#: src/ftp.c:607 src/ftp.c:1099 src/ftp.c:1163 src/ftp.c:1206
+#: src/ftp.c:607 src/ftp.c:1106 src/ftp.c:1170 src/ftp.c:1213
 msgid "done.    "
-msgstr "fÊrdig.      "
+msgstr "f√¶rdig.      "
 
-#: src/ftp.c:710 src/ftp.c:982 src/ftp.c:1026 src/ftp.c:1308 src/ftp.c:1357
+#: src/ftp.c:710 src/ftp.c:989 src/ftp.c:1033 src/ftp.c:1315 src/ftp.c:1364
 msgid "done.\n"
-msgstr "O.k.\n"
+msgstr "OK.\n"
 
 #: src/ftp.c:737
 #, c-format
 msgid "Unknown type `%c', closing control connection.\n"
-msgstr "Ukendt type '%c', lukker kontrolforbindelsen.\n"
+msgstr "Ukendt type ‚Äú%c‚Äù, lukker kontrolforbindelsen.\n"
 
 #: src/ftp.c:749
 msgid "done.  "
-msgstr "O.k.    "
+msgstr "OK.    "
 
 #: src/ftp.c:755
 msgid "==> CWD not needed.\n"
-msgstr "==> CWD ikke n¯dvendig.\n"
+msgstr "==> CWD ikke n√∏dvendig.\n"
 
-#: src/ftp.c:939
+#: src/ftp.c:946
 msgid "Logically impossible section reached in getftp()"
-msgstr ""
+msgstr "getftp() er kommet til et logisk umuligt afsnit"
 
-#: src/ftp.c:940
+#: src/ftp.c:947
 #, c-format
 msgid ""
 "cwd_count: %d\n"
 "cwd_start: %d\n"
 "cwd_end: %d\n"
 msgstr ""
+"cwd_count: %d\n"
+"cwd_start: %d\n"
+"cwd_end: %d\n"
 
-#: src/ftp.c:970
+#: src/ftp.c:977
 #, c-format
 msgid ""
 "No such directory %s.\n"
@@ -544,37 +293,37 @@ msgstr ""
 "Intet katalog ved navn %s.\n"
 "\n"
 
-#: src/ftp.c:991
+#: src/ftp.c:998
 msgid "==> CWD not required.\n"
-msgstr "==> CWD ikke n¯dvendig.\n"
+msgstr "==> CWD ikke n√∏dvendig.\n"
 
-#: src/ftp.c:1034
+#: src/ftp.c:1041
 msgid "File has already been retrieved.\n"
 msgstr "Fil er allerede blevet hentet.\n"
 
-#: src/ftp.c:1070
+#: src/ftp.c:1077
 msgid "Cannot initiate PASV transfer.\n"
-msgstr "Kan ikke opsÊtte PASV-overf¯rsel.\n"
+msgstr "Kan ikke ops√¶tte PASV-overf√∏rsel.\n"
 
-#: src/ftp.c:1074
+#: src/ftp.c:1081
 msgid "Cannot parse PASV response.\n"
 msgstr "Kan ikke tolke PASV-tilbagemelding.\n"
 
-#: src/ftp.c:1091
+#: src/ftp.c:1098
 #, c-format
 msgid "couldn't connect to %s port %d: %s\n"
 msgstr "kunne ikke forbinde til %s port %d: %s\n"
 
-#: src/ftp.c:1145
+#: src/ftp.c:1152
 #, c-format
 msgid "Bind error (%s).\n"
 msgstr "Bind-fejl (%s).\n"
 
-#: src/ftp.c:1151
+#: src/ftp.c:1158
 msgid "Invalid PORT.\n"
 msgstr "Ugyldig PORT.\n"
 
-#: src/ftp.c:1197
+#: src/ftp.c:1204
 msgid ""
 "\n"
 "REST failed, starting from scratch.\n"
@@ -582,17 +331,17 @@ msgstr ""
 "\n"
 "Fejl ved REST, starter forfra.\n"
 
-#: src/ftp.c:1240
+#: src/ftp.c:1247
 #, c-format
 msgid "File %s exists.\n"
 msgstr "Filen %s findes.\n"
 
-#: src/ftp.c:1246
+#: src/ftp.c:1253
 #, c-format
 msgid "No such file %s.\n"
 msgstr "Ingen fil ved navn %s.\n"
 
-#: src/ftp.c:1296
+#: src/ftp.c:1303
 #, c-format
 msgid ""
 "No such file %s.\n"
@@ -601,7 +350,7 @@ msgstr ""
 "Ingen fil ved navn %s.\n"
 "\n"
 
-#: src/ftp.c:1346
+#: src/ftp.c:1353
 #, c-format
 msgid ""
 "No such file or directory %s.\n"
@@ -610,638 +359,665 @@ msgstr ""
 "Ingen fil eller katalog ved navn %s.\n"
 "\n"
 
-#: src/ftp.c:1505 src/http.c:2563
+#: src/ftp.c:1512 src/http.c:2597
 #, c-format
 msgid "%s has sprung into existence.\n"
-msgstr "%s er opstÂet.\n"
+msgstr "%s er opst√•et.\n"
 
-#: src/ftp.c:1594
+#: src/ftp.c:1601
 #, c-format
 msgid "%s: %s, closing control connection.\n"
 msgstr "%s: %s, lukker kontrolforbindelsen.\n"
 
-#: src/ftp.c:1606
+#: src/ftp.c:1613
 #, c-format
 msgid "%s (%s) - Data connection: %s; "
-msgstr "%s (%s) - dataforbindelse: %s; "
+msgstr "%s (%s) ‚Äî dataforbindelse: %s; "
 
-#: src/ftp.c:1621
+#: src/ftp.c:1628
 msgid "Control connection closed.\n"
 msgstr "Forbindelsen lukket.\n"
 
-#: src/ftp.c:1639
+#: src/ftp.c:1646
 msgid "Data transfer aborted.\n"
-msgstr "Dataoverf¯rsel afbrudt.\n"
+msgstr "Dataoverf√∏rsel afbrudt.\n"
 
-#: src/ftp.c:1863 src/main.c:1682
+#: src/ftp.c:1870 src/main.c:1691
 #, c-format
 msgid "File %s already there; not retrieving.\n"
 msgstr "Filen %s findes allerede, hentes ikke.\n"
 
-#: src/ftp.c:1948 src/http.c:4300
+#: src/ftp.c:1955 src/http.c:4364
 #, c-format
 msgid "(try:%2d)"
-msgstr "(fors¯g:%2d)"
+msgstr "(fors√∏g:%2d)"
 
-#: src/ftp.c:2039 src/http.c:4731
+#: src/ftp.c:2047 src/http.c:4794
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - skrevet til standard-udata %s[%s]\n"
+"%s (%s) ‚Äî skrevet til standard-uddata %s[%s]\n"
 "\n"
 
-#: src/ftp.c:2040 src/http.c:4732
+#: src/ftp.c:2048 src/http.c:4795
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - %s gemt [%s]\n"
+"%s (%s) ‚Äî %s gemt [%s]\n"
 "\n"
 
-#: src/ftp.c:2100 src/main.c:2172 src/metalink.c:1135 src/recur.c:511
-#: src/recur.c:749 src/retr.c:1309
+#: src/ftp.c:2108 src/main.c:2178 src/metalink.c:1133 src/recur.c:511
+#: src/recur.c:750 src/retr.c:1303
 #, c-format
 msgid "Removing %s.\n"
 msgstr "Fjerner %s.\n"
 
 # listing??
-#: src/ftp.c:2157
+#: src/ftp.c:2165
 #, c-format
 msgid "Using %s as listing tmp file.\n"
 msgstr "Bruger %s som midlertidig listefil.\n"
 
-#: src/ftp.c:2174
+#: src/ftp.c:2182
 #, c-format
 msgid "Removed %s.\n"
 msgstr "Slettede %s.\n"
 
-#: src/ftp.c:2213
+#: src/ftp.c:2221
 #, c-format
 msgid "Recursion depth %d exceeded max. depth %d.\n"
 msgstr "Rekursionsdybde %d overskred maksimal dybde %d.\n"
 
-#: src/ftp.c:2283
+#: src/ftp.c:2291
 #, c-format
 msgid "Remote file no newer than local file %s -- not retrieving.\n"
-msgstr "Fjernfil ikke nyere end lokal fil %s -- hentes ikke.\n"
+msgstr "Fjernfil ikke nyere end lokal fil %s ‚Äî hentes ikke.\n"
 
-#: src/ftp.c:2291
+#: src/ftp.c:2299
 #, c-format
 msgid ""
 "Remote file is newer than local file %s -- retrieving.\n"
 "\n"
 msgstr ""
-"Fjernfil er nyere end lokal fil %s -- hentes.\n"
+"Fjernfil er nyere end lokal fil %s ‚Äî hentes.\n"
 "\n"
 
-#: src/ftp.c:2298
+#: src/ftp.c:2306
 #, c-format
 msgid ""
 "The sizes do not match (local %s) -- retrieving.\n"
 "\n"
-msgstr "St¯rrelserne er forskellige (lokal %s) -- hentes.\n"
+msgstr ""
+"St√∏rrelserne er forskellige (lokal %s) ‚Äî hentes.\n"
+"\n"
 
-#: src/ftp.c:2316
+#: src/ftp.c:2324
 msgid "Invalid name of the symlink, skipping.\n"
-msgstr "Ugyldigt navn for symbolsk lÊnke, ignoreres.\n"
+msgstr "Ugyldigt navn for symbolsk l√¶nke, ignoreres.\n"
 
-#: src/ftp.c:2333
+#: src/ftp.c:2353
 #, c-format
 msgid ""
 "Already have correct symlink %s -> %s\n"
 "\n"
 msgstr ""
-"Har allerede gyldig symbolsk lÊnke %s -> %s\n"
+"Har allerede gyldig symbolsk l√¶nke %s -> %s\n"
 "\n"
 
-#: src/ftp.c:2342
+#: src/ftp.c:2362
 #, c-format
 msgid "Creating symlink %s -> %s\n"
-msgstr "Laver symbolsk lÊnke %s -> %s\n"
+msgstr "Laver symbolsk l√¶nke %s -> %s\n"
 
-#: src/ftp.c:2352
+#: src/ftp.c:2372
 #, c-format
 msgid "Symlinks not supported, skipping symlink %s.\n"
 msgstr ""
-"Symbolske lÊnker underst¯ttes ikke, ignorerer den symbolske lÊnke %s.\n"
+"Symbolske l√¶nker underst√∏ttes ikke, ignorerer den symbolske l√¶nke %s.\n"
 
-#: src/ftp.c:2367
+#: src/ftp.c:2387
 #, c-format
 msgid "Skipping directory %s.\n"
 msgstr "Ignorerer katalog %s.\n"
 
-#: src/ftp.c:2380
+#: src/ftp.c:2400
 #, c-format
 msgid "%s: unknown/unsupported file type.\n"
-msgstr "%s: filtypen er ukendt/ikke underst¯ttet.\n"
+msgstr "%s: filtypen er ukendt/ikke underst√∏ttet.\n"
 
-#: src/ftp.c:2404
-#, fuzzy, c-format
+#: src/ftp.c:2424
+#, c-format
 msgid "Failed to set permissions for %s.\n"
-msgstr "Kunne ikke fÂ certifikatn¯gle fra %s\n"
+msgstr "Kunne ikke angive rettigheder til %s.\n"
 
-#: src/ftp.c:2425
+#: src/ftp.c:2445
 #, c-format
 msgid "%s: corrupt time-stamp.\n"
 msgstr "%s: ugyldigt tidsstempel.\n"
 
-#: src/ftp.c:2449
+#: src/ftp.c:2469
 #, c-format
 msgid "Will not retrieve dirs since depth is %d (max %d).\n"
 msgstr "Henter ikke kataloger, da dybde er %d (max %d).\n"
 
-#: src/ftp.c:2500
+#: src/ftp.c:2528
 #, c-format
 msgid "Not descending to %s as it is excluded/not-included.\n"
 msgstr "Behandler ikke %s, da det er ekskluderet/ikke inkluderet.\n"
 
-#: src/ftp.c:2613
+#: src/ftp.c:2644
 #, c-format
 msgid "Rejecting %s.\n"
 msgstr "Afviser %s.\n"
 
-#: src/ftp.c:2623
-#, fuzzy, c-format
+#: src/ftp.c:2654
+#, c-format
 msgid "Rejecting %s (Invalid Entry).\n"
-msgstr "Afviser %s.\n"
+msgstr "Afviser %s (ugyldig indgang).\n"
 
-#: src/ftp.c:2631
-#, fuzzy, c-format
+#: src/ftp.c:2675
+#, c-format
 msgid "%s is excluded/not-included through regex.\n"
-msgstr "Behandler ikke %s, da det er ekskluderet/ikke inkluderet.\n"
+msgstr "%s ekskluderet/fravalgt med regex.\n"
 
-#: src/ftp.c:2645
+#: src/ftp.c:2695
 #, c-format
 msgid "Error matching %s against %s: %s\n"
 msgstr "Fejl ved sammenligning af %s med %s: %s\n"
 
-#: src/ftp.c:2685
+#: src/ftp.c:2735
 #, c-format
 msgid "No matches on pattern %s.\n"
-msgstr "Ingen trÊffere med m¯nsteret %s.\n"
+msgstr "Ingen tr√¶ffere med m√∏nsteret %s.\n"
 
-#: src/ftp.c:2757
+#: src/ftp.c:2807
 #, c-format
 msgid "Wrote HTML-ized index to %s [%s].\n"
 msgstr "Skrev HTML-formateret indeks til %s [%s].\n"
 
-#: src/ftp.c:2762
+#: src/ftp.c:2812
 #, c-format
 msgid "Wrote HTML-ized index to %s.\n"
 msgstr "Skrev HTML-formateret indeks til %s.\n"
 
-#: src/gnutls.c:119
+#: src/gnutls.c:133
 #, c-format
 msgid "ERROR: Cannot open directory %s.\n"
-msgstr "FEJL: Kan ikke Âbne katalog %s.\n"
+msgstr "FEJL: Kan ikke √•bne katalog %s.\n"
 
-#: src/gnutls.c:169
-#, fuzzy, c-format
+#: src/gnutls.c:179
+#, c-format
 msgid "ERROR: Failed to open cert %s: (%d).\n"
-msgstr "FEJL: Kan ikke Âbne katalog %s.\n"
-
-#: src/gnutls.c:174
-#, fuzzy, c-format
-msgid "Loaded CA certificate '%s'\n"
-msgstr "Kunne ikke indlÊse certifikater fra %s\n"
+msgstr "FEJL: Kan ikke √•bne certifikat %s: (%d).\n"
 
 #: src/gnutls.c:184
 #, c-format
-msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
-msgstr ""
+msgid "Loaded CA certificate '%s'\n"
+msgstr "CA-certifkatet ‚Äú%s‚Äù indl√¶st\n"
 
-#: src/gnutls.c:188
+#: src/gnutls.c:192
+#, c-format
+msgid "ERROR: Failed to load CRL file '%s': (%d)\n"
+msgstr "FEJL: Kunne ikke indl√¶se CRL-filen ‚Äú%s‚Äù: (%d)\n"
+
+#: src/gnutls.c:196
 #, c-format
 msgid "Loaded CRL file '%s'\n"
-msgstr ""
+msgstr "CRL-filen ‚Äú%s‚Äù indl√¶st\n"
 
-#: src/gnutls.c:212
+#: src/gnutls.c:220
 msgid "ERROR: GnuTLS requires the key and the cert to be of the same type.\n"
-msgstr ""
+msgstr "FEJL: GnuTLS kr√¶ver, at n√∏gle og certifikat er af samme type.\n"
 
-#: src/gnutls.c:664 src/gnutls.c:728
+#: src/gnutls.c:777 src/gnutls.c:841
 msgid "Your GnuTLS version is too old to support TLS 1.3\n"
-msgstr ""
+msgstr "Din GnuTLS-version er for gammel til at underst√∏tte TLS 1.3\n"
 
-#: src/gnutls.c:676
+#: src/gnutls.c:789
 #, c-format
 msgid "GnuTLS: unimplemented 'secure-protocol' option value %u\n"
 msgstr ""
+"GnuTLS: V√¶rdien %u for tilvalget ‚Äúsecure-protocol‚Äù er ikke implementeret\n"
 
-#: src/gnutls.c:678 src/gnutls.c:734 src/host.c:157 src/openssl.c:284
-#, fuzzy
+#: src/gnutls.c:791 src/gnutls.c:847 src/host.c:158 src/openssl.c:289
 msgid "Please report this issue to bug-wget@gnu.org\n"
-msgstr "RapportÈr venligst fejl og send sp¯rgsmÂl til <bug-wget@gnu.org>.\n"
+msgstr "Rapport√©r venligst denne fejl til bug-wget@gnu.org\n"
 
-#: src/gnutls.c:733
+#: src/gnutls.c:846
 #, c-format
 msgid "GnuTLS: unimplemented 'secure-protocol' option value %d\n"
 msgstr ""
+"GnuTLS: V√¶rdien %d for tilvalget ‚Äúsecure-protocol‚Äù er ikke implementeret\n"
 
-#: src/gnutls.c:786
+#: src/gnutls.c:899
 msgid ""
 "GnuTLS: Cannot set prio string directly. Falling back to default priority.\n"
 msgstr ""
+"GnuTLS: Kan ikke angive prio-streng direkte. Bruger standardprioriteten i "
+"stedet.\n"
 
-#: src/gnutls.c:914 src/openssl.c:825
+#: src/gnutls.c:1027 src/openssl.c:1037
 msgid "ERROR"
 msgstr "FEJL"
 
-#: src/gnutls.c:914 src/openssl.c:825
+#: src/gnutls.c:1027 src/openssl.c:1037
 msgid "WARNING"
 msgstr "ADVARSEL"
 
-#: src/gnutls.c:925 src/openssl.c:838
+#: src/gnutls.c:1038 src/openssl.c:1050
 #, c-format
 msgid "%s: No certificate presented by %s.\n"
-msgstr "%s: Intet certifikat prÊsenteret af %s.\n"
+msgstr "%s: Intet certifikat pr√¶senteret af %s.\n"
 
-#: src/gnutls.c:931
+#: src/gnutls.c:1044
 #, c-format
 msgid "%s: The certificate of %s is not trusted.\n"
 msgstr "%s: Certifikatet for %s er ikke betroet.\n"
 
-#: src/gnutls.c:932
-#, fuzzy, c-format
+#: src/gnutls.c:1045
+#, c-format
 msgid "%s: The certificate of %s doesn't have a known issuer.\n"
 msgstr "%s: Certifikatet for %s har ingen kendt udsteder.\n"
 
-#: src/gnutls.c:933
+#: src/gnutls.c:1046
 #, c-format
 msgid "%s: The certificate of %s has been revoked.\n"
 msgstr "%s: Certifikatet for %s er blevet tilbagekaldt.\n"
 
-#: src/gnutls.c:934
-#, fuzzy, c-format
+#: src/gnutls.c:1047
+#, c-format
 msgid "%s: The certificate signer of %s was not a CA.\n"
-msgstr "%s: Certifikatet for %s er ikke betroet.\n"
+msgstr ""
+"%s: Certifikatunderskriveren af %s var ikke en certifikatautoritet (CA).\n"
 
-#: src/gnutls.c:935
-#, fuzzy, c-format
+#: src/gnutls.c:1048
+#, c-format
 msgid "%s: The certificate of %s was signed using an insecure algorithm.\n"
-msgstr "%s: Certifikatet for %s har ingen kendt udsteder.\n"
+msgstr "%s: Certifikatet for %s er underskrevet med en usikker algoritme.\n"
 
-#: src/gnutls.c:936
-#, fuzzy, c-format
+#: src/gnutls.c:1049
+#, c-format
 msgid "%s: The certificate of %s is not yet activated.\n"
-msgstr "%s: Certifikatet for %s er ikke betroet.\n"
+msgstr "%s: Certifikatet for %s er endnu ikke aktiveret.\n"
 
-#: src/gnutls.c:937
-#, fuzzy, c-format
+#: src/gnutls.c:1050
+#, c-format
 msgid "%s: The certificate of %s has expired.\n"
-msgstr "%s: Certifikatet for %s er blevet tilbagekaldt.\n"
+msgstr "%s: Certifikatet for %s er udl√∏bet.\n"
 
-#: src/gnutls.c:949
+#: src/gnutls.c:1062
 #, c-format
 msgid "Error initializing X509 certificate: %s\n"
 msgstr "Fejl ved initialisering af X509-certifikat: %s\n"
 
-#: src/gnutls.c:958
+#: src/gnutls.c:1071
 msgid "No certificate found\n"
 msgstr "Intet certifikat fundet\n"
 
-#: src/gnutls.c:965
+#: src/gnutls.c:1078
 #, c-format
 msgid "Error parsing certificate: %s\n"
 msgstr "Fejl ved fortolkning af certifikat: %s\n"
 
-#: src/gnutls.c:972
+#: src/gnutls.c:1085
 msgid "The certificate has not yet been activated\n"
 msgstr "Certifikatet er endnu ikke blevet aktiveret\n"
 
-#: src/gnutls.c:977
+#: src/gnutls.c:1090
 msgid "The certificate has expired\n"
-msgstr "Certifikatet er udl¯bet\n"
+msgstr "Certifikatet er udl√∏bet\n"
 
-#: src/gnutls.c:984
+#: src/gnutls.c:1097
 #, c-format
 msgid "The certificate's owner does not match hostname %s\n"
-msgstr "Certifikatets ejer svarer ikke til vÊrtsnavnet %s\n"
+msgstr "Certifikatets ejer svarer ikke til v√¶rtsnavnet %s\n"
 
-#: src/gnutls.c:993 src/openssl.c:1034
+#: src/gnutls.c:1106 src/openssl.c:1246
 msgid "The public key does not match pinned public key!\n"
 msgstr ""
+"Den offentlige n√∏gle stemmer ikke med den fastholdte offentlige n√∏gle!\n"
 
-#: src/gnutls.c:1002
+#: src/gnutls.c:1115
 msgid "Certificate must be X.509\n"
-msgstr ""
+msgstr "Certifikat skal v√¶re X.509\n"
 
-#: src/host.c:156
+#: src/host.c:157
 msgid "Error in handling the address list.\n"
-msgstr ""
+msgstr "Fejl i behandling af adresselisten.\n"
 
-#: src/host.c:367
+#: src/host.c:368
 msgid "Unknown host"
-msgstr "Ukendt vÊrt"
+msgstr "Ukendt v√¶rt"
 
-#: src/host.c:849
+#: src/host.c:372
+msgid "Temporary failure in name resolution"
+msgstr "Midlertidig fejl i navneevaluering"
+
+#: src/host.c:374
+msgid "Unknown error"
+msgstr "Ukendt fejl"
+
+#: src/host.c:850
 #, c-format
 msgid "Resolving %s... "
-msgstr "L¯ser %s... "
+msgstr "L√∏ser %s ‚Ä¶ "
 
-#: src/host.c:925
+#: src/host.c:926
 msgid "failed: No IPv4/IPv6 addresses for host.\n"
-msgstr "mislykkedes: Ingen IPv4/IPv6-adresser for vÊrt.\n"
+msgstr "mislykkedes: Ingen IPv4/IPv6-adresser for v√¶rt.\n"
 
-#: src/host.c:955
+#: src/host.c:956
 msgid "failed: timed out.\n"
-msgstr "mislykkedes: tiden udl¯b.\n"
+msgstr "mislykkedes: tiden udl√∏b.\n"
 
-#: src/html-url.c:305
+#: src/html-url.c:306
 #, c-format
 msgid "%s: Cannot resolve incomplete link %s.\n"
-msgstr "%s: kan ikke l¯se ukomplet lÊnke %s.\n"
+msgstr "%s: kan ikke l√∏se ukomplet l√¶nke %s.\n"
 
-#: src/html-url.c:939
+#: src/html-url.c:944
 #, c-format
 msgid "%s: Invalid URL %s: %s\n"
 msgstr "%s: Ugyldig URL %s: %s\n"
 
-#: src/http.c:377
+#: src/http.c:380
 #, c-format
 msgid "Failed writing HTTP request: %s.\n"
-msgstr "Fejl ved skrivning af HTTP-foresp¯rgsel: %s.\n"
+msgstr "Fejl ved skrivning af HTTP-foresp√∏rgsel: %s.\n"
 
-#: src/http.c:793
+#: src/http.c:795
 msgid "No headers, assuming HTTP/0.9"
 msgstr "Ingen toptekster, antager HTTP/0.9"
 
-#: src/http.c:1623
+#: src/http.c:1637
 #, c-format
 msgid ""
 "File %s already there; not retrieving.\n"
 "\n"
-msgstr "Filen %s findes allerede, hentes ikke.\n"
-
-#: src/http.c:1833
-msgid "gmtime failed. This is probably a bug.\n"
 msgstr ""
+"Filen %s findes allerede, hentes ikke.\n"
+"\n"
 
-#: src/http.c:1894
+#: src/http.c:1834
+msgid "gmtime failed. This is probably a bug.\n"
+msgstr "gmtime mislykkedes. Dette er sandsynligvis en programfejl.\n"
+
+#: src/http.c:1918
 msgid ""
 "Cannot convert timestamp to http format. Falling back to time 0 as last "
 "modification time.\n"
 msgstr ""
+"Kan ikke konvertere tidsstempel til http-format. Bruger derfor 0 som sidste "
+"modifikationstidspunkt.\n"
 
-#: src/http.c:1998
-#, fuzzy, c-format
+#: src/http.c:2001
+#, c-format
 msgid "BODY data file %s missing: %s\n"
-msgstr "POST-datafil %s mangler: %s\n"
+msgstr "BODY-datafilen %s mangler: %s\n"
 
-#: src/http.c:2090
-#, fuzzy, c-format
+#: src/http.c:2093
+#, c-format
 msgid "Reusing existing connection to [%s]:%d.\n"
-msgstr "Genbruger eksisterende forbindelse til %s:%d.\n"
+msgstr "Genbruger eksisterende forbindelse til [%s]:%d.\n"
 
-#: src/http.c:2095
+#: src/http.c:2098
 #, c-format
 msgid "Reusing existing connection to %s:%d.\n"
 msgstr "Genbruger eksisterende forbindelse til %s:%d.\n"
 
-#: src/http.c:2161
+#: src/http.c:2164
 #, c-format
 msgid "Failed reading proxy response: %s\n"
-msgstr "Fejl ved lÊsning af svar fra proxy: %s\n"
+msgstr "Fejl ved l√¶sning af svar fra proxy: %s\n"
 
-#: src/http.c:2180 src/http.c:3419 src/http.c:4525
+#: src/http.c:2183 src/http.c:3460 src/http.c:4590
 #, c-format
 msgid "%s ERROR %d: %s.\n"
 msgstr "%s FEJL %d: %s.\n"
 
-#: src/http.c:2182 src/http.c:3421 src/http.c:3609
+#: src/http.c:2185 src/http.c:3462 src/http.c:3663
 msgid "Malformed status line"
 msgstr "Forkert udformet statuslinje"
 
-#: src/http.c:2193
+#: src/http.c:2196
 #, c-format
 msgid "Proxy tunneling failed: %s"
 msgstr "Proxytunnel slog fejl: %s"
 
-#: src/http.c:2429
+#: src/http.c:2460
 msgid "Unknown authentication scheme.\n"
 msgstr "Ukendt autorisations-protokol.\n"
 
-#: src/http.c:2447
-#, fuzzy, c-format
+#: src/http.c:2478
+#, c-format
 msgid "Authentication selected: %s\n"
-msgstr "Ukendt autorisations-protokol.\n"
+msgstr "Valgt autorisering: %s\n"
 
-#: src/http.c:2578
+#: src/http.c:2612
 #, c-format
 msgid "Saving to: %s\n"
 msgstr "Gemmer til: %s\n"
 
-#: src/http.c:2797
+#: src/http.c:2830
 #, c-format
 msgid ""
 "When downloading signature:\n"
 "%s: %s.\n"
 msgstr ""
+"Ved download af signatur:\n"
+"%s: %s.\n"
 
-#: src/http.c:2833
+#: src/http.c:2865
 msgid "Unable to read signature content from temporary file. Skipping.\n"
-msgstr ""
+msgstr "Kan ikke l√¶se signaturindhold fra midlertidig fil. Springer over.\n"
 
-#: src/http.c:2856
+#: src/http.c:2888
 msgid "Could not create temporary file. Skipping signature download.\n"
-msgstr ""
+msgstr "Kunne ikke oprette midlertidig fil. Springer signaturdownload over.\n"
 
-#: src/http.c:2890 src/http.c:2972
+#: src/http.c:2922 src/http.c:3004
 #, c-format
 msgid "Invalid pri value. Assuming %d.\n"
-msgstr ""
+msgstr "Ugyldig pri-v√¶rdi. Antager %d.\n"
 
-#: src/http.c:3076
+#: src/http.c:3118
 msgid ""
 "Could not find acceptable digest for Metalink resources.\n"
 "Ignoring them.\n"
 msgstr ""
+"Kunne ikke finde acceptabel hash til Metalink-ressourcer.\n"
+"Ignorerer dem.\n"
 
-#: src/http.c:3213
+#: src/http.c:3252
 msgid "Disabling SSL due to encountered errors.\n"
 msgstr "Deaktiverer SSL, da der opstod fejl.\n"
 
-#: src/http.c:3355
+#: src/http.c:3396
 #, c-format
 msgid "%s request sent, awaiting response... "
-msgstr "%s foresp¯rgsel sendt, afventer svar... "
+msgstr "%s foresp√∏rgsel sendt, afventer svar ‚Ä¶ "
 
-#: src/http.c:3395
+#: src/http.c:3436
 msgid "No data received.\n"
-msgstr "Ingen data modtaget\n"
+msgstr "Ingen data modtaget.\n"
 
-#: src/http.c:3401
+#: src/http.c:3442
 #, c-format
 msgid "Read error (%s) in headers.\n"
-msgstr "LÊsefejl (%s) i toptekster.\n"
+msgstr "L√¶sefejl (%s) i toptekster.\n"
 
-#: src/http.c:3611
+#: src/http.c:3665
 msgid "(no description)"
 msgstr "(ingen beskrivelse)"
 
-#: src/http.c:3799
+#: src/http.c:3859
 #, c-format
 msgid "Location: %s%s\n"
 msgstr "Sted: %s%s\n"
 
-#: src/http.c:3800 src/http.c:4040
+#: src/http.c:3860 src/http.c:4100
 msgid "unspecified"
 msgstr "uspecificeret"
 
-#: src/http.c:3801
+#: src/http.c:3861
 msgid " [following]"
 msgstr " [omdirigeret]"
 
-#: src/http.c:3883
+#: src/http.c:3943
 #, c-format
 msgid ""
 "File %s not modified on server. Omitting download.\n"
 "\n"
 msgstr ""
+"Filen %s er ikke √¶ndret p√• serveren. Henter ikke.\n"
+"\n"
 
-#: src/http.c:3956
+#: src/http.c:4016
 #, c-format
 msgid ""
 "Server ignored If-Modified-Since header for file %s.\n"
 "You might want to add --no-if-modified-since option.\n"
 "\n"
 msgstr ""
+"Serveren ignorerede If-Modified-Since-topteksten fra filen %s.\n"
+"Du kan m√•ske benytte tilvaget --no-if-modified-since.\n"
+"\n"
 
-#: src/http.c:3976
+#: src/http.c:4036
 msgid ""
 "\n"
 "    The file is already fully retrieved; nothing to do.\n"
 "\n"
 msgstr ""
 "\n"
-"    Filen er allerede fuldt overf¯rt; ingen handling n¯dvendig.\n"
+"    Filen er allerede fuldt overf√∏rt; ingen handling n√∏dvendig.\n"
 "\n"
 
-#: src/http.c:4020
+#: src/http.c:4080
 msgid "Length: "
-msgstr "LÊngde: "
+msgstr "L√¶ngde: "
 
-#: src/http.c:4040
+#: src/http.c:4100
 msgid "ignored"
 msgstr "ignoreret"
 
-#: src/http.c:4208
+#: src/http.c:4272
 msgid "Warning: wildcards not supported in HTTP.\n"
-msgstr "Advarsel: jokertegn ikke underst¯ttet i HTTP.\n"
+msgstr "Advarsel: jokertegn ikke underst√∏ttet i HTTP.\n"
 
-#: src/http.c:4290
+#: src/http.c:4354
 msgid "Spider mode enabled. Check if remote file exists.\n"
-msgstr "Edderkoptilstand aktiveret. KontrollÈr om fjernfilen findes.\n"
+msgstr "Edderkoptilstand aktiveret. Kontroll√©r om fjernfilen findes.\n"
 
-#: src/http.c:4380
+#: src/http.c:4447
 #, c-format
 msgid "Cannot write to %s (%s).\n"
 msgstr "Kan ikke skrive til %s (%s).\n"
 
-#: src/http.c:4404
+#: src/http.c:4469
 msgid "Required attribute missing from Header received.\n"
-msgstr ""
+msgstr "Der mangler en n√∏dvendig attribut fra modtagne toptekst.\n"
 
-#: src/http.c:4409
+#: src/http.c:4474
 msgid "Username/Password Authentication Failed.\n"
-msgstr ""
+msgstr "Godkendelse via brugernavn/adgangskode mislykkedes.\n"
 
-#: src/http.c:4415
-#, fuzzy
+#: src/http.c:4480
 msgid "Cannot write to WARC file.\n"
-msgstr "Kan ikke skrive til %s (%s).\n"
+msgstr "Kan ikke skrive til WARC-fil.\n"
 
-#: src/http.c:4421
-#, fuzzy
+#: src/http.c:4486
 msgid "Cannot write to temporary WARC file.\n"
-msgstr "Kan ikke skrive til %s (%s).\n"
+msgstr "Kan ikke skrive til midlertidig WARC-fil.\n"
 
-#: src/http.c:4426
+#: src/http.c:4491
 msgid "Unable to establish SSL connection.\n"
 msgstr "Kunne ikke etablere SSL-forbindelse.\n"
 
-#: src/http.c:4432
-#, fuzzy, c-format
+#: src/http.c:4497
+#, c-format
 msgid "Cannot unlink %s (%s).\n"
-msgstr "Kan ikke skrive til %s (%s).\n"
+msgstr "Kan ikke aflinke %s (%s).\n"
 
-#: src/http.c:4442
+#: src/http.c:4507
 #, c-format
 msgid "ERROR: Redirection (%d) without location.\n"
 msgstr "FEJL: Omdirigering (%d) uden nyt sted.\n"
 
-#: src/http.c:4464
+#: src/http.c:4529
 msgid ""
 "Could not find Metalink data in HTTP response. Downloading file using HTTP "
 "GET.\n"
 msgstr ""
+"Kunne ikke finde Metalink-data i HTTP-svar. Henter filen med HTTP GET.\n"
 
-#: src/http.c:4473
+#: src/http.c:4538
 msgid "Metalink headers found. Switching to Metalink mode.\n"
-msgstr ""
+msgstr "Fandt Metalink-toptekster. Skifter til Metalink-tilstand.\n"
 
-#: src/http.c:4514
+#: src/http.c:4579
 msgid "Remote file does not exist -- broken link!!!\n"
-msgstr "Fjernfilen findes ikke -- ¯delagt henvisning!!!\n"
+msgstr "Fjernfilen findes ikke ‚Äî √∏delagt henvisning!!!\n"
 
-#: src/http.c:4542
+#: src/http.c:4607
 msgid "Last-modified header missing -- time-stamps turned off.\n"
-msgstr "Last-modified toptekst mangler -- tidsstempling slÂs fra.\n"
+msgstr "Last-modified toptekst mangler ‚Äî tidsstempling sl√•s fra.\n"
 
-#: src/http.c:4550
+#: src/http.c:4615
 msgid "Last-modified header invalid -- time-stamp ignored.\n"
-msgstr "Last-modified toptekst ugyldig -- tidsstempel ignoreret.\n"
+msgstr "Last-modified toptekst ugyldig ‚Äî tidsstempel ignoreret.\n"
 
-#: src/http.c:4580
+#: src/http.c:4645
 #, c-format
 msgid ""
 "Server file no newer than local file %s -- not retrieving.\n"
 "\n"
 msgstr ""
-"Serverfil ikke nyere end lokal fil %s -- hentes ikke.\n"
+"Serverfil ikke nyere end lokal fil %s ‚Äî hentes ikke.\n"
 "\n"
 
-#: src/http.c:4588
+#: src/http.c:4653
 #, c-format
 msgid "The sizes do not match (local %s) -- retrieving.\n"
-msgstr "St¯rrelserne er forskellige (lokal %s) -- hentes.\n"
+msgstr "St√∏rrelserne er forskellige (lokal %s) ‚Äî hentes.\n"
 
-#: src/http.c:4597
+#: src/http.c:4662
 msgid "Remote file is newer, retrieving.\n"
-msgstr "Fil pÂ server er nyere - hentes.\n"
+msgstr "Fil p√• server er nyere ‚Äî hentes.\n"
 
-#: src/http.c:4615
+#: src/http.c:4680
 msgid ""
 "Remote file exists and could contain links to other resources -- "
 "retrieving.\n"
 "\n"
 msgstr ""
-"Fjernfil findes og kan indeholde henvisninger til andre ressourcer -- "
+"Fjernfil findes og kan indeholde henvisninger til andre ressourcer ‚Äî "
 "henter.\n"
 "\n"
 
-#: src/http.c:4621
+#: src/http.c:4686
 msgid ""
 "Remote file exists but does not contain any link -- not retrieving.\n"
 "\n"
 msgstr ""
-"Fjernfil findes, men indeholder ingen henvisninger -- henter ikke.\n"
+"Fjernfil findes, men indeholder ingen henvisninger ‚Äî henter ikke.\n"
 "\n"
 
-#: src/http.c:4630
+#: src/http.c:4695
 msgid ""
 "Remote file exists and could contain further links,\n"
 "but recursion is disabled -- not retrieving.\n"
 "\n"
 msgstr ""
-"Fjernfilen findes og indeholder mÂske yderligere henvisninger,\n"
-"men rekursion er deaktiveret - henter ikke.\n"
+"Fjernfilen findes og indeholder m√•ske yderligere henvisninger,\n"
+"men rekursion er deaktiveret ‚Äî henter ikke.\n"
 "\n"
 
-#: src/http.c:4636
+#: src/http.c:4701
 msgid ""
 "Remote file exists.\n"
 "\n"
@@ -1249,626 +1025,633 @@ msgstr ""
 "Fjernfilen findes.\n"
 "\n"
 
-#: src/http.c:4645
+#: src/http.c:4710
 #, c-format
 msgid "%s URL: %s %2d %s\n"
 msgstr "%s URL %s %2d %s\n"
 
-#: src/http.c:4695
+#: src/http.c:4758
 #, c-format
 msgid ""
 "%s (%s) - written to stdout %s[%s/%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - skrevet til standard-uddata %s[%s/%s]\n"
+"%s (%s) ‚Äî skrevet til standard-uddata %s[%s/%s]\n"
 "\n"
 
-#: src/http.c:4696
+#: src/http.c:4759
 #, c-format
 msgid ""
 "%s (%s) - %s saved [%s/%s]\n"
 "\n"
 msgstr ""
-"%s (%s) - %s gemt [%s/%s]\n"
+"%s (%s) ‚Äî %s gemt [%s/%s]\n"
 "\n"
 
-#: src/http.c:4757
+#: src/http.c:4825
 #, c-format
 msgid "%s (%s) - Connection closed at byte %s. "
-msgstr "%s (%s) - Forbindelse lukket ved byte %s. "
+msgstr "%s (%s) ‚Äî Forbindelse lukket ved byte %s. "
 
-#: src/http.c:4780
+#: src/http.c:4848
 #, c-format
 msgid "%s (%s) - Read error at byte %s (%s)."
-msgstr "%s (%s) - LÊsefejl ved byte %s (%s)."
+msgstr "%s (%s) ‚Äî L√¶sefejl ved byte %s (%s)."
 
-#: src/http.c:4789
+#: src/http.c:4857
 #, c-format
 msgid "%s (%s) - Read error at byte %s/%s (%s). "
-msgstr "%s (%s) - LÊsefejl ved byte %s/%s (%s). "
+msgstr "%s (%s) ‚Äî L√¶sefejl ved byte %s/%s (%s). "
 
-#: src/http.c:5027
+#: src/http.c:5114
 #, c-format
 msgid "Unsupported quality of protection '%s'.\n"
-msgstr ""
+msgstr "Beskyttelseskvalitet ‚Äú%s‚Äù er ikke underst√∏ttet.\n"
 
-# scheme?
-#: src/http.c:5032
-#, fuzzy, c-format
+#: src/http.c:5119
+#, c-format
 msgid "Unsupported algorithm '%s'.\n"
-msgstr "Ikke-underst¯ttet skema %s"
+msgstr "Algoritmen ‚Äú%s‚Äù er ikke underst√∏ttet.\n"
 
-#: src/init.c:579
-#, fuzzy, c-format
+#: src/init.c:583
+#, c-format
 msgid ""
 "%s: WGETRC points to %s, which couldn't be accessed because of error: %s.\n"
-msgstr "%s: WGETRC peger pÂ %s, som ikke findes.\n"
+msgstr ""
+"%s: WGETRC peger p√• %s, som ikke kunne tilg√•s p√• grund af fejlen: %s.\n"
 
-#: src/init.c:678 src/netrc.c:452
+#: src/init.c:695 src/netrc.c:456
 #, c-format
 msgid "%s: Cannot read %s (%s).\n"
-msgstr "%s: Kan ikke lÊse %s (%s).\n"
+msgstr "%s: Kan ikke l√¶se %s (%s).\n"
 
-#: src/init.c:695
+#: src/init.c:712
 #, c-format
 msgid "%s: Error in %s at line %d.\n"
-msgstr "%s: Fejl i %s pÂ linje %d.\n"
+msgstr "%s: Fejl i %s p√• linje %d.\n"
 
-#: src/init.c:701
+#: src/init.c:718
 #, c-format
 msgid "%s: Syntax error in %s at line %d.\n"
-msgstr "%s: Syntaksfejl i %s pÂ linje %d.\n"
+msgstr "%s: Syntaksfejl i %s p√• linje %d.\n"
 
-#: src/init.c:706
+#: src/init.c:723
 #, c-format
 msgid "%s: Unknown command %s in %s at line %d.\n"
-msgstr "%s: Ukendt kommando %s i %s pÂ linje %d.\n"
+msgstr "%s: Ukendt kommando %s i %s p√• linje %d.\n"
 
-#: src/init.c:745
+#: src/init.c:762
 #, c-format
 msgid ""
 "Parsing system wgetrc file (env SYSTEM_WGETRC) failed.  Please check\n"
 "'%s',\n"
 "or specify a different file using --config.\n"
 msgstr ""
+"Fortolkning af systemets wgetrc-fil (env SYSTEM_WGETRC) mislykkedes.  "
+"Kontroll√©r\n"
+"‚Äú%s‚Äù\n"
+"eller angiv en anden fil ved hj√¶lp af --config.\n"
 
-#: src/init.c:760
+#: src/init.c:777
 #, c-format
 msgid ""
 "Parsing system wgetrc file failed.  Please check\n"
 "'%s',\n"
 "or specify a different file using --config.\n"
 msgstr ""
+"Fortolkning af systemets wgetrc-fil mislykkedes.  Kontroll√©r\n"
+"‚Äú%s‚Äù\n"
+"eller angiv en anden fil ved hj√¶lp af --config.\n"
 
-#: src/init.c:776
+#: src/init.c:793
 #, c-format
 msgid "%s: Warning: Both system and user wgetrc point to %s.\n"
-msgstr "%s: Advarsel: BÂde systemets og brugerens wgetrc peger pÂ %s.\n"
+msgstr "%s: Advarsel: B√•de systemets og brugerens wgetrc peger p√• %s.\n"
 
-#: src/init.c:977
+#: src/init.c:1006
 #, c-format
 msgid "%s: Invalid --execute command %s\n"
 msgstr "%s: Ugyldig kommando %s til --execute\n"
 
-#: src/init.c:1037
+#: src/init.c:1066
 #, c-format
 msgid "%s: %s: Invalid boolean %s; use `on' or `off'.\n"
-msgstr "%s: %s: Ugyldig boolesk variabel %s; brug 'on' eller 'off'.\n"
+msgstr "%s: %s: Ugyldig boolesk variabel %s; brug ‚Äúon‚Äù eller ‚Äúoff‚Äù.\n"
 
-#: src/init.c:1070
-#, fuzzy, c-format
+#: src/init.c:1099
+#, c-format
 msgid "%s: %s: Invalid %s; use `on', `off' or `quiet'.\n"
-msgstr "%s: %s: Ugyldig boolesk variabel %s; brug 'on' eller 'off'.\n"
+msgstr "%s: %s: Ugyldig %s; brug ‚Äúon‚Äù, ‚Äúoff‚Äù eller ‚Äúquiet‚Äù.\n"
 
-#: src/init.c:1090
+#: src/init.c:1119
 #, c-format
 msgid "%s: %s: Invalid number %s.\n"
 msgstr "%s: %s: Ugyldigt tal %s.\n"
 
-#: src/init.c:1172
+#: src/init.c:1201
 #, c-format
 msgid "%s: %s must only be used once\n"
-msgstr ""
+msgstr "%s: %s m√• kun bruges √©n gang\n"
 
-#: src/init.c:1327 src/init.c:1348
+#: src/init.c:1356 src/init.c:1377
 #, c-format
 msgid "%s: %s: Invalid byte value %s\n"
-msgstr "%s: %s: Ugyldig bytevÊrdi %s\n"
+msgstr "%s: %s: Ugyldig bytev√¶rdi %s\n"
 
-#: src/init.c:1373
+#: src/init.c:1402
 #, c-format
 msgid "%s: %s: Invalid time period %s\n"
 msgstr "%s: %s: Ugyldig tidsperiode %s\n"
 
-#: src/init.c:1435 src/main.c:1912
+#: src/init.c:1443
+#, c-format
+msgid "%s: %s: Negative time period %s\n"
+msgstr "%s: %s: Negativ tidsperiode %s\n"
+
+#: src/init.c:1471 src/main.c:1927
 #, c-format
 msgid ""
 "use-askpass requires a string or either environment variable WGET_ASKPASS or "
 "SSH_ASKPASS to be set.\n"
 msgstr ""
+"use-askpass kr√¶ver angivelse af en streng eller en af de to milj√∏variable "
+"WGET_ASKPASS og SSH_ASKPASS.\n"
 
-#: src/init.c:1453 src/init.c:1475 src/init.c:1583 src/init.c:1639
-#: src/init.c:1705 src/init.c:1725 src/init.c:1750
+#: src/init.c:1489 src/init.c:1511 src/init.c:1619 src/init.c:1675
+#: src/init.c:1741 src/init.c:1762 src/init.c:1787
 #, c-format
 msgid "%s: %s: Invalid value %s.\n"
-msgstr "%s: %s: Ugyldig vÊrdi %s.\n"
+msgstr "%s: %s: Ugyldig v√¶rdi %s.\n"
 
-#: src/init.c:1509
+#: src/init.c:1545
 #, c-format
 msgid "%s: %s: Invalid header %s.\n"
 msgstr "%s: %s: Ugyldig toptekst %s.\n"
 
-#: src/init.c:1530
-#, fuzzy, c-format
+#: src/init.c:1566
+#, c-format
 msgid "%s: %s: Invalid WARC header %s.\n"
-msgstr "%s: %s: Ugyldig toptekst %s.\n"
+msgstr "%s: %s: Ugyldig WARC-toptekst %s.\n"
 
-#: src/init.c:1596
+#: src/init.c:1632
 #, c-format
 msgid "%s: %s: Invalid progress type %s.\n"
-msgstr "%s: %s: Ugyldig fremskridtstype %s\n"
+msgstr "%s: %s: Ugyldig fremskridtstype %s.\n"
 
-#: src/init.c:1678
-#, fuzzy, c-format
+#: src/init.c:1714
+#, c-format
 msgid ""
 "%s: %s: Invalid restriction %s,\n"
 "    use [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 msgstr ""
-"%s: %s: Ugyldig restriktion %s,\n"
-"    brug [unix|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
+"%s: %s: Ugyldig begr√¶nsning %s,\n"
+"    brug [unix|vms|windows],[lowercase|uppercase],[nocontrol],[ascii].\n"
 
-#: src/iri.c:113
+#: src/iri.c:114
 #, c-format
 msgid "Encoding %s isn't valid\n"
 msgstr "Kodningen %s er ikke gyldig\n"
 
-#: src/iri.c:139 src/url.c:1570
+#: src/iri.c:140 src/url.c:1612
 #, c-format
 msgid "Conversion from %s to %s isn't supported\n"
-msgstr "Konvertering fra %s til %s underst¯ttes ikke\n"
+msgstr "Konvertering fra %s til %s underst√∏ttes ikke\n"
 
-#: src/iri.c:179 src/url.c:1600
+#: src/iri.c:180 src/url.c:1642
 msgid "Incomplete or invalid multibyte sequence encountered\n"
-msgstr "UfuldstÊndig eller ugyldig flerbytesekvens fundet\n"
+msgstr "Ufuldst√¶ndig eller ugyldig flerbytesekvens fundet\n"
 
-#: src/iri.c:198 src/url.c:1617
+#: src/iri.c:200 src/url.c:1659
 #, c-format
 msgid "Unhandled errno %d\n"
 msgstr "Ubehandlet fejlnr %d\n"
 
-#: src/iri.c:235
+#: src/iri.c:237
 msgid "locale_to_utf8: locale is unset\n"
 msgstr "locale_to_utf8: regionsinformation (locale) er ikke angivet\n"
 
-#: src/iri.c:281 src/iri.c:296
+#: src/iri.c:283 src/iri.c:298
 #, c-format
 msgid "idn_encode failed (%d): %s\n"
 msgstr "idn_encode mislykkedes (%d): %s\n"
 
-#: src/iri.c:288
-#, fuzzy, c-format
+# lower case ~ sm√• bogstaver velsagtens?  Det er en meningsfuld fejl i forbindelse med unicode-kodning
+#: src/iri.c:290
+#, c-format
 msgid "Failed to convert to lower: %d: %s\n"
-msgstr "kunne ikke forbinde til %s port %d: %s\n"
+msgstr "Kunne ikke konvertere til sm√•: %d: %s\n"
 
-#: src/log.c:931 src/log.c:950
-#, fuzzy, c-format
+#: src/log.c:938 src/log.c:957
+#, c-format
 msgid ""
 "\n"
 "Redirecting output to %s.\n"
 msgstr ""
 "\n"
-"%s modtaget, omdirigerer udskrift til %s.\n"
+"Omdirigerer udskrift til %s.\n"
 
-#: src/log.c:943
+#: src/log.c:950
 #, c-format
 msgid "%s: %s; disabling logging.\n"
 msgstr "%s: %s; deaktiverer logning.\n"
 
-#: src/main.c:577
+#: src/main.c:574
 #, c-format
 msgid "Usage: %s [OPTION]... [URL]...\n"
-msgstr "Brug: %s [FLAG]... [URL]...\n"
+msgstr "Brug: %s [FLAG] ‚Ä¶ [URL] ‚Ä¶\n"
 
-#: src/main.c:593
+#: src/main.c:590
 msgid ""
 "Mandatory arguments to long options are mandatory for short options too.\n"
 "\n"
 msgstr ""
-"Obligatoriske argumenter til lange flag er obligatoriske ogsÂ for korte.\n"
+"Obligatoriske argumenter til lange flag er obligatoriske ogs√• for korte.\n"
 "\n"
 
-#: src/main.c:595
+#: src/main.c:592
 msgid "Startup:\n"
 msgstr "Opstart:\n"
 
-#: src/main.c:597
-#, fuzzy
+#: src/main.c:594
 msgid ""
 "  -V,  --version                   display the version of Wget and exit\n"
-msgstr "  -V,  --version           vis versionen af Wget og afslut.\n"
+msgstr "  -V,  --version                   vis versionen af Wget og afslut\n"
 
-#: src/main.c:599
-#, fuzzy
+#: src/main.c:596
 msgid "  -h,  --help                      print this help\n"
-msgstr "  -h,  --help              udskriv denne hjÊlp.\n"
+msgstr "  -h,  --help                      udskriv denne hj√¶lp\n"
 
-#: src/main.c:601
-#, fuzzy
+#: src/main.c:598
 msgid "  -b,  --background                go to background after startup\n"
-msgstr "  -b,  --background        gÂ i baggrunden efter opstart.\n"
+msgstr "  -b,  --background                g√• i baggrunden efter opstart\n"
 
-#: src/main.c:603
-#, fuzzy
+#: src/main.c:600
 msgid "  -e,  --execute=COMMAND           execute a `.wgetrc'-style command\n"
-msgstr "  -e,  --execute=KOMMANDO  k¯r en kommando i stil med '.wgetrc'.\n"
+msgstr ""
+"  -e,  --execute=KOMMANDO          k√∏r en kommando i stil med ‚Äú.wgetrc‚Äù\n"
 
-#: src/main.c:607
+#: src/main.c:604
 msgid "Logging and input file:\n"
 msgstr "Logning og inddatafil:\n"
 
-#: src/main.c:609
-#, fuzzy
+#: src/main.c:606
 msgid "  -o,  --output-file=FILE          log messages to FILE\n"
-msgstr "  -o,  --output-file=FIL     log meddelelser til FIL.\n"
+msgstr "  -o,  --output-file=FIL           log meddelelser til FIL\n"
+
+#: src/main.c:608
+msgid "  -a,  --append-output=FILE        append messages to FILE\n"
+msgstr "  -a,  --append-output=FIL         tilf√∏j meddelelser til FIL\n"
 
 #: src/main.c:611
-#, fuzzy
-msgid "  -a,  --append-output=FILE        append messages to FILE\n"
-msgstr "  -a,  --append-output=FIL   tilf¯j meddelelser til FIL.\n"
-
-#: src/main.c:614
-#, fuzzy
 msgid ""
 "  -d,  --debug                     print lots of debugging information\n"
 msgstr ""
-"  -d,  --debug               udskriv masser af fejls¯gningsinformation.\n"
+"  -d,  --debug                     udskriv masser af "
+"fejls√∏gningsinformation\n"
 
-#: src/main.c:618
-#, fuzzy
+#: src/main.c:615
 msgid "       --wdebug                    print Watt-32 debug output\n"
 msgstr ""
-"       --wdebug              udskriv Watt-32-fejls¯gningsinformation.\n"
+"       --wdebug                    udskriv Watt-32-fejls√∏gningsinformation\n"
 
-#: src/main.c:621
-#, fuzzy
+#: src/main.c:618
 msgid "  -q,  --quiet                     quiet (no output)\n"
-msgstr "  -q,  --quiet               stilhed (ingen udskrift).\n"
+msgstr "  -q,  --quiet                     stilhed (ingen udskrift)\n"
 
-#: src/main.c:623
-#, fuzzy
+#: src/main.c:620
 msgid "  -v,  --verbose                   be verbose (this is the default)\n"
-msgstr ""
-"  -v,  --verbose             uddybende udskrift (dette er standardvalget).\n"
+msgstr "  -v,  --verbose                   uddybende udskrift (standard)\n"
 
-#: src/main.c:625
-#, fuzzy
+#: src/main.c:622
 msgid ""
 "  -nv, --no-verbose                turn off verboseness, without being "
 "quiet\n"
 msgstr ""
-"  -nv, --no-verbose          vÊre mindre uddybende, men ikke helt stille.\n"
+"  -nv, --no-verbose                v√¶r mindre uddybende, men ikke helt "
+"stille\n"
 
-#: src/main.c:627
+#: src/main.c:624
 msgid ""
 "       --report-speed=TYPE         output bandwidth as TYPE.  TYPE can be "
 "bits\n"
 msgstr ""
+"       --report-speed=TYPE         vis b√•ndbredde som TYPE.  TYPE kan v√¶re "
+"bits\n"
 
-#: src/main.c:629
-#, fuzzy
+#: src/main.c:626
 msgid ""
 "  -i,  --input-file=FILE           download URLs found in local or external "
 "FILE\n"
 msgstr ""
-"  -i,  --input-file=FILE     hent URL'er fra den lokale eller eksterne FIL.\n"
+"  -i,  --input-file=FIL            hent URL'er fra den lokale eller eksterne "
+"FIL\n"
 
-#: src/main.c:632
-#, fuzzy
+#: src/main.c:629
 msgid ""
 "       --input-metalink=FILE       download files covered in local Metalink "
 "FILE\n"
 msgstr ""
-"  -i,  --input-file=FILE     hent URL'er fra den lokale eller eksterne FIL.\n"
+"       --input-metalink=FIL        hent filer d√¶kket af lokal Metalink-FIL\n"
 
-#: src/main.c:635
-#, fuzzy
+#: src/main.c:632
 msgid "  -F,  --force-html                treat input file as HTML\n"
-msgstr "  -F,  --force-html          behandl inddatafilen som HTML.\n"
+msgstr "  -F,  --force-html                behandl inddatafilen som HTML\n"
 
-#: src/main.c:637
-#, fuzzy
+#: src/main.c:634
 msgid ""
 "  -B,  --base=URL                  resolves HTML input-file links (-i -F)\n"
 "                                     relative to URL\n"
 msgstr ""
-"  -B,  --base=URL            evaluerer henvisninger i HTML-inddatafil (-i -"
-"F)\n"
-"                             relativt til URL.\n"
+"  -B,  --base=URL                  evaluerer henvisninger i HTML-inddatafil\n"
+"                                     (-i -F) relativt til URL\n"
 
-#: src/main.c:640
-#, fuzzy
+#: src/main.c:637
 msgid "       --config=FILE               specify config file to use\n"
-msgstr "       --no-cookies            brug ikke cookies.\n"
+msgstr ""
+"       --config=FIL                angiv konfigurationsfilen, der skal "
+"bruges\n"
 
-#: src/main.c:642
-#, fuzzy
+#: src/main.c:639
 msgid "       --no-config                 do not read any config file\n"
-msgstr "       --no-cookies            brug ikke cookies.\n"
+msgstr "       --no-config                 l√¶s ikke nogen konfigurationsfil\n"
 
-#: src/main.c:644
+#: src/main.c:641
 msgid ""
 "       --rejected-log=FILE         log reasons for URL rejection to FILE\n"
 msgstr ""
+"       --rejected-log=FIL          log √•rsager til afvisning af URL'er i "
+"FIL\n"
 
-#: src/main.c:648
+#: src/main.c:645
 msgid "Download:\n"
 msgstr "Download:\n"
 
-#: src/main.c:650
-#, fuzzy
+#: src/main.c:647
 msgid ""
 "  -t,  --tries=NUMBER              set number of retries to NUMBER (0 "
 "unlimits)\n"
 msgstr ""
-"  -t,  --tries=ANTAL             sÊt antal fors¯g til ANTAL (0 for "
-"ubegrÊnset)\n"
+"  -t,  --tries=ANTAL               s√¶t antal fors√∏g til ANTAL (0 er "
+"ubegr√¶nset)\n"
 
-#: src/main.c:652
-#, fuzzy
+#: src/main.c:649
 msgid ""
 "       --retry-connrefused         retry even if connection is refused\n"
 msgstr ""
-"       --retry-connrefused       fors¯g igen selv hvis forbindelse nÊgtes.\n"
+"       --retry-connrefused         fors√∏g igen selv hvis forbindelse n√¶gtes\n"
 
-#: src/main.c:654
-#, fuzzy
+#: src/main.c:651
+msgid ""
+"       --retry-on-host-error       consider host errors as non-fatal, "
+"transient errors\n"
+msgstr ""
+"       --retry-on-host-error       betragt v√¶rtsfejl som ikke-fatale "
+"forbig√•ende fejl\n"
+
+#: src/main.c:653
 msgid ""
 "       --retry-on-http-error=ERRORS    comma-separated list of HTTP errors "
 "to retry\n"
 msgstr ""
-"       --ignore-tags=LISTE         kommaadskilt liste af HTML-mÊrker, der\n"
-"                                   ignoreres.\n"
+"       --retry-on-http-error=FEJL      kommaadskilt liste over HTTP-fejl som "
+"skal pr√∏ves igen\n"
 
-#: src/main.c:656
-#, fuzzy
+#: src/main.c:655
 msgid "  -O,  --output-document=FILE      write documents to FILE\n"
-msgstr "  -O,  --output-document=FIL     skriv dokumenter til FIL.\n"
+msgstr "  -O,  --output-document=FIL       skriv dokumenter til FIL\n"
 
-#: src/main.c:658
-#, fuzzy
+#: src/main.c:657
 msgid ""
 "  -nc, --no-clobber                skip downloads that would download to\n"
 "                                     existing files (overwriting them)\n"
 msgstr ""
-"  -nc, --no-clobber              hent ikke filer, der ville blive lagret pÂ\n"
-"                                 eksisterende filer.\n"
+"  -nc, --no-clobber                hent ikke filer, der ville blive lagret "
+"p√•\n"
+"                                     (og overskrive) eksisterende filer\n"
 
-#: src/main.c:661
-#, fuzzy
+#: src/main.c:660
 msgid ""
 "       --no-netrc                  don't try to obtain credentials from ."
 "netrc\n"
-msgstr "  -np, --no-parent                 gÂ ikke op til ophavskataloget.\n"
+msgstr ""
+"       --no-netrc                  hent ikke legitimationsoplysninger fra ."
+"netrc\n"
 
-#: src/main.c:663
-#, fuzzy
+#: src/main.c:662
 msgid ""
 "  -c,  --continue                  resume getting a partially-downloaded "
 "file\n"
 msgstr ""
-"  -c,  --continue                genoptag hentning af en delvis hentet fil.\n"
+"  -c,  --continue                  genoptag hentning af en delvis hentet "
+"fil\n"
 
-#: src/main.c:665
+#: src/main.c:664
 msgid ""
 "       --start-pos=OFFSET          start downloading from zero-based "
 "position OFFSET\n"
 msgstr ""
+"       --start-pos=POSITION        start med at hente fra POSITION talt fra "
+"nul\n"
 
-#: src/main.c:667
-#, fuzzy
+#: src/main.c:666
 msgid "       --progress=TYPE             select progress gauge type\n"
-msgstr "       --progress=TYPE           vÊlg angivelsesmÂde af fremgang.\n"
+msgstr "       --progress=TYPE             v√¶lg angivelsesm√•de af fremgang\n"
 
-#: src/main.c:669
-#, fuzzy
+#: src/main.c:668
 msgid ""
 "       --show-progress             display the progress bar in any verbosity "
 "mode\n"
-msgstr "       --progress=TYPE           vÊlg angivelsesmÂde af fremgang.\n"
+msgstr ""
+"       --show-progress             vis fremgang uanset √∏vrig "
+"uddybningstilstand\n"
 
-#: src/main.c:671
-#, fuzzy
+#: src/main.c:670
 msgid ""
 "  -N,  --timestamping              don't re-retrieve files unless newer "
 "than\n"
 "                                     local\n"
 msgstr ""
-"  -N,  --timestamping            hent ikke filer igen, med mindre de er "
+"  -N,  --timestamping              hent ikke filer igen, med mindre de er "
 "nyere\n"
-"                                 end den lokale.\n"
+"                                     end lokale\n"
 
-#: src/main.c:674
+#: src/main.c:673
 msgid ""
 "       --no-if-modified-since      don't use conditional if-modified-since "
 "get\n"
 "                                     requests in timestamping mode\n"
 msgstr ""
+"       --no-if-modified-since      brug ikke get-anmodninger med ‚Äúhvis "
+"√¶ndret\n"
+"                                     siden‚Äù-betingelser i "
+"tidsstempeltilstand\n"
 
-#: src/main.c:677
-#, fuzzy
+#: src/main.c:676
 msgid ""
 "       --no-use-server-timestamps  don't set the local file's timestamp by\n"
 "                                     the one on the server\n"
 msgstr ""
-"  --no-use-server-timestamps     sÊt ikke den lokale fils tidsstempel til\n"
-"                                 den pÂ serveren.\n"
+"       --no-use-server-timestamps  s√¶t ikke den lokale fils tidsstempel til\n"
+"                                     det p√• serveren\n"
 
-#: src/main.c:680
-#, fuzzy
+#: src/main.c:679
 msgid "  -S,  --server-response           print server response\n"
-msgstr "  -S,  --server-response         udskriv svar fra server.\n"
+msgstr "  -S,  --server-response           udskriv svar fra server\n"
 
-#: src/main.c:682
-#, fuzzy
+#: src/main.c:681
 msgid "       --spider                    don't download anything\n"
-msgstr "       --spider                  hent intet.\n"
+msgstr "       --spider                    hent intet\n"
 
-#: src/main.c:684
-#, fuzzy
+#: src/main.c:683
 msgid "  -T,  --timeout=SECONDS           set all timeout values to SECONDS\n"
 msgstr ""
-"  -T,  --timeout=SEKUNDER        sÊt alle vÊrdier for tidsudl¯b til "
-"SEKUNDER.\n"
+"  -T,  --timeout=SEKUNDER          s√¶t alle v√¶rdier for tidsudl√∏b til "
+"SEKUNDER\n"
 
-#: src/main.c:687
+#: src/main.c:686
 msgid ""
 "       --dns-servers=ADDRESSES     list of DNS servers to query (comma "
 "separated)\n"
 msgstr ""
+"       --dns-servers=ADRESSER      liste over DNS-servere til foresp√∏rgsler "
+"(kommaadskilt)\n"
 
-#: src/main.c:689
-#, fuzzy
+#: src/main.c:688
 msgid ""
 "       --bind-dns-address=ADDRESS  bind DNS resolver to ADDRESS (hostname or "
 "IP) on local host\n"
 msgstr ""
-"       --bind-address=ADRESSE    bind til ADRESSE (vÊrtsnavn eller IP) pÂ "
-"lokal\n"
-"                                 vÊrt.\n"
+"       --bind-dns-address=ADRESSE  bind DNS til ADRESSE (v√¶rtsnavn eller IP) "
+"p√• lokal v√¶rt\n"
 
-#: src/main.c:692
-#, fuzzy
+#: src/main.c:691
 msgid "       --dns-timeout=SECS          set the DNS lookup timeout to SECS\n"
 msgstr ""
-"       --dns-timeout=SEKUNDER    sÊt tidsudl¯b for DNS-opslag til SEKUNDER\n"
+"       --dns-timeout=SEKUNDER      s√¶t tidsudl√∏b for DNS-opslag til "
+"SEKUNDER\n"
 
-#: src/main.c:694
-#, fuzzy
+#: src/main.c:693
 msgid "       --connect-timeout=SECS      set the connect timeout to SECS\n"
 msgstr ""
-"       --connect-timeout=SEKUNDER  sÊt tidsudl¯b for forbindelse til "
-"SEKUNDER.\n"
+"       --connect-timeout=SEKUNDER  s√¶t tidsudl√∏b for forbindelse til "
+"SEKUNDER\n"
 
-#: src/main.c:696
-#, fuzzy
+#: src/main.c:695
 msgid "       --read-timeout=SECS         set the read timeout to SECS\n"
 msgstr ""
-"       --read-timeout=SEKUNDER   sÊt tidsudl¯b for lÊsning til SEKUNDER.\n"
+"       --read-timeout=SEKUNDER     s√¶t tidsudl√∏b for l√¶sning til SEKUNDER\n"
 
-#: src/main.c:698
-#, fuzzy
-msgid "  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
-msgstr "  -w,  --wait=SEKUNDER           vent SEKUNDER mellem hentninger.\n"
+#: src/main.c:697
+msgid ""
+"  -w,  --wait=SECONDS              wait SECONDS between retrievals\n"
+"                                     (applies if more then 1 URL is to be "
+"retrieved)\n"
+msgstr ""
+"  -w,  --wait=SEKUNDER             vent SEKUNDER mellem henteforesp√∏rgsler\n"
+"                                     (g√¶lder hvis mere end √©n URL skal "
+"hentes)\n"
 
 #: src/main.c:700
-#, fuzzy
 msgid ""
 "       --waitretry=SECONDS         wait 1..SECONDS between retries of a "
 "retrieval\n"
+"                                     (applies if more then 1 URL is to be "
+"retrieved)\n"
 msgstr ""
-"       --waitretry=SEKUNDER      vent 1..SEKUNDER mellem gentagelsesfors¯g "
-"pÂ\n"
-"                                 at hente.\n"
+"       --waitretry=SEKUNDER        vent 1..SEKUNDER mellem gentagelsesfors√∏g "
+"p√•\n"
+"                                     at hente (g√¶lder, hvis der skal hentes "
+"mere\n"
+"                                     end √©n URL)\n"
 
-#: src/main.c:702
-#, fuzzy
+#: src/main.c:703
 msgid ""
 "       --random-wait               wait from 0.5*WAIT...1.5*WAIT secs "
 "between retrievals\n"
+"                                     (applies if more then 1 URL is to be "
+"retrieved)\n"
 msgstr ""
-"       --random-wait             vent fra 0,5*VENT til 1,5*VENT sekunder "
-"mellem hentninger.\n"
-
-#: src/main.c:704
-#, fuzzy
-msgid "       --no-proxy                  explicitly turn off proxy\n"
-msgstr "       --no-proxy                slÂ proxy fra eksplicit.\n"
+"       --random-wait               vent fra 0,5*VENT til 1,5*VENT sekunder\n"
+"                                     mellem overf√∏rsler (g√¶lder, hvis der "
+"skal\n"
+"                                     hentes mere end √©n URL)\n"
 
 #: src/main.c:706
-#, fuzzy
-msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
-msgstr "  -Q,  --quota=ANTAL             sÊt hentningskvote til ANTAL.\n"
+msgid "       --no-proxy                  explicitly turn off proxy\n"
+msgstr "       --no-proxy                  sl√• proxy fra eksplicit\n"
 
 #: src/main.c:708
-#, fuzzy
+msgid "  -Q,  --quota=NUMBER              set retrieval quota to NUMBER\n"
+msgstr "  -Q,  --quota=ANTAL               s√¶t hentekvote til ANTAL\n"
+
+#: src/main.c:710
 msgid ""
 "       --bind-address=ADDRESS      bind to ADDRESS (hostname or IP) on local "
 "host\n"
 msgstr ""
-"       --bind-address=ADRESSE    bind til ADRESSE (vÊrtsnavn eller IP) pÂ "
-"lokal\n"
-"                                 vÊrt.\n"
-
-#: src/main.c:710
-#, fuzzy
-msgid "       --limit-rate=RATE           limit download rate to RATE\n"
-msgstr ""
-"       --limit-rate=HASTIGHED    begrÊns downloadhastighed til HASTIGHED.\n"
+"       --bind-address=ADRESSE      bind til ADRESSE (v√¶rtsnavn eller IP) p√•\n"
+"                                     lokal v√¶rt\n"
 
 #: src/main.c:712
-#, fuzzy
-msgid "       --no-dns-cache              disable caching DNS lookups\n"
-msgstr "       --no-dns-cache            deaktivÈr cache for DNS-opslag.\n"
+msgid "       --limit-rate=RATE           limit download rate to RATE\n"
+msgstr ""
+"       --limit-rate=HASTIGHED      begr√¶ns downloadhastighed til HASTIGHED\n"
 
 #: src/main.c:714
-#, fuzzy
+msgid "       --no-dns-cache              disable caching DNS lookups\n"
+msgstr "       --no-dns-cache              deaktiv√©r cache for DNS-opslag\n"
+
+#: src/main.c:716
 msgid ""
 "       --restrict-file-names=OS    restrict chars in file names to ones OS "
 "allows\n"
 msgstr ""
-"       --restrict-file-names=OS  begrÊnser tegn i filnavne til de, som "
+"       --restrict-file-names=OS    begr√¶ns tegn i filnavne til de, som "
 "tillades\n"
-"                                 af operativsystemet.\n"
+"                                     af operativsystemet\n"
 
-#: src/main.c:716
-#, fuzzy
+#: src/main.c:718
 msgid ""
 "       --ignore-case               ignore case when matching files/"
 "directories\n"
 msgstr ""
-"       --ignore-case             ingen forskel pÂ store/smÂ bogstaver ved\n"
-"                                 matching af filer/kataloger\n"
-
-#: src/main.c:719
-#, fuzzy
-msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
-msgstr "  -4,  --inet4-only              forbind kun til IPv4-adresser.\n"
+"       --ignore-case               ingen forskel p√• store/sm√• bogstaver ved\n"
+"                                     match af filer/kataloger\n"
 
 #: src/main.c:721
-#, fuzzy
-msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
-msgstr "  -6,  --inet6-only              forbind kun til IPv6-adresser.\n"
+msgid "  -4,  --inet4-only                connect only to IPv4 addresses\n"
+msgstr "  -4,  --inet4-only                forbind kun til IPv4-adresser\n"
 
 #: src/main.c:723
-#, fuzzy
+msgid "  -6,  --inet6-only                connect only to IPv6 addresses\n"
+msgstr "  -6,  --inet6-only                forbind kun til IPv6-adresser\n"
+
+#: src/main.c:725
 msgid ""
 "       --prefer-family=FAMILY      connect first to addresses of specified "
 "family,\n"
 "                                     one of IPv6, IPv4, or none\n"
 msgstr ""
-"       --prefer-family=FAMILIE   forbind f¯rst til adresser i den angivne\n"
-"                                 familie, enten IPv6, IPv4, eller none.\n"
-
-#: src/main.c:727
-#, fuzzy
-msgid "       --user=USER                 set both ftp and http user to USER\n"
-msgstr ""
-"       --user=BRUGER             angiv bÂde ftp- og http-bruger til BRUGER.\n"
+"       --prefer-family=FAMILIE     forbind f√∏rst til adresser i den angivne\n"
+"                                   familie; enten IPv6, IPv4 eller none\n"
 
 #: src/main.c:729
-#, fuzzy
+msgid "       --user=USER                 set both ftp and http user to USER\n"
+msgstr ""
+"       --user=BRUGER               angiv b√•de ftp- og http-bruger til "
+"BRUGER\n"
+
+#: src/main.c:731
 msgid ""
 "       --password=PASS             set both ftp and http password to PASS\n"
 msgstr ""
-"       --password=KODE           angiv bÂde ftp- og http-adgangskode til "
-"KODE.\n"
-
-#: src/main.c:731
-#, fuzzy
-msgid "       --ask-password              prompt for passwords\n"
-msgstr "       --ask-password            bed om adgangskoder.\n"
+"       --password=KODE             angiv adgangs-KODE til b√•de ftp og http\n"
 
 #: src/main.c:733
+msgid "       --ask-password              prompt for passwords\n"
+msgstr "       --ask-password              bed om adgangskoder\n"
+
+#: src/main.c:736
 msgid ""
 "       --use-askpass=COMMAND       specify credential handler for "
 "requesting \n"
@@ -1878,360 +1661,347 @@ msgid ""
 "SSH_ASKPASS \n"
 "                                     environment variable is used.\n"
 msgstr ""
+"       --use-askpass=KOMMANDO      angiv mekanisme til h√•ndtering af "
+"brugernavn\n"
+"                                     og adgangskode. Uden KOMMANDO bruges\n"
+"                                     milj√∏variablen WGET_ASKPASS eller\n"
+"                                     SSH_ASKPASS.\n"
 
-#: src/main.c:738
-#, fuzzy
+#: src/main.c:742
 msgid "       --no-iri                    turn off IRI support\n"
-msgstr "       --no-iri                  slÂ underst¯ttelse af IRI fra.\n"
+msgstr "       --no-iri                    sl√• underst√∏ttelse af IRI fra\n"
 
-#: src/main.c:740
-#, fuzzy
+#: src/main.c:744
 msgid ""
 "       --local-encoding=ENC        use ENC as the local encoding for IRIs\n"
 msgstr ""
-"       --local-encoding=KODNING  brug KODNING som lokal kodning for IRI'er\n"
+"       --local-encoding=KODNING    brug KODNING som lokal kodning for "
+"IRI'er\n"
 
-#: src/main.c:742
-#, fuzzy
+#: src/main.c:746
 msgid ""
 "       --remote-encoding=ENC       use ENC as the default remote encoding\n"
 msgstr ""
-"       --remote-encoding=KODNING brug KODNING som standardfjernkodning.\n"
+"       --remote-encoding=KODNING   brug KODNING som standardfjernkodning\n"
 
-# glob er f.eks. nÂr man skriver *.txt, og skallen svarer med fil1.txt, fil2.txt, ...
-#: src/main.c:744
-#, fuzzy
+#: src/main.c:748
 msgid "       --unlink                    remove file before clobber\n"
-msgstr "       --no-glob               slÂ globning af FTP-filnavne fra.\n"
+msgstr "       --unlink                    fjern fil f√∏r overskrivning\n"
 
-#: src/main.c:747
+#: src/main.c:751
 msgid ""
 "       --keep-badhash              keep files with checksum mismatch "
 "(append .badhash)\n"
 msgstr ""
+"       --keep-badhash              behold filer med forkert kontrolsum "
+"(tilf√∏j .badhash)\n"
 
-#: src/main.c:749
+# ?
+#: src/main.c:753
 msgid ""
 "       --metalink-index=NUMBER     Metalink application/metalink4+xml "
 "metaurl ordinal NUMBER\n"
 msgstr ""
+"       --metalink-index=TAL        Metalink application/metalink4+xml "
+"metaurl ordinal-TAL\n"
 
-#: src/main.c:751
+#: src/main.c:755
 msgid ""
 "       --metalink-over-http        use Metalink metadata from HTTP response "
 "headers\n"
 msgstr ""
+"       --metalink-over-http        brug Metalink-metadata fra HTTP-"
+"svartoptekster\n"
 
-#: src/main.c:753
+#: src/main.c:757
 msgid ""
 "       --preferred-location        preferred location for Metalink "
 "resources\n"
 msgstr ""
+"       --preferred-location        foretrukken placering af Metalink-"
+"ressourcer\n"
 
-#: src/main.c:757
+#: src/main.c:761
 msgid ""
 "       --xattr                     turn on storage of metadata in extended "
 "file attributes\n"
 msgstr ""
+"       --xattr                     sl√• lagring af metadata i udvidede "
+"filattributter til\n"
 
-#: src/main.c:762
+#: src/main.c:766
 msgid "Directories:\n"
 msgstr "Kataloger:\n"
 
-#: src/main.c:764
-#, fuzzy
-msgid "  -nd, --no-directories            don't create directories\n"
-msgstr "  -nd, --no-directories           opret ikke kataloger.\n"
-
-#: src/main.c:766
-#, fuzzy
-msgid "  -x,  --force-directories         force creation of directories\n"
-msgstr "  -x,  --force-directories        tving oprettelse af kataloger.\n"
-
 #: src/main.c:768
-#, fuzzy
-msgid "  -nH, --no-host-directories       don't create host directories\n"
-msgstr "  -nH, --no-host-directories      opret ikke vÊrtskataloger.\n"
+msgid "  -nd, --no-directories            don't create directories\n"
+msgstr "  -nd, --no-directories            opret ikke kataloger\n"
 
 #: src/main.c:770
-#, fuzzy
-msgid "       --protocol-directories      use protocol name in directories\n"
-msgstr "       --protocol-directories     brug protokolnavn i kataloger.\n"
+msgid "  -x,  --force-directories         force creation of directories\n"
+msgstr "  -x,  --force-directories         tving oprettelse af kataloger\n"
 
 #: src/main.c:772
-#, fuzzy
-msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
-msgstr "  -P,  --directory-prefix=PR∆FIKS gem filer til PR∆FIKS/...\n"
+msgid "  -nH, --no-host-directories       don't create host directories\n"
+msgstr "  -nH, --no-host-directories       opret ikke v√¶rtskataloger\n"
 
 #: src/main.c:774
-#, fuzzy
+msgid "       --protocol-directories      use protocol name in directories\n"
+msgstr "       --protocol-directories      brug protokolnavn i kataloger\n"
+
+#: src/main.c:776
+msgid "  -P,  --directory-prefix=PREFIX   save files to PREFIX/..\n"
+msgstr "  -P,  --directory-prefix=PR√ÜFIKS  gem filer til PR√ÜFIKS/..\n"
+
+#: src/main.c:778
 msgid ""
 "       --cut-dirs=NUMBER           ignore NUMBER remote directory "
 "components\n"
 msgstr ""
-"       --cut-dirs=ANTAL           ignorÈr ANTAL komponenter for "
+"       --cut-dirs=ANTAL            ignor√©r ANTAL komponenter for "
 "fjernkataloger\n"
 
-#: src/main.c:778
+#: src/main.c:782
 msgid "HTTP options:\n"
 msgstr "HTTP-flag:\n"
 
-#: src/main.c:780
-#, fuzzy
-msgid "       --http-user=USER            set http user to USER\n"
-msgstr "       --http-user=BRUGER      sÊt http-brugeren til BRUGER.\n"
-
-#: src/main.c:782
-#, fuzzy
-msgid "       --http-password=PASS        set http password to PASS\n"
-msgstr "       --http-password=KODE    sÊt http-adgangskoden til KODE.\n"
-
 #: src/main.c:784
-#, fuzzy
-msgid "       --no-cache                  disallow server-cached data\n"
-msgstr "       --no-cache              tillad ikke serverlagring af data.\n"
+msgid "       --http-user=USER            set http user to USER\n"
+msgstr "       --http-user=BRUGER          s√¶t http-brugeren til BRUGER\n"
 
 #: src/main.c:786
-#, fuzzy
+msgid "       --http-password=PASS        set http password to PASS\n"
+msgstr "       --http-password=KODE        s√¶t http-adgangskoden til KODE\n"
+
+#: src/main.c:788
+msgid "       --no-cache                  disallow server-cached data\n"
+msgstr "       --no-cache                  tillad ikke serverlagring af data\n"
+
+#: src/main.c:790
 msgid ""
 "       --default-page=NAME         change the default page name (normally\n"
 "                                     this is 'index.html'.)\n"
 msgstr ""
-"       --default-page=NAVN     ∆ndr standardsidenavnet (normalt er dette\n"
-"                               'index.html'.).\n"
+"       --default-page=NAVN         √Ündr standardsidenavnet (normalt er "
+"dette\n"
+"                                     ‚Äúindex.html‚Äù.)\n"
 
-#: src/main.c:789
-#, fuzzy
+#: src/main.c:793
 msgid ""
 "  -E,  --adjust-extension          save HTML/CSS documents with proper "
 "extensions\n"
 msgstr ""
-"  -E,  --adjust-extension      gem HTML/CSS-dokumenter med passende "
+"  -E,  --adjust-extension          gem HTML/CSS-dokumenter med passende "
 "filendelser\n"
 
-#: src/main.c:791
-#, fuzzy
+#: src/main.c:795
 msgid ""
 "       --ignore-length             ignore 'Content-Length' header field\n"
 msgstr ""
-"       --ignore-length         ignorÈr `Content-Length' toptekstfeltet.\n"
+"       --ignore-length             ignor√©r toptekstfeltet ‚ÄúContent-Length‚Äù\n"
 
-#: src/main.c:793
-#, fuzzy
+#: src/main.c:797
 msgid "       --header=STRING             insert STRING among the headers\n"
-msgstr "       --header=STRENG         indsÊt STRENG blandt topteksterne.\n"
+msgstr "       --header=STRENG             inds√¶t STRENG blandt topteksterne\n"
 
-#: src/main.c:796
+#: src/main.c:800
 msgid ""
 "       --compression=TYPE          choose compression, one of auto, gzip and "
 "none. (default: none)\n"
 msgstr ""
+"       --compression=TYPE          v√¶lg komprimering: auto, gzip eller none. "
+"(Standard: none)\n"
 
-#: src/main.c:799
-#, fuzzy
+#: src/main.c:803
 msgid ""
 "       --max-redirect              maximum redirections allowed per page\n"
 msgstr ""
-"       --max-redirect          maksimalt tilladt antal omdirigeringer pr. "
-"side.\n"
-
-#: src/main.c:801
-#, fuzzy
-msgid "       --proxy-user=USER           set USER as proxy username\n"
-msgstr "       --proxy-user=BRUGER     sÊt BRUGER som proxybrugernavn.\n"
-
-#: src/main.c:803
-#, fuzzy
-msgid "       --proxy-password=PASS       set PASS as proxy password\n"
-msgstr "       --proxy-password=KODE   brug KODE som proxyadgangskode.\n"
+"       --max-redirect              antal tilladte omdirigeringer pr. side\n"
 
 #: src/main.c:805
-#, fuzzy
+msgid "       --proxy-user=USER           set USER as proxy username\n"
+msgstr "       --proxy-user=BRUGER         s√¶t BRUGER som proxybrugernavn\n"
+
+#: src/main.c:807
+msgid "       --proxy-password=PASS       set PASS as proxy password\n"
+msgstr "       --proxy-password=KODE       brug KODE som proxyadgangskode\n"
+
+#: src/main.c:809
 msgid ""
 "       --referer=URL               include 'Referer: URL' header in HTTP "
 "request\n"
 msgstr ""
-"       --referer=URL           inkludÈr `Referer: URL'-toptekst i \n"
-"                               HTTP-foresp¯rgsel\n"
+"       --referer=URL               inklud√©r ‚ÄúReferer: URL‚Äù-toptekst i\n"
+"                                     HTTP-foresp√∏rgsel\n"
 
-#: src/main.c:807
-#, fuzzy
+#: src/main.c:811
 msgid "       --save-headers              save the HTTP headers to file\n"
-msgstr "       --save-headers          gem HTTP-topteksterne til en fil.\n"
+msgstr "       --save-headers              gem HTTP-topteksterne til en fil\n"
 
-#: src/main.c:809
-#, fuzzy
+#: src/main.c:813
 msgid ""
 "  -U,  --user-agent=AGENT          identify as AGENT instead of Wget/"
 "VERSION\n"
 msgstr ""
-"  -U,  --user-agent=AGENT      identificÈr som AGENT frem for Wget/VERSION.\n"
+"  -U,  --user-agent=AGENT          identific√©r som AGENT frem for Wget/"
+"VERSION\n"
 
-#: src/main.c:811
-#, fuzzy
+#: src/main.c:815
 msgid ""
 "       --no-http-keep-alive        disable HTTP keep-alive (persistent "
 "connections)\n"
 msgstr ""
-"       --no-http-keep-alive    deaktivÈr HTTP-keep-alive (vedvarende \n"
-"                               forbindelser).\n"
-
-#: src/main.c:813
-#, fuzzy
-msgid "       --no-cookies                don't use cookies\n"
-msgstr "       --no-cookies            brug ikke cookies.\n"
-
-#: src/main.c:815
-#, fuzzy
-msgid ""
-"       --load-cookies=FILE         load cookies from FILE before session\n"
-msgstr "       --load-cookies=FIL      indlÊs cookies fra FIL f¯r session.\n"
+"       --no-http-keep-alive        deaktiv√©r HTTP-keep-alive (vedvarende "
+"forbindelser)\n"
 
 #: src/main.c:817
-#, fuzzy
-msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
-msgstr "       --save-cookies=FIL      gem cookies til FIL efter session.\n"
+msgid "       --no-cookies                don't use cookies\n"
+msgstr "       --no-cookies                brug ikke cookies\n"
 
 #: src/main.c:819
-#, fuzzy
+msgid ""
+"       --load-cookies=FILE         load cookies from FILE before session\n"
+msgstr ""
+"       --load-cookies=FIL          indl√¶s cookies fra FIL f√∏r session\n"
+
+#: src/main.c:821
+msgid "       --save-cookies=FILE         save cookies to FILE after session\n"
+msgstr "       --save-cookies=FIL          gem cookies til FIL efter session\n"
+
+#: src/main.c:823
 msgid ""
 "       --keep-session-cookies      load and save session (non-permanent) "
 "cookies\n"
 msgstr ""
-"       --keep-session-cookies  indlÊs og gem (ikke-permanente) "
+"       --keep-session-cookies      indl√¶s og gem (ikke-permanente) "
 "sessionscookies\n"
 
-#: src/main.c:821
-#, fuzzy
+#: src/main.c:825
 msgid ""
 "       --post-data=STRING          use the POST method; send STRING as the "
 "data\n"
 msgstr ""
-"       --post-data=STRENG      brug POST-metoden; send STRENG som data.\n"
+"       --post-data=STRENG          brug POST-metoden; send STRENG som data\n"
 
-#: src/main.c:823
-#, fuzzy
+#: src/main.c:827
 msgid ""
 "       --post-file=FILE            use the POST method; send contents of "
 "FILE\n"
 msgstr ""
-"       --post-file=FIL         brug POST-metoden; send indhold af FIL.\n"
+"       --post-file=FIL             brug POST-metoden; send indhold af FIL\n"
 
-#: src/main.c:825
+#: src/main.c:829
 msgid ""
 "       --method=HTTPMethod         use method \"HTTPMethod\" in the request\n"
 msgstr ""
+"       --method=HTTPMetode         brug metoden ‚ÄúHTTPMetode‚Äù i "
+"foresp√∏rgslen\n"
 
-#: src/main.c:827
-#, fuzzy
+#: src/main.c:831
 msgid ""
 "       --body-data=STRING          send STRING as data. --method MUST be "
 "set\n"
 msgstr ""
-"       --post-data=STRENG      brug POST-metoden; send STRENG som data.\n"
+"       --body-data=STRENG          send STRENG som data. --method SKAL "
+"angives\n"
 
-#: src/main.c:829
-#, fuzzy
+#: src/main.c:833
 msgid ""
 "       --body-file=FILE            send contents of FILE. --method MUST be "
 "set\n"
 msgstr ""
-"       --post-file=FIL         brug POST-metoden; send indhold af FIL.\n"
+"       --body-file=FIL             send indhold af FIL. --method SKAL "
+"angives\n"
 
-#: src/main.c:831
-#, fuzzy
+#: src/main.c:835
 msgid ""
 "       --content-disposition       honor the Content-Disposition header "
 "when\n"
 "                                     choosing local file names "
 "(EXPERIMENTAL)\n"
 msgstr ""
-"       --content-disposition   respektÈr topteksten Content-Disposition ved\n"
-"                               valg af lokale filnavne (EKSPERIMENTEL).\n"
+"       --content-disposition       respekt√©r topteksten Content-Disposition "
+"ved\n"
+"                                     valg af lokale filnavne "
+"(EKSPERIMENTEL)\n"
 
-#: src/main.c:834
+#: src/main.c:838
 msgid ""
 "       --content-on-error          output the received content on server "
 "errors\n"
 msgstr ""
+"       --content-on-error          udskriv modtaget indhold ved serverfejl\n"
 
-#: src/main.c:836
-#, fuzzy
+#: src/main.c:840
 msgid ""
 "       --auth-no-challenge         send Basic HTTP authentication "
 "information\n"
 "                                     without first waiting for the server's\n"
 "                                     challenge\n"
 msgstr ""
-"       --auth-no-challenge     send basal HTTP-autentifikationsinformation\n"
-"                               uden f¯rst at vente pÂ serverens udfordring.\n"
+"       --auth-no-challenge         send basal HTTP-godkendelsesinformation\n"
+"                                   uden f√∏rst at vente p√• serverens "
+"udfordring\n"
 
-#: src/main.c:843
+#: src/main.c:847
 msgid "HTTPS (SSL/TLS) options:\n"
 msgstr "HTTPS-tilvalg (SSL/TLS):\n"
 
-#: src/main.c:845
-#, fuzzy
+#: src/main.c:849
 msgid ""
 "       --secure-protocol=PR        choose secure protocol, one of auto, "
 "SSLv2,\n"
-"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2 and PFS\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3 "
+"and PFS\n"
 msgstr ""
-"       --secure-protocol=PR     vÊlg sikker protokol: en af auto, SSLv2,\n"
-"                                SSLv3 og TLSv1.\n"
-
-#: src/main.c:848
-#, fuzzy
-msgid "       --https-only                only follow secure HTTPS links\n"
-msgstr "  -L,  --relative                  f¯lg kun relative henvisninger.\n"
-
-#: src/main.c:850
-#, fuzzy
-msgid ""
-"       --no-check-certificate      don't validate the server's certificate\n"
-msgstr "       --no-check-certificate   bekrÊft ikke serverens certifikat.\n"
+"       --secure-protocol=PR        v√¶lg sikker protokol; en af auto, SSLv2,\n"
+"                                     SSLv3, TLSv1, TLSv1_1, TLSv1_2, TLSv1_3 "
+"og PFS\n"
 
 #: src/main.c:852
-#, fuzzy
-msgid "       --certificate=FILE          client certificate file\n"
-msgstr "       --certificate=FIL        klientcertifikatfil.\n"
+msgid "       --https-only                only follow secure HTTPS links\n"
+msgstr "       --https-only                f√∏lg kun sikre HTTPS-links\n"
 
 #: src/main.c:854
-#, fuzzy
+msgid ""
+"       --no-check-certificate      don't validate the server's certificate\n"
+msgstr "       --no-check-certificate      bekr√¶ft ikke serverens certifikat\n"
+
+#: src/main.c:856
+msgid "       --certificate=FILE          client certificate file\n"
+msgstr "       --certificate=FIL           klientcertifikatfil\n"
+
+#: src/main.c:858
 msgid ""
 "       --certificate-type=TYPE     client certificate type, PEM or DER\n"
 msgstr ""
-"       --certificate-type=TYPE  type af klientcertifikat: PEM eller DER.\n"
-
-#: src/main.c:856
-#, fuzzy
-msgid "       --private-key=FILE          private key file\n"
-msgstr "       --private-key=FIL        privat n¯glefil.\n"
-
-#: src/main.c:858
-#, fuzzy
-msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
-msgstr "       --private-key-type=TYPE  type af privat n¯gle: PEM eller DER.\n"
+"       --certificate-type=TYPE  type af klientcertifikat: PEM eller DER\n"
 
 #: src/main.c:860
-#, fuzzy
-msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
-msgstr "       --ca-certificate=FIL     fil med samlingen af CA'er.\n"
+msgid "       --private-key=FILE          private key file\n"
+msgstr "       --private-key=FIL           privat n√∏glefil\n"
 
 #: src/main.c:862
-#, fuzzy
+msgid "       --private-key-type=TYPE     private key type, PEM or DER\n"
+msgstr "       --private-key-type=TYPE  type af privat n√∏gle: PEM eller DER\n"
+
+#: src/main.c:864
+msgid "       --ca-certificate=FILE       file with the bundle of CAs\n"
+msgstr "       --ca-certificate=FIL        fil med samling af CA'er\n"
+
+#: src/main.c:866
 msgid ""
 "       --ca-directory=DIR          directory where hash list of CAs is "
 "stored\n"
 msgstr ""
-"       --ca-directory=KAT       katalog hvor hashlisten af CA'er lagres.\n"
+"       --ca-directory=KAT          katalog hvor hashlisten over CA'er "
+"lagres\n"
 
-#: src/main.c:864
-#, fuzzy
+#: src/main.c:868
 msgid "       --crl-file=FILE             file with bundle of CRLs\n"
-msgstr "       --ca-certificate=FIL     fil med samlingen af CA'er.\n"
+msgstr "       --crl-file=FIL              fil med samling af CRL'er\n"
 
-#: src/main.c:866
+#: src/main.c:870
 msgid ""
 "       --pinnedpubkey=FILE/HASHES  Public key (PEM/DER) file, or any number\n"
 "                                   of base64 encoded sha256 hashes preceded "
@@ -2240,26 +2010,31 @@ msgid ""
 "verify\n"
 "                                   peer against\n"
 msgstr ""
+"       --pinnedpubkey=FIL/HASH     Offentlig n√∏glefil (PEM/DER) eller et "
+"antal\n"
+"                                   base64-kodede sha256-hashv√¶rdier indledt "
+"af\n"
+"                                   ‚Äúsha256//‚Äù og adskilt af ‚Äú;‚Äù, som bruges "
+"til\n"
+"                                   at verificere modparten\n"
 
-#: src/main.c:872
-#, fuzzy
+#: src/main.c:876
 msgid ""
 "       --random-file=FILE          file with random data for seeding the SSL "
 "PRNG\n"
 msgstr ""
-"       --random-file=FIL        fil med tilfÊldige data til at seede \n"
-"                                SSL-talgeneratoren.\n"
+"       --random-file=FIL           fil med tilf√¶ldige data til at seede\n"
+"                                     SSL-talgeneratoren\n"
 
-#: src/main.c:876
-#, fuzzy
+#: src/main.c:880
 msgid ""
 "       --egd-file=FILE             file naming the EGD socket with random "
 "data\n"
 msgstr ""
-"       --egd-file=FIL           fil, der angiver navnet pÂ EGD-soklen med\n"
-"                                tilfÊldige data\n"
+"       --egd-file=FIL              fil der angiver navnet p√• EGD-soklen med\n"
+"                                     tilf√¶ldige data\n"
 
-#: src/main.c:880
+#: src/main.c:884
 msgid ""
 "       --ciphers=STR           Set the priority string (GnuTLS) or cipher "
 "list string (OpenSSL) directly.\n"
@@ -2268,456 +2043,447 @@ msgid ""
 "                                   The format and syntax of this string "
 "depend on the specific SSL/TLS engine.\n"
 msgstr ""
-
-#: src/main.c:887
-#, fuzzy
-msgid "HSTS options:\n"
-msgstr "HTTP-flag:\n"
-
-#: src/main.c:889
-#, fuzzy
-msgid "       --no-hsts                   disable HSTS\n"
-msgstr "       --no-cache              tillad ikke serverlagring af data.\n"
+"       --ciphers=STR           Angiv prioritetsstreng (GnuTLS) eller cipher-"
+"listestreng (OpenSSL) direkte.\n"
+"                                   Brug med omtanke. Dette tilvalg "
+"tilsides√¶tter --secure-protocol.\n"
+"                                   Format og syntaks for denne streng "
+"afh√¶nger af den specifikke SSL/TLS-motor.\n"
 
 #: src/main.c:891
+msgid "HSTS options:\n"
+msgstr "HSTS-flag:\n"
+
+#: src/main.c:893
+msgid "       --no-hsts                   disable HSTS\n"
+msgstr "       --no-hsts                   sl√• HSTS fra\n"
+
+#: src/main.c:895
 msgid ""
 "       --hsts-file                 path of HSTS database (will override "
 "default)\n"
 msgstr ""
+"       --hsts-file                 sti til HSTS-databasen (tilsides√¶tter "
+"standardv√¶rdi)\n"
 
-#: src/main.c:896
+#: src/main.c:900
 msgid "FTP options:\n"
 msgstr "FTP-flag:\n"
 
-#: src/main.c:899
-#, fuzzy
+#: src/main.c:903
 msgid ""
 "       --ftp-stmlf                 use Stream_LF format for all binary FTP "
 "files\n"
 msgstr ""
-"       --ftp-stmlf             Brug Stream_LF-format til alle binÊre FTP-"
-"filer.\n"
-
-#: src/main.c:902
-#, fuzzy
-msgid "       --ftp-user=USER             set ftp user to USER\n"
-msgstr "       --ftp-user=BRUGER       sÊt ftp-brugeren til BRUGER.\n"
-
-#: src/main.c:904
-#, fuzzy
-msgid "       --ftp-password=PASS         set ftp password to PASS\n"
-msgstr "       --ftp-password=KODE     sÊt ftp-adgangskoden til KODE.\n"
+"       --ftp-stmlf                 brug Stream_LF-format til alle bin√¶re FTP-"
+"filer\n"
 
 #: src/main.c:906
-#, fuzzy
-msgid "       --no-remove-listing         don't remove '.listing' files\n"
-msgstr "       --no-remove-listing     fjern ikke '.listing'-filer.\n"
+msgid "       --ftp-user=USER             set ftp user to USER\n"
+msgstr "       --ftp-user=BRUGER           s√¶t ftp-brugeren til BRUGER\n"
 
-# glob er f.eks. nÂr man skriver *.txt, og skallen svarer med fil1.txt, fil2.txt, ...
 #: src/main.c:908
-#, fuzzy
-msgid "       --no-glob                   turn off FTP file name globbing\n"
-msgstr "       --no-glob               slÂ globning af FTP-filnavne fra.\n"
+msgid "       --ftp-password=PASS         set ftp password to PASS\n"
+msgstr "       --ftp-password=KODE         s√¶t ftp-adgangskoden til KODE\n"
 
 #: src/main.c:910
-#, fuzzy
+msgid "       --no-remove-listing         don't remove '.listing' files\n"
+msgstr "       --no-remove-listing         fjern ikke ‚Äú.listing‚Äù-filer\n"
+
+# glob er f.eks. n√•r man skriver *.txt, og skallen svarer med fil1.txt, fil2.txt, ...
+#: src/main.c:912
+msgid "       --no-glob                   turn off FTP file name globbing\n"
+msgstr "       --no-glob                   sl√• globning af FTP-filnavne fra\n"
+
+#: src/main.c:914
 msgid ""
 "       --no-passive-ftp            disable the \"passive\" transfer mode\n"
 msgstr ""
-"       --no-passive-ftp        deaktivÈr den \"passive\" "
-"overf¯rselstilstand.\n"
+"       --no-passive-ftp            deaktiv√©r ‚Äúpassiv‚Äù overf√∏rselstilstand\n"
 
-#: src/main.c:912
-#, fuzzy
+#: src/main.c:916
 msgid "       --preserve-permissions      preserve remote file permissions\n"
-msgstr "  -S,  --server-response         udskriv svar fra server.\n"
+msgstr ""
+"       --preserve-permissions      behold den fjerne fils rettigheder\n"
 
-#: src/main.c:914
-#, fuzzy
+#: src/main.c:918
 msgid ""
 "       --retr-symlinks             when recursing, get linked-to files (not "
 "dir)\n"
 msgstr ""
-"       --retr-symlinks         hent filer der henvises til (ikke kataloger) "
-"ved\n"
-"                               rekursion\n"
+"       --retr-symlinks             hent destinationsfiler for links\n"
+"                                   (ikke kataloger) ved rekursion\n"
 
-#: src/main.c:919
-#, fuzzy
+#: src/main.c:923
 msgid "FTPS options:\n"
-msgstr "FTP-flag:\n"
+msgstr "FTPS-flag:\n"
 
-#: src/main.c:921
+#: src/main.c:925
 msgid ""
 "       --ftps-implicit                 use implicit FTPS (default port is "
 "990)\n"
 msgstr ""
+"       --ftps-implicit                 brug implicit FTPS (standardport er "
+"990)\n"
 
-#: src/main.c:923
+#: src/main.c:927
 msgid ""
 "       --ftps-resume-ssl               resume the SSL/TLS session started in "
 "the control connection when\n"
 "                                         opening a data connection\n"
 msgstr ""
+"       --ftps-resume-ssl               genoptag SSL/TLS-sessionen fra "
+"kontrolforbindelsen\n"
+"                                         ved √•bning af en dataforbindelse\n"
 
-#: src/main.c:926
+#: src/main.c:930
 msgid ""
 "       --ftps-clear-data-connection    cipher the control channel only; all "
 "the data will be in plaintext\n"
 msgstr ""
+"       --ftps-clear-data-connection    krypt√©r kun kontrolkanalen; alle data "
+"vil v√¶re i klartekst\n"
 
-#: src/main.c:928
+#: src/main.c:932
 msgid ""
 "       --ftps-fallback-to-ftp          fall back to FTP if FTPS is not "
 "supported in the target server\n"
 msgstr ""
+"       --ftps-fallback-to-ftp          brug FTP, hvis FTPS ikke underst√∏ttes "
+"p√• m√•lserveren\n"
 
-#: src/main.c:932
-#, fuzzy
+#: src/main.c:936
 msgid "WARC options:\n"
-msgstr "FTP-flag:\n"
+msgstr "WARC-flag:\n"
 
-#: src/main.c:934
+#: src/main.c:938
 msgid ""
 "       --warc-file=FILENAME        save request/response data to a .warc.gz "
 "file\n"
 msgstr ""
+"       --warc-file=FILNAVN         gem foresp√∏rgsel/svar-data i .warc.gz-"
+"fil\n"
 
-#: src/main.c:936
-#, fuzzy
+#: src/main.c:940
 msgid ""
 "       --warc-header=STRING        insert STRING into the warcinfo record\n"
-msgstr "       --header=STRENG         indsÊt STRENG blandt topteksterne.\n"
+msgstr "       --warc-header=STRENG        ind√¶st STRENG i warcinfo-posten\n"
 
-#: src/main.c:938
-#, fuzzy
+#: src/main.c:942
 msgid ""
 "       --warc-max-size=NUMBER      set maximum size of WARC files to NUMBER\n"
 msgstr ""
-"  -t,  --tries=ANTAL             sÊt antal fors¯g til ANTAL (0 for "
-"ubegrÊnset)\n"
+"       --warc-max-size=TAL         s√¶t maksimal st√∏rrelse af WARC-filer til "
+"TAL\n"
 
-#: src/main.c:940
-#, fuzzy
+#: src/main.c:944
 msgid "       --warc-cdx                  write CDX index files\n"
-msgstr "       --spider                  hent intet.\n"
+msgstr "       --warc-cdx                  skriv CDX-indexfiler\n"
 
-#: src/main.c:942
+#: src/main.c:946
 msgid ""
 "       --warc-dedup=FILENAME       do not store records listed in this CDX "
 "file\n"
 msgstr ""
+"       --warc-dedup=FILNAVN        gem ikke poster anf√∏rt i denne CDX-fil\n"
 
-#: src/main.c:945
+#: src/main.c:949
 msgid ""
 "       --no-warc-compression       do not compress WARC files with GZIP\n"
 msgstr ""
+"       --no-warc-compression       komprim√©r ikke WARC-filer med GZIP\n"
 
-#: src/main.c:948
-#, fuzzy
+#: src/main.c:952
 msgid "       --no-warc-digests           do not calculate SHA1 digests\n"
-msgstr "       --no-cookies            brug ikke cookies.\n"
+msgstr "       --no-warc-digests           beregn ikke SHA1-hashsummer\n"
 
-#: src/main.c:950
-#, fuzzy
+#: src/main.c:954
 msgid ""
 "       --no-warc-keep-log          do not store the log file in a WARC "
 "record\n"
-msgstr ""
-"       --ignore-case             ingen forskel pÂ store/smÂ bogstaver ved\n"
-"                                 matching af filer/kataloger\n"
+msgstr "       --no-warc-keep-log          gem ikke logfilen i en WARC-post\n"
 
-#: src/main.c:952
+#: src/main.c:956
 msgid ""
 "       --warc-tempdir=DIRECTORY    location for temporary files created by "
 "the\n"
 "                                     WARC writer\n"
 msgstr ""
+"       --warc-tempdir=KATALOG      placering til midlertidige filer dannet "
+"af\n"
+"                                     WARC-skriveren\n"
 
-#: src/main.c:957
+#: src/main.c:961
 msgid "Recursive download:\n"
 msgstr "Rekursiv download:\n"
 
-#: src/main.c:959
-#, fuzzy
+#: src/main.c:963
 msgid "  -r,  --recursive                 specify recursive download\n"
-msgstr "  -r,  --recursive          angiv rekursiv download.\n"
+msgstr "  -r,  --recursive                 angiv rekursiv download\n"
 
-#: src/main.c:961
-#, fuzzy
+#: src/main.c:965
 msgid ""
 "  -l,  --level=NUMBER              maximum recursion depth (inf or 0 for "
 "infinite)\n"
 msgstr ""
-"  -l,  --level=ANTAL        maksimal rekursionsdybde (inf eller 0 for\n"
-"                            uendelig).\n"
+"  -l,  --level=ANTAL               maksimal rekursionsdybde (inf eller 0 "
+"for\n"
+"                                     uendelig)\n"
 
-#: src/main.c:963
-#, fuzzy
+#: src/main.c:967
 msgid ""
 "       --delete-after              delete files locally after downloading "
 "them\n"
-msgstr "       --delete-after       slet filer lokalt efter de er hentet.\n"
+msgstr ""
+"       --delete-after              slet filer lokalt, efter de er hentet\n"
 
-#: src/main.c:965
-#, fuzzy
+#: src/main.c:969
 msgid ""
 "  -k,  --convert-links             make links in downloaded HTML or CSS "
 "point to\n"
 "                                     local files\n"
 msgstr ""
-"  -k,  --convert-links      fÂ henvisninger i hentet HTML eller CSS til at "
-"pege\n"
-"                            pÂ lokale filer.\n"
+"  -k,  --convert-links             f√• henvisninger i hentet HTML eller CSS "
+"til\n"
+"                                     at pege p√• lokale filer\n"
 
-#: src/main.c:968
+#: src/main.c:972
 msgid ""
 "       --convert-file-only         convert the file part of the URLs only "
 "(usually known as the basename)\n"
 msgstr ""
+"       --convert-file-only         konvert√©r kun fil-delen af URL'er (ofte "
+"kaldet basename/basisnavn)\n"
 
-#: src/main.c:970
+#: src/main.c:974
 msgid ""
 "       --backups=N                 before writing file X, rotate up to N "
 "backup files\n"
 msgstr ""
+"       --backups=N                 rot√©r op til N sikkerhedskopifiler f√∏r "
+"skrivning af fil X\n"
 
-#: src/main.c:974
-#, fuzzy
+#: src/main.c:978
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as "
 "X_orig\n"
 msgstr ""
-"  -K,  --backup-converted   f¯r konvertering af fil X, sÂ opret\n"
-"                            sikkerhedskopien X_orig.\n"
+"  -K,  --backup-converted          f√∏r konvertering af fil X, s√• opret\n"
+"                                     sikkerhedskopien X_orig\n"
 
-#: src/main.c:977
-#, fuzzy
+#: src/main.c:981
 msgid ""
 "  -K,  --backup-converted          before converting file X, back up as X."
 "orig\n"
 msgstr ""
-"  -K,  --backup-converted   f¯r konvertering af fil X, sÂ opret\n"
-"                            sikkerhedskopien X.orig.\n"
+"  -K,  --backup-converted          f√∏r konvertering af fil X, s√• opret\n"
+"                                     sikkerhedskopien X.orig\n"
 
-#: src/main.c:980
-#, fuzzy
+#: src/main.c:984
 msgid ""
 "  -m,  --mirror                    shortcut for -N -r -l inf --no-remove-"
 "listing\n"
 msgstr ""
-"  -m,  --mirror             forkortelse for -N -r -l inf --no-remove-"
-"listing.\n"
+"  -m,  --mirror                    forkortelse for -N -r -l inf --no-remove-"
+"listing\n"
 
-#: src/main.c:982
-#, fuzzy
+#: src/main.c:986
 msgid ""
 "  -p,  --page-requisites           get all images, etc. needed to display "
 "HTML page\n"
 msgstr ""
-"  -p,  --page-requisites    hent alle billeder osv., der krÊves for at vise "
-"en\n"
-"                            HTML-side.\n"
+"  -p,  --page-requisites           hent alle billeder osv., der kr√¶ves for "
+"at\n"
+"                                     vise en HTML-side\n"
 
-#: src/main.c:984
-#, fuzzy
+#: src/main.c:988
 msgid ""
 "       --strict-comments           turn on strict (SGML) handling of HTML "
 "comments\n"
 msgstr ""
-"       --strict-comments    brug strikt (SGML) hÂndtering af HTML-"
-"kommentarer.\n"
+"       --strict-comments           brug strikt (SGML) h√•ndtering af HTML-"
+"kommentarer\n"
 
-#: src/main.c:988
+#: src/main.c:992
 msgid "Recursive accept/reject:\n"
 msgstr "Rekursiv accept/afslag:\n"
 
-#: src/main.c:990
-#, fuzzy
+#: src/main.c:994
 msgid ""
 "  -A,  --accept=LIST               comma-separated list of accepted "
 "extensions\n"
 msgstr ""
-"  -A,  --accept=LISTE              kommaadskilt liste af accepterede "
-"endelser.\n"
+"  -A,  --accept=LISTE              kommaadskilt liste over accepterede "
+"endelser\n"
 
-#: src/main.c:992
-#, fuzzy
+#: src/main.c:996
 msgid ""
 "  -R,  --reject=LIST               comma-separated list of rejected "
 "extensions\n"
 msgstr ""
-"  -R,  --reject=LISTE              kommaadskilt liste af afslÂede endelser.\n"
+"  -R,  --reject=LISTE              kommaadskilt liste over afsl√•ede "
+"endelser\n"
 
-#: src/main.c:994
+#: src/main.c:998
 msgid "       --accept-regex=REGEX        regex matching accepted URLs\n"
 msgstr ""
+"       --accept-regex=REGEX        regex som matcher accepterede URL'er\n"
 
-#: src/main.c:996
+#: src/main.c:1000
 msgid "       --reject-regex=REGEX        regex matching rejected URLs\n"
 msgstr ""
+"       --reject-regex=REGEX        regex som matcher fravalgte URL'er\n"
 
-#: src/main.c:999
-#, fuzzy
+#: src/main.c:1003
 msgid "       --regex-type=TYPE           regex type (posix|pcre)\n"
-msgstr "       --progress=TYPE           vÊlg angivelsesmÂde af fremgang.\n"
+msgstr ""
+"       --regex-type=TYPE           typen af regul√¶rt udtryk (posix|pcre)\n"
 
-#: src/main.c:1002
-#, fuzzy
+#: src/main.c:1006
 msgid "       --regex-type=TYPE           regex type (posix)\n"
-msgstr "       --progress=TYPE           vÊlg angivelsesmÂde af fremgang.\n"
+msgstr "       --regex-type=TYPE           typen af regul√¶rt udtryk (posix)\n"
 
-#: src/main.c:1005
-#, fuzzy
+#: src/main.c:1009
 msgid ""
 "  -D,  --domains=LIST              comma-separated list of accepted domains\n"
 msgstr ""
-"  -D,  --domains=LISTE             kommaadskilt liste af accepterede "
-"domÊner.\n"
+"  -D,  --domains=LISTE             kommaadskilt liste over accepterede "
+"dom√¶ner\n"
 
-#: src/main.c:1007
-#, fuzzy
+#: src/main.c:1011
 msgid ""
 "       --exclude-domains=LIST      comma-separated list of rejected domains\n"
 msgstr ""
-"       --exclude-domains=LISTE     kommaadskilt liste af afslÂede domÊner.\n"
+"       --exclude-domains=LISTE     kommaadskilt liste over afsl√•ede dom√¶ner\n"
 
-#: src/main.c:1009
-#, fuzzy
+#: src/main.c:1013
 msgid ""
 "       --follow-ftp                follow FTP links from HTML documents\n"
 msgstr ""
-"       --follow-ftp                f¯lg FTP-henvisninger fra HTML-"
-"dokumenter.\n"
+"       --follow-ftp                f√∏lg FTP-henvisninger fra HTML-"
+"dokumenter\n"
 
-#: src/main.c:1011
-#, fuzzy
+#: src/main.c:1015
 msgid ""
 "       --follow-tags=LIST          comma-separated list of followed HTML "
 "tags\n"
 msgstr ""
-"       --follow-tags=LISTE         kommaadskilt liste af HTML-mÊrker, der\n"
-"                                   f¯lges.\n"
+"       --follow-tags=LISTE         kommaadskilt liste over HTML-m√¶rker, der\n"
+"                                   f√∏lges\n"
 
-#: src/main.c:1013
-#, fuzzy
+#: src/main.c:1017
 msgid ""
 "       --ignore-tags=LIST          comma-separated list of ignored HTML "
 "tags\n"
 msgstr ""
-"       --ignore-tags=LISTE         kommaadskilt liste af HTML-mÊrker, der\n"
-"                                   ignoreres.\n"
-
-#: src/main.c:1015
-#, fuzzy
-msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
-msgstr ""
-"  -H,  --span-hosts                hop til fremmede vÊrter nÂr rekursiv.\n"
-
-#: src/main.c:1017
-#, fuzzy
-msgid "  -L,  --relative                  follow relative links only\n"
-msgstr "  -L,  --relative                  f¯lg kun relative henvisninger.\n"
+"       --ignore-tags=LISTE         kommaadskilt liste over HTML-m√¶rker, der\n"
+"                                   ignoreres\n"
 
 #: src/main.c:1019
-#, fuzzy
-msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
-msgstr "  -I,  --include-directories=LISTE liste af tillate kataloger.\n"
+msgid "  -H,  --span-hosts                go to foreign hosts when recursive\n"
+msgstr ""
+"  -H,  --span-hosts                hop til fremmede v√¶rter n√•r rekursiv\n"
 
 #: src/main.c:1021
-#, fuzzy
+msgid "  -L,  --relative                  follow relative links only\n"
+msgstr "  -L,  --relative                  f√∏lg kun relative henvisninger\n"
+
+#: src/main.c:1023
+msgid "  -I,  --include-directories=LIST  list of allowed directories\n"
+msgstr "  -I,  --include-directories=LISTE  liste over tillate kataloger\n"
+
+#: src/main.c:1025
 msgid ""
 "       --trust-server-names        use the name specified by the "
 "redirection\n"
 "                                     URL's last component\n"
 msgstr ""
-"  --trust-server-names  brug navnet angivet ved den sidste komponent pÂ "
-"redirektion url'en.\n"
+"  --trust-server-names             brug navnet angivet ved den sidste "
+"komponent\n"
+"                                     p√• omdirigerings-url'en\n"
 
-#: src/main.c:1024
-#, fuzzy
+#: src/main.c:1028
 msgid "  -X,  --exclude-directories=LIST  list of excluded directories\n"
-msgstr "  -X,  --exclude-directories=LISTE liste af ekskluderede kataloger.\n"
-
-#: src/main.c:1026
-#, fuzzy
-msgid ""
-"  -np, --no-parent                 don't ascend to the parent directory\n"
-msgstr "  -np, --no-parent                 gÂ ikke op til ophavskataloget.\n"
-
-#: src/main.c:1029
-#, fuzzy
-msgid "Email bug reports, questions, discussions to <bug-wget@gnu.org>\n"
-msgstr "RapportÈr fejl og send forslag til <bug-wget@gnu.org>.\n"
+msgstr ""
+"  -X,  --exclude-directories=LISTE  liste over ekskluderede kataloger\n"
 
 #: src/main.c:1030
 msgid ""
+"  -np, --no-parent                 don't ascend to the parent directory\n"
+msgstr "  -np, --no-parent                 g√• ikke op til ophavskataloget\n"
+
+#: src/main.c:1033
+msgid ""
+"Email bug reports, questions, discussions to <bug-wget@gnu.org>\n"
 "and/or open issues at https://savannah.gnu.org/bugs/?"
 "func=additem&group=wget.\n"
 msgstr ""
+"Send fejlrapporter, sp√∏rgsm√•l og diskussioner til <bug-wget@gnu.org>\n"
+"og/eller √•bn en rapport p√• https://savannah.gnu.org/bugs/?"
+"func=additem&group=wget.\n"
 
-#: src/main.c:1035
+#: src/main.c:1039
 #, c-format
 msgid "GNU Wget %s, a non-interactive network retriever.\n"
 msgstr "GNU Wget %s, en ikke-interaktiv informationsagent.\n"
 
-#: src/main.c:1078
+#: src/main.c:1082
 #, c-format
 msgid "Password for user %s: "
 msgstr "Adgangskode for brugeren %s: "
 
-#: src/main.c:1080
+#: src/main.c:1084
 #, c-format
 msgid "Password: "
 msgstr "Adgangskode: "
 
-#: src/main.c:1104
+#: src/main.c:1108
 #, c-format
 msgid "Cannot create pipe\n"
-msgstr ""
+msgstr "Kan ikke oprette datakanal\n"
 
-#: src/main.c:1112
+#: src/main.c:1116
 #, c-format
 msgid "Error initializing spawn file actions for use-askpass: %d\n"
-msgstr ""
+msgstr "Fejl ved initialisering af spawn file-handlinger for use-askpass: %d\n"
 
-#: src/main.c:1121
+#: src/main.c:1125
 #, c-format
 msgid "Error setting spawn file actions for use-askpass: %d\n"
-msgstr ""
+msgstr "Fejl ved angivelse af spawn file-handlinger for use-askpass: %d\n"
 
-#: src/main.c:1145
+#: src/main.c:1149
 #, c-format
 msgid "Error reading response from command \"%s %s\": %s\n"
-msgstr ""
+msgstr "Fejl ved l√¶sning af svar fra kommandoen ‚Äú%s %s‚Äù: %s\n"
 
-#: src/main.c:1168
+#: src/main.c:1172
 #, c-format
 msgid "Username for '%s%s': "
-msgstr ""
+msgstr "Brugernavn for ‚Äú%s%s‚Äù: "
 
-#: src/main.c:1178
-#, fuzzy, c-format
+#: src/main.c:1182
+#, c-format
 msgid "Password for '%s%s@%s': "
-msgstr "Adgangskode for brugeren %s: "
+msgstr "Adgangskode for ‚Äú%s%s@%s‚Äù: "
 
-#: src/main.c:1250
+#: src/main.c:1254
 msgid "Wgetrc: "
 msgstr "Wgetrc: "
 
-#: src/main.c:1251
+#: src/main.c:1255
 msgid "Locale: "
 msgstr "Regionsindstilling (locale): "
 
-#: src/main.c:1252
+#: src/main.c:1256
 msgid "Compile: "
 msgstr "Kompilering: "
 
-#: src/main.c:1253
+#: src/main.c:1257
 msgid "Link: "
 msgstr "Link: "
 
-#: src/main.c:1257
+#: src/main.c:1261
 #, c-format
 msgid ""
 "GNU Wget %s built on %s.\n"
@@ -2726,29 +2492,29 @@ msgstr ""
 "GNU Wget %s kompileret %s.\n"
 "\n"
 
-#: src/main.c:1284
+#: src/main.c:1294
 #, c-format
 msgid "    %s (env)\n"
-msgstr "    %s (milj¯)\n"
+msgstr "    %s (milj√∏)\n"
 
-#: src/main.c:1291
+#: src/main.c:1301
 #, c-format
 msgid "    %s (user)\n"
 msgstr "    %s (bruger)\n"
 
-#: src/main.c:1296
+#: src/main.c:1306
 #, c-format
 msgid "    %s (system)\n"
 msgstr "    %s (system)\n"
 
 #. TRANSLATORS: When available, an actual copyright character
 #. (circle-c) should be used in preference to "(C)".
-#: src/main.c:1324
-#, fuzzy, c-format
+#: src/main.c:1334
+#, c-format
 msgid "Copyright (C) %s Free Software Foundation, Inc.\n"
-msgstr "Ophavsret © 2009 Free Software Foundation, Inc.\n"
+msgstr "Ophavsret ¬© %s Free Software Foundation, Inc.\n"
 
-#: src/main.c:1327
+#: src/main.c:1337
 msgid ""
 "License GPLv3+: GNU GPL version 3 or later\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
@@ -2757,13 +2523,13 @@ msgid ""
 msgstr ""
 "Licens  GPLv3+: GNU GPL version 3 eller nyere\n"
 "<http://www.gnu.org/licenses/gpl.html>.\n"
-"Dette er frit programmel: du kan frit Êndre og videredistribuere det.\n"
+"Dette er frit programmel: du kan frit √¶ndre og videredistribuere det.\n"
 "Der gives INGEN GARANTI, i den grad som dette tillades af loven.\n"
 
 # kan ikke finde nogen en_US.po
 #. TRANSLATORS: When available, please use the proper diacritics for
 #. names such as this one. See en_US.po for reference.
-#: src/main.c:1335
+#: src/main.c:1345
 msgid ""
 "\n"
 "Originally written by Hrvoje Niksic <hniksic@xemacs.org>.\n"
@@ -2771,79 +2537,85 @@ msgstr ""
 "\n"
 "Oprindeligt skrevet af Hrvoje Niksic <hniksic@xemacs.com>.\n"
 
-#: src/main.c:1338
+#: src/main.c:1348
 msgid "Please send bug reports and questions to <bug-wget@gnu.org>.\n"
-msgstr "RapportÈr venligst fejl og send sp¯rgsmÂl til <bug-wget@gnu.org>.\n"
+msgstr "Rapport√©r venligst fejl og send sp√∏rgsm√•l til <bug-wget@gnu.org>.\n"
 
-#: src/main.c:1391 src/main.c:1940
+#: src/main.c:1400
 #, c-format
 msgid "Memory allocation problem\n"
-msgstr ""
+msgstr "Problem ved hukommelsesallokering\n"
 
-#: src/main.c:1442
+#: src/main.c:1451
 #, c-format
 msgid "Exiting due to error in %s\n"
-msgstr ""
+msgstr "Afslutter grundet fejl i %s\n"
 
-#: src/main.c:1472 src/main.c:1543 src/main.c:1779
+#: src/main.c:1481 src/main.c:1552 src/main.c:1794
 #, c-format
 msgid "Try `%s --help' for more options.\n"
-msgstr "Pr¯v '%s --help' for flere flag.\n"
+msgstr "Pr√∏v ‚Äú%s --help‚Äù for flere flag.\n"
 
-#: src/main.c:1539
+#: src/main.c:1548
 #, c-format
 msgid "%s: illegal option -- `-n%c'\n"
-msgstr "%s: ugyldigt flag -- '-n%c'\n"
+msgstr "%s: ugyldigt flag ‚Äî ‚Äú-n%c‚Äù\n"
 
-#: src/main.c:1585
+#: src/main.c:1594
 #, c-format
 msgid "Debugging support not compiled in. Ignoring --debug flag.\n"
 msgstr ""
+"Programmet er ikke kompileret med fejls√∏gningsfunktionalitet. Ignorerer "
+"flaget --debug.\n"
 
-#: src/main.c:1598
+#: src/main.c:1607
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-links were specified, only --convert-links "
 "will be used.\n"
 msgstr ""
+"B√•de --no-clobber og --convert-links blev angivet, men kun --convert-links "
+"vil blive brugt.\n"
 
-#: src/main.c:1600
+#: src/main.c:1609
 #, c-format
 msgid ""
 "Both --no-clobber and --convert-file-only were specified, only --convert-"
 "file-only will be used.\n"
 msgstr ""
+"B√•de --no-clobber og --convert-file-only blev angivet, men kun --convert-"
+"file-only vil blive brugt.\n"
 
-#: src/main.c:1633
+#: src/main.c:1642
 #, c-format
 msgid "Can't be verbose and quiet at the same time.\n"
-msgstr "Kan ikke vÊre udf¯rlig og stille pÂ samme tid.\n"
-
-#: src/main.c:1639
-#, c-format
-msgid "Can't timestamp and not clobber old files at the same time.\n"
-msgstr ""
-"Kan ikke tidsstemple og lade vÊre at ber¯re eksisterende filer pÂ samme "
-"tid.\n"
+msgstr "Kan ikke v√¶re udf√∏rlig og stille p√• samme tid.\n"
 
 #: src/main.c:1648
 #, c-format
-msgid "Cannot specify both --inet4-only and --inet6-only.\n"
-msgstr "Kan ikke angive bÂde --inet4-only og --inet6-only.\n"
+msgid "Can't timestamp and not clobber old files at the same time.\n"
+msgstr ""
+"Kan ikke tidsstemple og lade v√¶re at ber√∏re eksisterende filer p√• samme "
+"tid.\n"
 
-#: src/main.c:1658
-#, fuzzy
+#: src/main.c:1657
+#, c-format
+msgid "Cannot specify both --inet4-only and --inet6-only.\n"
+msgstr "Kan ikke angive b√•de --inet4-only og --inet6-only.\n"
+
+#: src/main.c:1667
 msgid ""
 "Cannot specify both -k or --convert-file-only and -O if multiple URLs are "
 "given, or in combination\n"
 "with -p or -r. See the manual for details.\n"
 "\n"
 msgstr ""
-"Kan ikke angive bÂde -k og -O, hvis der er givet flere URL'er, eller sammen\n"
-"med -p eller -r. Flere detaljer kan findes i manualen.\n"
+"Kan ikke angive -k/--convert-file-only sammen med -O, hvis der er givet "
+"flere\n"
+"URL'er, eller sammen med -p eller -r. Flere detaljer kan findes i manualen.\n"
 "\n"
 
-#: src/main.c:1667
+#: src/main.c:1676
 msgid ""
 "WARNING: combining -O with -r or -p will mean that all downloaded content\n"
 "will be placed in the single file you specified.\n"
@@ -2854,327 +2626,353 @@ msgstr ""
 "vil blive lagt i den enkelte fil, du angav.\n"
 "\n"
 
-#: src/main.c:1673
+#: src/main.c:1682
 msgid ""
 "WARNING: timestamping does nothing in combination with -O. See the manual\n"
 "for details.\n"
 "\n"
 msgstr ""
-"ADVARSEL: tidsstempling g¯r intet sammen med -O. Detaljer kan findes i\n"
+"ADVARSEL: tidsstempling g√∏r intet sammen med -O. Detaljer kan findes i\n"
 "manualen.\n"
 "\n"
 
-#: src/main.c:1693
+#: src/main.c:1702
 #, c-format
 msgid ""
 "WARC output does not work with --no-clobber, --no-clobber will be disabled.\n"
 msgstr ""
+"WARC-uddata fungerer ikke sammen med --no-clobber; --no-clobber "
+"deaktiveres.\n"
 
-#: src/main.c:1700
+#: src/main.c:1709
 #, c-format
 msgid ""
 "WARC output does not work with timestamping, timestamping will be disabled.\n"
 msgstr ""
+"WARC-uddata fungerer ikke med tidsstempler; tidsstempler deaktiveres.\n"
 
-#: src/main.c:1707
+#: src/main.c:1716
 #, c-format
 msgid "WARC output does not work with --spider.\n"
-msgstr ""
+msgstr "WARC-uddata fungerer ikke sammen med --spider.\n"
 
-#: src/main.c:1713
+#: src/main.c:1722
 #, c-format
 msgid ""
 "WARC output does not work with --continue or --start-pos, they will be "
 "disabled.\n"
 msgstr ""
+"WARC-uddata fungerer ikke sammen med --continue eller --start-pos; disse "
+"deaktiveres.\n"
 
-#: src/main.c:1721
+#: src/main.c:1730
 #, c-format
 msgid ""
 "Digests are disabled; WARC deduplication will not find duplicate records.\n"
 msgstr ""
+"Hashsummer er deaktiveret; WARC-deduplikering vil ikke finde duplikerede "
+"poster.\n"
 
-#: src/main.c:1742
+#: src/main.c:1751
 #, c-format
 msgid ""
 "Compression does not work with --continue or --start-pos, they will be "
 "disabled.\n"
 msgstr ""
+"Komprimering fungerer ikke med --continue eller --start-pos; de "
+"deaktiveres.\n"
 
-#: src/main.c:1753
+#: src/main.c:1762
 #, c-format
 msgid "Cannot specify both --ask-password and --password.\n"
-msgstr "Kan ikke angive bÂde --ask-password og --password.\n"
+msgstr "Kan ikke angive b√•de --ask-password og --password.\n"
 
-#: src/main.c:1761
+#: src/main.c:1770
+#, c-format
+msgid ""
+"WARNING: No username set with --ask-password. This is usually not what you "
+"want.\n"
+msgstr ""
+"ADVARSEL: Intet brugernavn angivet med --ask-password. Dette er normalt ikke "
+"hensigten.\n"
+
+#: src/main.c:1776
 #, c-format
 msgid ""
 "Specifying both --start-pos and --continue is not recommended; --continue "
 "will be disabled.\n"
 msgstr ""
+"Angivelse af b√•de --start-pos og --continue anbefales ikke; --continue "
+"deaktiveres.\n"
 
-#: src/main.c:1774
+#: src/main.c:1789
 #, c-format
 msgid "%s: missing URL\n"
-msgstr "%s: URL mangler.\n"
+msgstr "%s: URL mangler\n"
 
-#: src/main.c:1822
-#, fuzzy, c-format
+#: src/main.c:1837
+#, c-format
 msgid "You cannot specify both --post-data and --post-file.\n"
-msgstr "Kan ikke angive bÂde --ask-password og --password.\n"
+msgstr "Du kan ikke angive b√•de --post-data og --post-file.\n"
 
-#: src/main.c:1827
+#: src/main.c:1842
 #, c-format
 msgid ""
 "You cannot use --post-data or --post-file along with --method. --method "
 "expects data through --body-data and --body-file options\n"
 msgstr ""
+"Du kan ikke bruge --post-data eller --post-file sammen med --method. --"
+"method forventer data gennem tilvalgene --body-data og --body-file\n"
 
-#: src/main.c:1836
+#: src/main.c:1851
 #, c-format
 msgid ""
 "You must specify a method through --method=HTTPMethod to use with --body-"
 "data or --body-file.\n"
 msgstr ""
+"Du skal angive en metode med --method=HTTPMetode, som skal bruges med --body-"
+"data eller --body-file.\n"
 
-#: src/main.c:1842
-#, fuzzy, c-format
+#: src/main.c:1857
+#, c-format
 msgid "You cannot specify both --body-data and --body-file.\n"
-msgstr "Kan ikke angive bÂde --inet4-only og --inet6-only.\n"
+msgstr "Du kan ikke angive b√•de --body-data og --body-file.\n"
 
-#: src/main.c:1894
+#: src/main.c:1909
 #, c-format
 msgid "This version does not have support for IRIs\n"
-msgstr "Denne version underst¯tter ikke IRI'er.\n"
+msgstr "Denne version underst√∏tter ikke IRI'er\n"
 
-#: src/main.c:2006
-#, fuzzy, c-format
+#: src/main.c:2009
+#, c-format
 msgid ""
 "-k or -r can be used together with -O only if outputting to a regular file.\n"
 msgstr ""
-"-k kan kun bruges sammen med -O hvis udskrivning er til en almindelig fil.\n"
+"-k og -r kan kun bruges sammen med -O ved udskrivning til en almindelig "
+"fil.\n"
 
-#: src/main.c:2012
-#, fuzzy, c-format
+#: src/main.c:2015
+#, c-format
 msgid ""
 "--convert-links or --convert-file-only can be used together only if "
 "outputting to a regular file.\n"
 msgstr ""
-"-k kan kun bruges sammen med -O hvis udskrivning er til en almindelig fil.\n"
+"--convert-links og --convert-file-only kan kun bruges sammen ved udskrift "
+"til en almindelig fil.\n"
 
-#: src/main.c:2023
-#, fuzzy, c-format
+#: src/main.c:2026
+#, c-format
 msgid "Failed to init libcares\n"
-msgstr "Kan ikke aflÊnke den symbolske lÊnke %s: %s\n"
+msgstr "Kunne ikke initialisere libcares\n"
 
-#: src/main.c:2029
+#: src/main.c:2032
 #, c-format
 msgid "Failed to init c-ares channel\n"
-msgstr ""
+msgstr "Kunne ikke initialisere c-ares-kanal\n"
 
-#: src/main.c:2052
-#, fuzzy, c-format
+#: src/main.c:2055
+#, c-format
 msgid "Failed to parse IP address '%s'\n"
-msgstr "%s: kan ikke evaluere vÊrtsadresse %s\n"
+msgstr "Kunne ikke fortolke ‚Äú%s‚Äù som IP-adresse\n"
 
-#: src/main.c:2063
+#: src/main.c:2066
 #, c-format
 msgid "Failed to set DNS server(s) '%s' (%d)\n"
-msgstr ""
+msgstr "Kunne ikke angive ‚Äú%s‚Äù som DNS-servere (%d)\n"
 
-#: src/main.c:2191
+#: src/main.c:2201
 #, c-format
 msgid "No URLs found in %s.\n"
 msgstr "Fandt ingen URLer i %s.\n"
 
-#: src/main.c:2207
-#, fuzzy, c-format
+#: src/main.c:2217
+#, c-format
 msgid "Unable to parse metalink file %s.\n"
-msgstr "Kan ikke slette %s: %s\n"
+msgstr "Kan ikke fortolke metalink-filen %s.\n"
 
-#: src/main.c:2237 src/metalink.c:337
-#, fuzzy, c-format
+#: src/main.c:2247 src/metalink.c:337
+#, c-format
 msgid "Could not download all resources from %s.\n"
-msgstr "Kunne ikke indlÊse certifikater fra %s\n"
+msgstr "Kunne ikke hente alle ressourcer fra %s.\n"
 
-#: src/main.c:2264
-#, fuzzy, c-format
+#: src/main.c:2274
+#, c-format
 msgid ""
 "FINISHED --%s--\n"
 "Total wall clock time: %s\n"
 "Downloaded: %d files, %s in %s (%s)\n"
 msgstr ""
-"F∆RDIG --%s--\n"
-"Hentede %d filer, %s pÂ %s (%s)\n"
+"F√ÜRDIG --%s--\n"
+"Samlet varighed: %s\n"
+"Hentede: %d filer, %s p√• %s (%s)\n"
 
-#: src/main.c:2278
+#: src/main.c:2288
 #, c-format
 msgid "Download quota of %s EXCEEDED!\n"
-msgstr "Hente-kvote pÂ %s OVERSKREDET!\n"
+msgstr "Hente-kvote p√• %s OVERSKREDET!\n"
 
 #: src/metalink.c:93
 msgid "-O not supported for metalink download. Ignoring.\n"
-msgstr ""
+msgstr "-O underst√∏ttes ikke til metalink-download. Ignorerer.\n"
 
 #: src/metalink.c:172
 #, c-format
 msgid "[--trust-server-names %s, --directory-prefix=%s]\n"
-msgstr ""
+msgstr "[--trust-server-names %s, --directory-prefix=%s]\n"
 
 #: src/metalink.c:176
-#, fuzzy, c-format
+#, c-format
 msgid "Planned metalink file: %s\n"
-msgstr "Proxytunnel slog fejl: %s"
+msgstr "Planlagt metalink-fil: %s\n"
 
 #: src/metalink.c:179
 #, c-format
 msgid "Secured metalink file: %s\n"
-msgstr ""
+msgstr "Sikret metalink-fil: %s\n"
 
 #: src/metalink.c:184
 msgid "Rejecting metalink file. Unsafe name.\n"
-msgstr ""
+msgstr "Afviser metalink-fil. Usikkert navn.\n"
 
 #: src/metalink.c:238
 #, c-format
 msgid "Processing metaurl %s...\n"
-msgstr ""
+msgstr "Behandler metaurl %s ‚Ä¶\n"
 
 #: src/metalink.c:251
 #, c-format
 msgid "Rejecting metaurl file %s. Unsafe name.\n"
-msgstr ""
+msgstr "Afviser metaurl-filen %s. Usikkert navn.\n"
 
 #: src/metalink.c:268
 #, c-format
 msgid "Failed to download %s. Skipping metaurl.\n"
-msgstr ""
+msgstr "Kunne ikke hente %s. Springer metaurl over.\n"
 
 #: src/metalink.c:285
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to parse metaurl file %s.\n"
-msgstr "Kan ikke slette %s: %s\n"
+msgstr "Kan ikke fortolke metaurl-filen %s.\n"
 
 #: src/metalink.c:354
 msgid "Metaurls processing returned with error.\n"
-msgstr ""
+msgstr "Metaurl-behandling returnerede med fejl.\n"
 
 #: src/metalink.c:386
 #, c-format
 msgid "Resource type %s not supported, ignoring...\n"
-msgstr ""
+msgstr "Ressourcetypen %s underst√∏ttes ikke; ignorerer ‚Ä¶\n"
 
-#: src/metalink.c:509
+#: src/metalink.c:507
 msgid "Could not open downloaded file.\n"
-msgstr ""
+msgstr "Kunne ikke √•bne hentet fil.\n"
 
-#: src/metalink.c:514
+#: src/metalink.c:512
 #, c-format
 msgid "Computing size for %s\n"
-msgstr ""
+msgstr "Beregner st√∏rrelse af %s\n"
 
-#: src/metalink.c:519
+#: src/metalink.c:517
 msgid "File size not declared. Skipping check.\n"
-msgstr ""
+msgstr "Filst√∏rrelsen er ikke erkl√¶ret. Springer kontrol over.\n"
 
-#: src/metalink.c:527
+#: src/metalink.c:525
 msgid "Could not get downloaded file's size.\n"
-msgstr ""
+msgstr "Kunne ikke finde st√∏rrelsen af den hentede fil.\n"
 
-#: src/metalink.c:539
-#, fuzzy, c-format
+#: src/metalink.c:537
+#, c-format
 msgid "Size mismatch for file %s.\n"
-msgstr "Ingen fil ved navn %s.\n"
+msgstr "St√∏rrelsen stemmer ikke for filen %s.\n"
 
-#: src/metalink.c:547
+#: src/metalink.c:545
 msgid "Size matches.\n"
-msgstr ""
+msgstr "St√∏rrelsen stemmer.\n"
 
-#: src/metalink.c:600
+#: src/metalink.c:598
 #, c-format
 msgid "Computing checksum for %s\n"
-msgstr ""
+msgstr "Beregner kontrolsum for %s\n"
 
-#: src/metalink.c:678
+#: src/metalink.c:676
 msgid "Checksum matches.\n"
-msgstr ""
+msgstr "Kontrolsummen stemmer.\n"
 
-#: src/metalink.c:683
+#: src/metalink.c:681
 #, c-format
 msgid "Checksum mismatch for file %s.\n"
-msgstr ""
+msgstr "Kontrolsummen stemmer ikke for filen %s.\n"
 
-#: src/metalink.c:722
+#: src/metalink.c:720
 msgid "Could not open downloaded file for signature verification.\n"
-msgstr ""
+msgstr "Kunne ikke √•bne hentet fil til bekr√¶ftelse af signatur.\n"
 
-#: src/metalink.c:780
+#: src/metalink.c:778
 #, c-format
 msgid "GPGME data_new_from_mem: %s\n"
-msgstr ""
+msgstr "GPGME data_new_from_mem: %s\n"
 
-#: src/metalink.c:792
+#: src/metalink.c:790
 #, c-format
 msgid "GPGME op_verify: %s\n"
-msgstr ""
+msgstr "GPGME op_verify: %s\n"
 
-#: src/metalink.c:805
+#: src/metalink.c:803
 msgid "GPGME op_verify_result: NULL\n"
-msgstr ""
+msgstr "GPGME op_verify_result: NULL\n"
 
-#: src/metalink.c:821
+#: src/metalink.c:819
 msgid "Signature validation succeeded.\n"
-msgstr ""
+msgstr "Signatur blev valideret.\n"
 
-#: src/metalink.c:829
+#: src/metalink.c:827
 msgid "Invalid signature. Rejecting resource.\n"
-msgstr ""
+msgstr "Ugyldig signatur. Afviser ressourcen.\n"
 
-#: src/metalink.c:838
+#: src/metalink.c:836
 msgid "Data matches signature, but signature is not trusted.\n"
-msgstr ""
+msgstr "Data stemmer med signatur, men der er ikke tillid til signaturen.\n"
 
-#: src/metalink.c:865
-#, fuzzy
+#: src/metalink.c:863
 msgid "No checksums found.\n"
-msgstr "Intet certifikat fundet\n"
+msgstr "Ingen kontrolsummer fundet.\n"
 
-#: src/metalink.c:871
+#: src/metalink.c:869
 #, c-format
 msgid "Failed to download %s. Skipping resource.\n"
-msgstr ""
+msgstr "Kunne ikke hente %s. Springer ressourcen over.\n"
 
-#: src/metalink.c:878
+#: src/metalink.c:876
 #, c-format
 msgid "File %s retrieved but size does not match. \n"
-msgstr ""
+msgstr "Filen %s blev hentet, men st√∏rrelsen stemmer ikke. \n"
 
-#: src/metalink.c:885
+#: src/metalink.c:883
 #, c-format
 msgid "File %s retrieved but checksum does not match. \n"
-msgstr ""
+msgstr "Filen %s blev hentet, men kontrolsummen stemmer ikke. \n"
 
-#: src/metalink.c:894
+#: src/metalink.c:892
 #, c-format
 msgid "File %s retrieved but signature does not match. \n"
-msgstr ""
+msgstr "Filen %s blev hentet, men signaturen stemmer ikke. \n"
 
-#: src/metalink.c:1113
-#, fuzzy, c-format
+#: src/metalink.c:1111
+#, c-format
 msgid "Renaming %s to %s.\n"
-msgstr "Fjerner %s.\n"
+msgstr "Omd√∏ber %s til %s.\n"
 
 #: src/mswindows.c:96
 #, c-format
 msgid "Continuing in background.\n"
-msgstr "FortsÊtter i baggrunden.\n"
+msgstr "Forts√¶tter i baggrunden.\n"
 
 #: src/mswindows.c:289
 #, c-format
 msgid "Continuing in background, pid %lu.\n"
-msgstr "FortsÊtter i baggrunden, pid %lu.\n"
+msgstr "Forts√¶tter i baggrunden, pid %lu.\n"
 
-#: src/mswindows.c:291 src/utils.c:508
+#: src/mswindows.c:291 src/utils.c:502
 #, c-format
 msgid "Output will be written to %s.\n"
 msgstr "Uddata vil blive skrevet til %s.\n"
@@ -3182,12 +2980,12 @@ msgstr "Uddata vil blive skrevet til %s.\n"
 #: src/mswindows.c:323
 #, c-format
 msgid "fake_fork_child() failed\n"
-msgstr ""
+msgstr "fake_fork_child() mislykkedes\n"
 
 #: src/mswindows.c:331
 #, c-format
 msgid "fake_fork() failed\n"
-msgstr ""
+msgstr "fake_fork() mislykkedes\n"
 
 #: src/mswindows.c:460 src/mswindows.c:467
 #, c-format
@@ -3197,108 +2995,126 @@ msgstr "%s: Fandt ingen brugbar sokkel-driver.\n"
 #: src/mswindows.c:647
 #, c-format
 msgid "ioctl() failed.  The socket could not be set as blocking.\n"
-msgstr ""
+msgstr "ioctl() mislykkedes.  Soklen kunne ikke indstilles som blokerende.\n"
 
-#: src/netrc.c:371
+#: src/netrc.c:373
 #, c-format
 msgid "%s: %s:%d: warning: %s token appears before any machine name\n"
-msgstr "%s: %s:%d: advarsel: Symbolet %s fundet f¯r noget maskinenavn\n"
+msgstr "%s: %s:%d: advarsel: Symbolet %s fundet f√∏r noget maskinenavn\n"
 
-#: src/netrc.c:412
+#: src/netrc.c:416
 #, c-format
 msgid "%s: %s:%d: unknown token \"%s\"\n"
-msgstr "%s: %s:%d: ukendt symbol '%s'\n"
+msgstr "%s: %s:%d: ukendt symbol ‚Äú%s‚Äù\n"
 
-#: src/netrc.c:496
+#: src/netrc.c:557
 #, c-format
 msgid "Usage: %s NETRC [HOSTNAME]\n"
-msgstr "Brug: %s NETRC [V∆RTSNAVN]\n"
+msgstr "Brug: %s NETRC [V√ÜRTSNAVN]\n"
 
-#: src/netrc.c:514
+#: src/netrc.c:575
 #, c-format
 msgid "%s: cannot stat %s: %s\n"
-msgstr "%s: 'stat' fejlede for %s: %s\n"
+msgstr "%s: ‚Äústat‚Äù fejlede for %s: %s\n"
 
-#: src/openssl.c:114
+#: src/openssl.c:129
 msgid "WARNING: using a weak random seed.\n"
-msgstr "ADVARSEL: bruger en svag tilfÊldig seed.\n"
+msgstr "ADVARSEL: bruger en svag tilf√¶ldig seed.\n"
 
-#: src/openssl.c:192
+#: src/openssl.c:209
 msgid "Could not seed PRNG; consider using --random-file.\n"
 msgstr ""
-"Kunne ikke seede pseudotilfÊldig talgenerator; pr¯v at bruge --random-file.\n"
+"Kunne ikke seede pseudotilf√¶ldig talgenerator; pr√∏v at bruge --random-file.\n"
 
-#: src/openssl.c:267
+#: src/openssl.c:272
 msgid "Your OpenSSL version is too old to support TLS 1.3\n"
-msgstr ""
+msgstr "Din OpenSSL-version er for gammel til at underst√∏tte TLS 1.3\n"
 
-#: src/openssl.c:273
+#: src/openssl.c:278
 msgid "Your OpenSSL version is too old to support TLSv1.1\n"
-msgstr ""
+msgstr "Din OpenSSL-version er for gammel til at underst√∏tte TLSv1.1\n"
 
-#: src/openssl.c:277
+#: src/openssl.c:282
 msgid "Your OpenSSL version is too old to support TLSv1.2\n"
-msgstr ""
+msgstr "Din OpenSSL-version er for gammel til at underst√∏tte TLSv1.2\n"
 
-#: src/openssl.c:283
+#: src/openssl.c:288
 #, c-format
 msgid "OpenSSL: unimplemented 'secure-protocol' option value %d\n"
 msgstr ""
+"OpenSSL: V√¶rdien %d for tilvalget ‚Äúsecure-protocol‚Äù er ikke implementeret\n"
 
-#: src/openssl.c:323
-#, fuzzy, c-format
+#: src/openssl.c:295
+#, c-format
+msgid "Your OpenSSL version does not support option '%s'.\n"
+msgstr "Din OpenSSL-version underst√∏tter ikke tilvalget ‚Äú%s‚Äù.\n"
+
+#: src/openssl.c:296
+msgid "Rebuilding Wget and/or OpenSSL may help in this situation.\n"
+msgstr "Det kan m√•ske hj√¶lpe at kompilere Wget og/eller OpenSSL igen.\n"
+
+#: src/openssl.c:341
+#, c-format
 msgid "OpenSSL: Invalid cipher list: %s\n"
-msgstr "%s: Ugyldig URL %s: %s\n"
+msgstr "OpenSSL: Ugyldig cipher-liste: %s\n"
 
-#: src/openssl.c:640
-#, fuzzy
+#: src/openssl.c:368
+msgid "OpenSSL: Failed set trust to partial chain\n"
+msgstr "OpenSSL: Mislykket angivelse af tillid til ‚Äúpartial chain‚Äù\n"
+
+#: src/openssl.c:374
+msgid "OpenSSL: Failed to allocate verification param\n"
+msgstr "OpenSSL: Kunne ikke allokere verifikationsparameter\n"
+
+#: src/openssl.c:852
 msgid "WARNING: Could not seed PRNG. Consider using --random-file.\n"
 msgstr ""
-"Kunne ikke seede pseudotilfÊldig talgenerator; pr¯v at bruge --random-file.\n"
+"ADVARSEL: Kunne ikke seede pseudotilf√¶ldig talgenerator. Pr√∏v --random-"
+"file.\n"
 
-#: src/openssl.c:860
+#: src/openssl.c:1072
 #, c-format
 msgid "%s: cannot verify %s's certificate, issued by %s:\n"
 msgstr "%s: kan ikke verificere certifikat for %s, udstedt af %s:\n"
 
-#: src/openssl.c:871
+#: src/openssl.c:1083
 msgid "  Unable to locally verify the issuer's authority.\n"
 msgstr "  Kan ikke lokalt verificere udstederens autoritet.\n"
 
-#: src/openssl.c:876
+#: src/openssl.c:1088
 msgid "  Self-signed certificate encountered.\n"
 msgstr "  Der blev fundet et selvunderskrevet certifikat.\n"
 
-#: src/openssl.c:879
+#: src/openssl.c:1091
 msgid "  Issued certificate not yet valid.\n"
 msgstr "  De udstedte certifikat er endnu ikke gyldigt.\n"
 
-#: src/openssl.c:882
+#: src/openssl.c:1094
 msgid "  Issued certificate has expired.\n"
-msgstr "  Det udstedte certifikat er udl¯bet.\n"
+msgstr "  Det udstedte certifikat er udl√∏bet.\n"
 
-# 'common name' kan f.eks. vÊre et personnavn.  Eksempel findes pÂ
+# 'common name' kan f.eks. v√¶re et personnavn.  Eksempel findes p√•
 # http://tools.ietf.org/html/rfc5280
-#: src/openssl.c:970
+#: src/openssl.c:1182
 #, c-format
 msgid ""
 "%s: no certificate subject alternative name matches\n"
 "\trequested host name %s.\n"
 msgstr ""
 "%s: intet certifikatsubjekts alternative navn svarer til det forspurgte "
-"vÊrtsnavn %s.\n"
+"v√¶rtsnavn %s.\n"
 
-# 'common name' kan f.eks. vÊre et personnavn.  Eksempel findes pÂ
+# 'common name' kan f.eks. v√¶re et personnavn.  Eksempel findes p√•
 # http://tools.ietf.org/html/rfc5280
-#: src/openssl.c:989
+#: src/openssl.c:1201
 #, c-format
 msgid ""
 "    %s: certificate common name %s doesn't match requested host name %s.\n"
 msgstr ""
 "    %s: certifikatets trivialnavn %s svarer ikke til det forespurgte "
-"vÊrtsnavn %s.\n"
+"v√¶rtsnavn %s.\n"
 
-#: src/openssl.c:1021
+#: src/openssl.c:1233
 #, c-format
 msgid ""
 "    %s: certificate common name is invalid (contains a NUL character).\n"
@@ -3306,15 +3122,15 @@ msgid ""
 "    (that is, it is not the real %s).\n"
 msgstr ""
 "    %s: certifikatets trivialnavn er ugyldigt (indeholder et NUL-tegn).\n"
-"    Dette kan vÊre et tegn pÂ at vÊrten ikke er den, den udgiver sig for\n"
-"    (altsÂ at det ikke er den rigtige %s).\n"
+"    Dette kan v√¶re et tegn p√• at v√¶rten ikke er den, den udgiver sig for\n"
+"    (alts√• at det ikke er den rigtige %s).\n"
 
-#: src/openssl.c:1046
+#: src/openssl.c:1258
 #, c-format
 msgid "To connect to %s insecurely, use `--no-check-certificate'.\n"
-msgstr "Brug '--no-check-certificate' for at forbinde til %s pÂ usikker vis.\n"
+msgstr "Brug ‚Äú--no-check-certificate‚Äù for at forbinde til %s p√• usikker vis.\n"
 
-#: src/progress.c:244
+#: src/progress.c:260
 #, c-format
 msgid ""
 "\n"
@@ -3323,27 +3139,38 @@ msgstr ""
 "\n"
 "%*s[ springer over %sK ]"
 
-#: src/progress.c:465
+#: src/progress.c:545
 #, c-format
 msgid "Invalid dot style specification %s; leaving unchanged.\n"
-msgstr "Ugyldig punkt-stilangivelse %s; forbliver uÊndret.\n"
+msgstr "Ugyldig punkt-stilangivelse %s; forbliver u√¶ndret.\n"
 
 #. TRANSLATORS: "ETA" is English-centric, but this must
 #. be short, ideally 3 chars.  Abbreviate if necessary.
-#: src/progress.c:857
-#, fuzzy, c-format
+#: src/progress.c:1006
+#, c-format
 msgid "    eta %s"
-msgstr "  tid %s"
+msgstr "    tid %s"
 
-#: src/progress.c:1147
-#, fuzzy
+#. TRANSLATORS: The meaning is "elapsed time", and it is shown
+#. * next to the progress bar once the download is done.
+#. * This should not take up more room than
+#. * available here (6 columns).  Abbreviate if necessary.
+#: src/progress.c:1312
 msgid "    in "
-msgstr "   om "
+msgstr "    om "
 
-#: src/ptimer.c:157
+#: src/ptimer.c:158
 #, c-format
 msgid "Cannot get REALTIME clock frequency: %s\n"
 msgstr "Kan ikke finde frekvens af REALTIME-ur: %s\n"
+
+#: src/recur.c:428
+#, c-format
+msgid ""
+"nofollow attribute found in %s. Will not follow any links on this page\n"
+msgstr ""
+"Attributten nofollow blev fundet i %s. F√∏lger ikke nogen links p√• denne "
+"side\n"
 
 #: src/recur.c:512
 #, c-format
@@ -3352,29 +3179,29 @@ msgstr "Fjerner %s fordi den skal forkastes.\n"
 
 #: src/res.c:394
 #, c-format
-msgid "Cannot open %s: %s"
-msgstr "Kan ikke Âbne %s: %s"
+msgid "Cannot open %s: %s\n"
+msgstr "Kan ikke √•bne %s: %s\n"
 
-#: src/res.c:553
+#: src/res.c:556
 msgid "Loading robots.txt; please ignore errors.\n"
 msgstr "Henter robots.txt; ignorer eventuelle fejlmeldinger.\n"
 
-#: src/retr.c:928
+#: src/retr.c:925
 #, c-format
 msgid "Error parsing proxy URL %s: %s.\n"
 msgstr "Fejl ved fortolkning af proxy-URL %s: %s.\n"
 
-#: src/retr.c:940
+#: src/retr.c:938
 #, c-format
 msgid "Error in proxy URL %s: Must be HTTP.\n"
-msgstr "Fejl i proxy URL %s: Skal vÊre HTTP.\n"
+msgstr "Fejl i proxy URL %s: Skal v√¶re HTTP.\n"
 
-#: src/retr.c:1069
+#: src/retr.c:1067
 #, c-format
 msgid "%d redirections exceeded.\n"
 msgstr "%d omdirigeringer overskredet.\n"
 
-#: src/retr.c:1333
+#: src/retr.c:1327
 msgid ""
 "Giving up.\n"
 "\n"
@@ -3382,23 +3209,23 @@ msgstr ""
 "Giver op.\n"
 "\n"
 
-#: src/retr.c:1333
+#: src/retr.c:1327
 msgid ""
 "Retrying.\n"
 "\n"
 msgstr ""
-"Pr¯ver igen.\n"
+"Pr√∏ver igen.\n"
 "\n"
 
-#: src/spider.c:75
+#: src/spider.c:77
 msgid ""
 "Found no broken links.\n"
 "\n"
 msgstr ""
-"Fandt ingen ¯delagte henvisninger.\n"
+"Fandt ingen √∏delagte henvisninger.\n"
 "\n"
 
-#: src/spider.c:82
+#: src/spider.c:84
 #, c-format
 msgid ""
 "Found %d broken link.\n"
@@ -3407,179 +3234,194 @@ msgid_plural ""
 "Found %d broken links.\n"
 "\n"
 msgstr[0] ""
-"Fandt %d ¯delagt henvisning.\n"
+"Fandt %d √∏delagt henvisning.\n"
 "\n"
 msgstr[1] ""
-"Fandt %d ¯delagte henvisninger.\n"
+"Fandt %d √∏delagte henvisninger.\n"
 "\n"
 
-#: src/url.c:674
+#: src/url.c:688
 msgid "No error"
 msgstr "Ingen fejl"
 
 # scheme?
-#: src/url.c:676
-#, c-format
-msgid "Unsupported scheme %s"
-msgstr "Ikke-underst¯ttet skema %s"
+#: src/url.c:689
+msgid "Unsupported scheme"
+msgstr "Skema ikke underst√∏ttet"
+
+#: src/url.c:690
+msgid "HTTPS support not compiled in"
+msgstr "Underst√∏ttelse af HTTPS er ikke kompileret med"
+
+#: src/url.c:691
+msgid "FTPS support not compiled in"
+msgstr "Underst√∏ttelse af FTPS er ikke kompileret med"
 
 # scheme?
-#: src/url.c:678
+#: src/url.c:692
 msgid "Scheme missing"
 msgstr "Skema mangler"
 
-#: src/url.c:680
+#: src/url.c:693
 msgid "Invalid host name"
-msgstr "VÊrtsnavnet er ugyldigt"
+msgstr "V√¶rtsnavnet er ugyldigt"
 
-#: src/url.c:682
+#: src/url.c:694
 msgid "Bad port number"
 msgstr "Ugyldigt portnummer"
 
-#: src/url.c:684
+#: src/url.c:695
 msgid "Invalid user name"
 msgstr "Ugyldigt brugernavn"
 
-#: src/url.c:686
+#: src/url.c:696
 msgid "Unterminated IPv6 numeric address"
 msgstr "Uafsluttet numerisk IPv6-adresse"
 
-#: src/url.c:688
+#: src/url.c:697
 msgid "IPv6 addresses not supported"
-msgstr "IPv6-adresser underst¯ttes ikke"
+msgstr "IPv6-adresser underst√∏ttes ikke"
 
-#: src/url.c:690
+#: src/url.c:698
 msgid "Invalid IPv6 numeric address"
 msgstr "Ugyldig numerisk IPv6-adresse"
 
-#: src/url.c:1006
-msgid "HTTPS support not compiled in"
-msgstr "Underst¯ttelse af HTTPS er ikke kompileret med"
-
-#: src/url.c:1603
-#, fuzzy
+#: src/url.c:1645
 msgid "Unconvertable multibyte sequence encountered\n"
-msgstr "UfuldstÊndig eller ugyldig flerbytesekvens fundet\n"
+msgstr "Ukonverterbar flerbytesekvens fundet\n"
 
-#: src/utils.c:128
+#: src/utils.c:122
 #, c-format
 msgid "%s: %s: Failed to allocate enough memory; memory exhausted.\n"
 msgstr "%s: %s: Kunne ikke allokere nok hukommelse; hukommelsen opbrugt.\n"
 
-#: src/utils.c:134
+#: src/utils.c:128
 #, c-format
 msgid "%s: %s: Failed to allocate %ld bytes; memory exhausted.\n"
 msgstr "%s: %s: Kunne ikke allokere %ld byte; hukommelsen opbrugt.\n"
 
-#: src/utils.c:354
-#, fuzzy, c-format
+#: src/utils.c:348
+#, c-format
 msgid "%s: aprintf: text buffer is too big (%d bytes), aborting.\n"
-msgstr "%s: aprintf: tekstbuffer er for stor (%ld byte), afbryder.\n"
+msgstr "%s: aprintf: tekstbuffer er for stor (%d byte), afbryder.\n"
 
-#: src/utils.c:506
+#: src/utils.c:500
 #, c-format
 msgid "Continuing in background, pid %d.\n"
-msgstr "FortsÊtter i baggrunden, pid %d.\n"
+msgstr "Forts√¶tter i baggrunden, pid %d.\n"
 
-#: src/utils.c:557
+#: src/utils.c:551
 #, c-format
 msgid "Failed to unlink symlink %s: %s\n"
-msgstr "Kan ikke aflÊnke den symbolske lÊnke %s: %s\n"
+msgstr "Kan ikke afl√¶nke den symbolske l√¶nke %s: %s\n"
 
-#: src/utils.c:865
-#, fuzzy, c-format
+#: src/utils.c:872
+#, c-format
 msgid "Failed to Fopen file %s\n"
-msgstr "Kunne ikke indlÊse certifikater fra %s\n"
-
-#: src/utils.c:871
-#, fuzzy, c-format
-msgid "Failed to get FD for file %s\n"
-msgstr "Kunne ikke fÂ certifikatn¯gle fra %s\n"
+msgstr "Kunne ikke Fopen filen %s\n"
 
 #: src/utils.c:878
 #, c-format
-msgid "Failed to stat file %s, (check permissions)\n"
-msgstr ""
+msgid "Failed to get FD for file %s\n"
+msgstr "Kunne ikke opn√• fildeskriptor for filen %s\n"
 
-#: src/utils.c:888
+#: src/utils.c:885
 #, c-format
-msgid "File %s changed since the last check. Security check failed."
-msgstr ""
+msgid "Failed to stat file %s, (check permissions)\n"
+msgstr "Kunne ikke k√∏re stat p√• filen %s (kontroll√©r rettigheder)\n"
 
-#: src/utils.c:923
-#, fuzzy, c-format
+#: src/utils.c:895
+#, c-format
+msgid "File %s changed since the last check. Security check failed.\n"
+msgstr "Filen %s er √¶ndret siden sidste kontrol. Sikkerhedskontrol fejlet.\n"
+
+#: src/utils.c:930
+#, c-format
 msgid "Failed to open file %s, reason :%s\n"
-msgstr "Kunne ikke indlÊse certifikater fra %s\n"
+msgstr "Kunne ikke √•bne filen %s; √•rsag: %s\n"
 
-#: src/utils.c:929
-#, fuzzy, c-format
+#: src/utils.c:936
+#, c-format
 msgid "Failed to stat file %s, error: %s\n"
-msgstr "Kunne ikke indlÊse certifikater fra %s\n"
+msgstr "Kunne ikke k√∏re stat p√• filen %s; fejl: %s\n"
 
-#: src/utils.c:939
+#: src/utils.c:946
 #, c-format
 msgid ""
 "Trying to open file %s but it changed since last check. Security check "
-"failed."
+"failed.\n"
 msgstr ""
+"Fors√∏ger at finde √•ben filen %s, men den er √¶ndret siden sidste kontrol. "
+"Sikkerhedskontrol fejlet.\n"
 
-#: src/utils.c:2445
+#: src/utils.c:2443
 #, c-format
 msgid "Invalid regular expression %s, PCRE2 error %d\n"
-msgstr ""
+msgstr "Ugyldigt regul√¶rt udtryk %s, PCRE2-fejl %d\n"
 
-#: src/utils.c:2462 src/utils.c:2485
+#: src/utils.c:2460 src/utils.c:2483
 #, c-format
 msgid "Invalid regular expression %s, %s\n"
-msgstr ""
+msgstr "Ugyldigt regul√¶rt udtryk %s, %s\n"
 
-#: src/utils.c:2515 src/utils.c:2537 src/utils.c:2561
-#, fuzzy, c-format
+#: src/utils.c:2513 src/utils.c:2535 src/utils.c:2559
+#, c-format
 msgid "Error while matching %s: %d\n"
-msgstr "Fejl ved skrivning til %s: %s\n"
+msgstr "Fejl ved match af %s: %d\n"
 
-#: src/utils.c:2854
+#: src/utils.c:2852
 #, c-format
 msgid "Skipping key with wrong size (%d/%d): %s\n"
-msgstr ""
+msgstr "Springer n√∏gle med forkert st√∏rrelse over (%d/%d): %s\n"
 
-#: src/warc.c:222
+#: src/warc.c:217
+msgid "Error setting WARC file position.\n"
+msgstr "Fejl ved angivelse af WARC-filposition.\n"
+
+#: src/warc.c:224
+msgid "Error flushing WARC file to disk.\n"
+msgstr "Fejl ved t√∏mning af WARC-filbuffer til disken.\n"
+
+#: src/warc.c:234
 msgid "Error duplicating WARC file file descriptor.\n"
-msgstr ""
+msgstr "Fejl ved duplikering af WARC-fils fildeskriptor.\n"
 
-#: src/warc.c:233
+#: src/warc.c:245
 msgid "Error opening GZIP stream to WARC file.\n"
-msgstr ""
+msgstr "Fejl ved √•bning af GZIP-str√∏m til WARC-filen.\n"
 
-#: src/warc.c:809
+#: src/warc.c:830
 msgid "Error writing warcinfo record to WARC file.\n"
-msgstr ""
+msgstr "Fejl ved skrivning af warcinfo-post til WARC-fil.\n"
 
-#: src/warc.c:872
+#: src/warc.c:893
 #, c-format
 msgid ""
 "Opening WARC file %s.\n"
 "\n"
 msgstr ""
+"√Öbner WARC-filen %s.\n"
+"\n"
 
-#: src/warc.c:878
-#, fuzzy, c-format
+#: src/warc.c:899
+#, c-format
 msgid "Error opening WARC file %s.\n"
-msgstr "Fejl ved fortolkning af certifikat: %s\n"
+msgstr "Fejl ved √•bning af WARC-filen %s.\n"
 
-#: src/warc.c:1075
+#: src/warc.c:1095
 msgid "CDX file does not list original urls. (Missing column 'a'.)\n"
 msgstr ""
+"CDX-filen indeholder ikke oprindelige URL'er. (Mangler kolonnen ‚Äúa‚Äù.)\n"
 
-#: src/warc.c:1078
+#: src/warc.c:1098
 msgid "CDX file does not list checksums. (Missing column 'k'.)\n"
-msgstr ""
+msgstr "CDX-filen indeholder ikke kontrolsummer. (Mangler kolonnen ‚Äúk‚Äù.)\n"
 
-#: src/warc.c:1081
+#: src/warc.c:1101
 msgid "CDX file does not list record ids. (Missing column 'u'.)\n"
-msgstr ""
+msgstr "CDX-filen indeholder ikke post-id'er. (Mangler kolonnen ‚Äúu‚Äù.)\n"
 
-#: src/warc.c:1105
+#: src/warc.c:1125
 #, c-format
 msgid ""
 "Loaded %d record from CDX.\n"
@@ -3588,43 +3430,67 @@ msgid_plural ""
 "Loaded %d records from CDX.\n"
 "\n"
 msgstr[0] ""
+"Indl√¶ste %d post fra CDX.\n"
+"\n"
 msgstr[1] ""
-
-#: src/warc.c:1151
-#, c-format
-msgid "Could not read CDX file %s for deduplication.\n"
-msgstr ""
-
-#: src/warc.c:1161
-msgid "Could not open temporary WARC manifest file.\n"
-msgstr ""
+"Indl√¶ste %d poster fra CDX.\n"
+"\n"
 
 #: src/warc.c:1171
+#, c-format
+msgid "Could not read CDX file %s for deduplication.\n"
+msgstr "Kunne ikke l√¶se CDX-filen %s til deduplikering.\n"
+
+#: src/warc.c:1181
+msgid "Could not open temporary WARC manifest file.\n"
+msgstr "Kunne ikke √•bne midlertidig WARC-manifestfil.\n"
+
+#: src/warc.c:1191
 msgid "Could not open temporary WARC log file.\n"
-msgstr ""
+msgstr "Kunne ikke √•bne midlertidig WARC-logfil.\n"
 
-#: src/warc.c:1180
+#: src/warc.c:1200
 msgid "Could not open WARC file.\n"
-msgstr ""
+msgstr "Kunne ikke √•bne WARC-fil.\n"
 
-#: src/warc.c:1189
-#, fuzzy
+#: src/warc.c:1209
 msgid "Could not open CDX file for output.\n"
-msgstr "Fandt ikke proxy-server.\n"
+msgstr "Kunne ikke √•bne CDX-fil til udskrift.\n"
 
-#: src/warc.c:1219
+#: src/warc.c:1239
 msgid "Could not open temporary WARC file.\n"
-msgstr ""
+msgstr "Kunne ikke √•bne midlertidig WARC-fil.\n"
 
-#: src/warc.c:1495
+#: src/warc.c:1515
 msgid "Found exact match in CDX file. Saving revisit record to WARC.\n"
-msgstr ""
+msgstr "Fandt eksakt match i CDX-fil. Gemmer ‚Äúrevisit‚Äù-post til WARC.\n"
+
+#~ msgid "Unknown system error"
+#~ msgstr "Ukendt systemfejl"
+
+#~ msgid "%s: option '%s' is ambiguous\n"
+#~ msgstr "%s: flaget '%s' er flertydig\n"
 
 #~ msgid "%s: option '--%s' doesn't allow an argument\n"
 #~ msgstr "%s: flaget '--%s' tillader ikke et argument\n"
 
+#~ msgid "%s: option '%c%s' doesn't allow an argument\n"
+#~ msgstr "%s: flaget '%c%s' tillader ikke et argument\n"
+
+#~ msgid "%s: option '--%s' requires an argument\n"
+#~ msgstr "%s: flaget '--%s' kr√¶ver et argument\n"
+
 #~ msgid "%s: unrecognized option '--%s'\n"
 #~ msgstr "%s: ukendt flag '--%s'\n"
+
+#~ msgid "%s: unrecognized option '%c%s'\n"
+#~ msgstr "%s: ukendt flag '%c%s'\n"
+
+#~ msgid "%s: invalid option -- '%c'\n"
+#~ msgstr "%s: ugyldigt flag -- %c\n"
+
+#~ msgid "%s: option requires an argument -- '%c'\n"
+#~ msgstr "%s: flaget kr√¶ver et argument -- %c\n"
 
 #~ msgid "%s: option '-W %s' is ambiguous\n"
 #~ msgstr "%s: flaget '-W %s' er flertydigt\n"
@@ -3633,7 +3499,10 @@ msgstr ""
 #~ msgstr "%s: flaget '-W %s' tillader ikke et argument\n"
 
 #~ msgid "%s: option '-W %s' requires an argument\n"
-#~ msgstr "%s: flaget '%s' krÊver et argument\n"
+#~ msgstr "%s: flaget '%s' kr√¶ver et argument\n"
+
+#~ msgid "memory exhausted"
+#~ msgstr "hukommelse opbrugt"
 
 #~ msgid "Authorization failed.\n"
 #~ msgstr "Autorisation mislykkedes\n"
@@ -3648,6 +3517,12 @@ msgstr ""
 #~ "\n"
 #~ "%s modtaget.\n"
 
+#~ msgid "  -w,  --wait=SECONDS            wait SECONDS between retrievals.\n"
+#~ msgstr "  -w,  --wait=SEKUNDER           vent SEKUNDER mellem hentninger.\n"
+
+#~ msgid "Mail bug reports and suggestions to <bug-wget@gnu.org>.\n"
+#~ msgstr "Rapport√©r fejl og send forslag til <bug-wget@gnu.org>.\n"
+
 #~ msgid "File `%s' already there; not retrieving.\n"
 #~ msgstr "Filen '%s' findes allerede, hentes ikke.\n"
 
@@ -3655,7 +3530,7 @@ msgstr ""
 #~ "WARNING: Can't reopen standard output in binary mode;\n"
 #~ "         downloaded file may contain inappropriate line endings.\n"
 #~ msgstr ""
-#~ "ADVARSEL: Kan ikke genÂbne standard-uddata i binÊr tilstand;\n"
+#~ "ADVARSEL: Kan ikke gen√•bne standard-uddata i bin√¶r tilstand;\n"
 #~ "          den hentede fil kan indeholde forkerte linjeafslutninger.\n"
 
 #~ msgid "%s: illegal option -- %c\n"
@@ -3665,11 +3540,11 @@ msgstr ""
 #~ "GNU Wget %s built on VMS %s %s.\n"
 #~ "\n"
 #~ msgstr ""
-#~ "GNU Wget %s bygget pÂ VMS %s %s.\n"
+#~ "GNU Wget %s bygget p√• VMS %s %s.\n"
 #~ "\n"
 
 #~ msgid "Currently maintained by Micah Cowan <micah@cowan.name>.\n"
-#~ msgstr "Vedligeholdes i ¯jeblikket af Micah Cowan <micah@cowan.name>.\n"
+#~ msgstr "Vedligeholdes i √∏jeblikket af Micah Cowan <micah@cowan.name>.\n"
 
 #~ msgid "Error in Set-Cookie, field `%s'"
 #~ msgstr "fejl ved Set-Cookie, felt '%s'"
@@ -3688,16 +3563,16 @@ msgstr ""
 #~ msgstr " [%s tilbage]"
 
 #~ msgid "Host not found"
-#~ msgstr "VÊrt ikke fundet"
+#~ msgstr "V√¶rt ikke fundet"
 
 #~ msgid "Failed to set up an SSL context\n"
-#~ msgstr "Kunne ikke opsÊtte et SSL-milj¯\n"
+#~ msgstr "Kunne ikke ops√¶tte et SSL-milj√∏\n"
 
 #~ msgid "Trying without the specified certificate\n"
-#~ msgstr "Pr¯ver uden det angivne certifikat\n"
+#~ msgstr "Pr√∏ver uden det angivne certifikat\n"
 
 #~ msgid "End of file while parsing headers.\n"
-#~ msgstr "Filafslutning fundet ved lÊsning af toptekster.\n"
+#~ msgstr "Filafslutning fundet ved l√¶sning af toptekster.\n"
 
 #~ msgid ""
 #~ "\n"
@@ -3706,9 +3581,9 @@ msgstr ""
 #~ "\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Fortsat hentning mislykkedes for denne fil, hvilket er i modsÊtning til '-"
+#~ "Fortsat hentning mislykkedes for denne fil, hvilket er i mods√¶tning til '-"
 #~ "c'.\n"
-#~ "NÊgter at afkorte eksisterende fil '%s'.\n"
+#~ "N√¶gter at afkorte eksisterende fil '%s'.\n"
 #~ "\n"
 
 #~ msgid " (%s to go)"
@@ -3743,9 +3618,9 @@ msgstr ""
 #~ msgstr ""
 #~ "Opstart:\n"
 #~ "  -V,  --version           vis Wget's versionsnummer og afslut.\n"
-#~ "  -h,  --help              udskriv denne hjÊlpetekst.\n"
-#~ "  -b,  --background        k¯r i baggrunden efter opstart.\n"
-#~ "  -e,  --execute=KOMMANDO  udf¯r en '.wgetrc'-kommando.\n"
+#~ "  -h,  --help              udskriv denne hj√¶lpetekst.\n"
+#~ "  -b,  --background        k√∏r i baggrunden efter opstart.\n"
+#~ "  -e,  --execute=KOMMANDO  udf√∏r en '.wgetrc'-kommando.\n"
 #~ "\n"
 
 #~ msgid ""
@@ -3765,19 +3640,19 @@ msgstr ""
 #~ "       --egd-file=FILE        file name of the EGD socket.\n"
 #~ "\n"
 #~ msgstr ""
-#~ "Logning og indlÊsning:\n"
+#~ "Logning og indl√¶sning:\n"
 #~ "  -o,  --output-file=FIL      log beskeder til FIL.\n"
-#~ "  -a,  --append-output=FIL    tilf¯j beskeder til slutningen af FIL.\n"
-#~ "  -d,  --debug                skriv fejls¯gningsinformation.\n"
+#~ "  -a,  --append-output=FIL    tilf√∏j beskeder til slutningen af FIL.\n"
+#~ "  -d,  --debug                skriv fejls√∏gningsinformation.\n"
 #~ "  -q,  --quiet                stille (ingen udskrifter).\n"
-#~ "  -v,  --verbose              vÊr udf¯rlig (standard).\n"
-#~ "  -nv, --non-verbose          mindre udf¯rlig, men ikke stille.\n"
+#~ "  -v,  --verbose              v√¶r udf√∏rlig (standard).\n"
+#~ "  -nv, --non-verbose          mindre udf√∏rlig, men ikke stille.\n"
 #~ "  -i,  --input-file=FIL       hent URLer fundet i FIL.\n"
 #~ "  -F,  --force-html           behandl inddatafil som HTML.\n"
-#~ "  -B,  --base=URL             foranstiller URL til relative lÊnker i -F -"
+#~ "  -B,  --base=URL             foranstiller URL til relative l√¶nker i -F -"
 #~ "i fil.\n"
 #~ "       --sslcertfile=FIL      valgbart klient-certifikat.\n"
-#~ "       --sslcertkey=NÿGLEFIL  valgbar n¯glefil for dette certifikat.\n"
+#~ "       --sslcertkey=N√òGLEFIL  valgbar n√∏glefil for dette certifikat.\n"
 #~ "       --egd-file=FIL         filnavn for EGD-soklen.\n"
 #~ "\n"
 
@@ -3809,27 +3684,27 @@ msgstr ""
 #~ "\n"
 #~ msgstr ""
 #~ "Hentning:\n"
-#~ "       --bind-address=ADRESSE   bind til ADRESSE (vÊrtsnavn eller IP) pÂ "
-#~ "lokal vÊrt.\n"
-#~ "  -t,  --tries=ANTAL            maksimalt antal fors¯g (0 for uendelig).\n"
+#~ "       --bind-address=ADRESSE   bind til ADRESSE (v√¶rtsnavn eller IP) p√• "
+#~ "lokal v√¶rt.\n"
+#~ "  -t,  --tries=ANTAL            maksimalt antal fors√∏g (0 for uendelig).\n"
 #~ "  -O   --output-document=FIL    skriv dokumenter til FIL.\n"
-#~ "  -nc, --no-clobber             ber¯r ikke eksisterende filer, eller "
+#~ "  -nc, --no-clobber             ber√∏r ikke eksisterende filer, eller "
 #~ "brug .#-endelser.\n"
-#~ "  -c,  --continue               fortsÊt hentning af en eksisterende fil.\n"
-#~ "       --progress=TYPE          vÊlg type af fremskridtsvisning.\n"
-#~ "  -N,  --timestamping           hent ikke filer igen som er Êldre end "
+#~ "  -c,  --continue               forts√¶t hentning af en eksisterende fil.\n"
+#~ "       --progress=TYPE          v√¶lg type af fremskridtsvisning.\n"
+#~ "  -N,  --timestamping           hent ikke filer igen som er √¶ldre end "
 #~ "eksisterende.\n"
 #~ "  -S,  --server-response        vis svar fra serveren.\n"
 #~ "       --spider                 hent ikke filer.\n"
-#~ "  -T,  --timeout=SEKUNDER       sÊt ventetid ved lÊsning til SEKUNDER.\n"
-#~ "  -w,  --wait=SEKUNDER          sÊt ventetid mellem filer til SEKUNDER.\n"
-#~ "       --waitretry=SEKUNDER\twait 1...SEKUNDER mellem fors¯g pÂ "
-#~ "gentagelse af en hentning.\n"
-#~ "       --random-wait            vent fra 0...2*WAIT sekunder mellem "
+#~ "  -T,  --timeout=SEKUNDER       s√¶t ventetid ved l√¶sning til SEKUNDER.\n"
+#~ "  -w,  --wait=SEKUNDER          s√¶t ventetid mellem filer til SEKUNDER.\n"
+#~ "       --waitretry=SEKUNDER\twait 1‚Ä¶SEKUNDER mellem fors√∏g p√• gentagelse "
+#~ "af en hentning.\n"
+#~ "       --random-wait            vent fra 0‚Ä¶2*WAIT sekunder mellem "
 #~ "modtagelse.\n"
-#~ "  -Y,  --proxy=on/off           slÂ brug af proxy til eller fra.\n"
-#~ "  -Q,  --quota=ANTAL            sÊt hente-kvote til ANTAL.\n"
-#~ "       --limit-rate=RATE        begrÊns hentingshastighed til RATE.\n"
+#~ "  -Y,  --proxy=on/off           sl√• brug af proxy til eller fra.\n"
+#~ "  -Q,  --quota=ANTAL            s√¶t hente-kvote til ANTAL.\n"
+#~ "       --limit-rate=RATE        begr√¶ns hentingshastighed til RATE.\n"
 #~ "\n"
 
 #~ msgid ""
@@ -3845,9 +3720,9 @@ msgstr ""
 #~ "Kataloger:\n"
 #~ "  -nd  --no-directories             lav ikke kataloger.\n"
 #~ "  -x,  --force-directories          lav kataloger.\n"
-#~ "  -nH, --no-host-directories        lav ikke ovenstÂende kataloger.\n"
-#~ "  -P,  --directory-prefix=PR∆FIKS   skriv filer til PR∆FIKS/...\n"
-#~ "       --cut-dirs=ANTAL             ignorÈr ANTAL komponenter af "
+#~ "  -nH, --no-host-directories        lav ikke ovenst√•ende kataloger.\n"
+#~ "  -P,  --directory-prefix=PR√ÜFIKS   skriv filer til PR√ÜFIKS/‚Ä¶\n"
+#~ "       --cut-dirs=ANTAL             ignor√©r ANTAL komponenter af "
 #~ "serverens\n"
 #~ "                                    katalognavn.\n"
 #~ "\n"
@@ -3876,25 +3751,25 @@ msgstr ""
 #~ "\n"
 #~ msgstr ""
 #~ "HTTP-flag:\n"
-#~ "       --http-user=BRUGER      sÊt HTTP-bruger til BRUGER.\n"
-#~ "       --http-passwd=PASSORD   sÊt HTTP-adgangskode til PASSORD.\n"
-#~ "  -C,  --cache=on/off          tillad (ikke) brug af mellemlager pÂ "
+#~ "       --http-user=BRUGER      s√¶t HTTP-bruger til BRUGER.\n"
+#~ "       --http-passwd=PASSORD   s√¶t HTTP-adgangskode til PASSORD.\n"
+#~ "  -C,  --cache=on/off          tillad (ikke) brug af mellemlager p√• "
 #~ "server.\n"
 #~ "  -E,  --html-extension        gem alle tekst/html dokumenter med .html "
 #~ "filkode.\n"
 #~ "       --ignore-length         ignorer 'Content-Length' felt i toptekst.\n"
-#~ "       --header=TEKST          sÊt TEKST ind som en toptekst.\n"
-#~ "       --proxy-user=BRUGER     sÊt proxy-bruger til BRUGER.\n"
-#~ "       --proxy-passwd=PASSORD  sÊt proxy-adgangskode til PASSORD.\n"
+#~ "       --header=TEKST          s√¶t TEKST ind som en toptekst.\n"
+#~ "       --proxy-user=BRUGER     s√¶t proxy-bruger til BRUGER.\n"
+#~ "       --proxy-passwd=PASSORD  s√¶t proxy-adgangskode til PASSORD.\n"
 #~ "       --referer=URL           brug `Referer: URL' kommando i HTTP-"
-#~ "foresp¯rgsel.\n"
+#~ "foresp√∏rgsel.\n"
 #~ "  -s,  --save-headers          skriv HTTP-toptekster til fil.\n"
 #~ "  -U,  --user-agent=AGENT      identificer som AGENT i stedet for \n"
 #~ "                               'Wget/VERSION'.\n"
-#~ "       --no-http-keep-alive    deaktivÈr HTTP keep-alive (overlevende "
+#~ "       --no-http-keep-alive    deaktiv√©r HTTP keep-alive (overlevende "
 #~ "forbindelser).\n"
 #~ "       --cookies=off           brug ikke infokager.\n"
-#~ "       --load-cookies=FILE     indlÊs infokager fra FIL f¯r session.\n"
+#~ "       --load-cookies=FILE     indl√¶s infokager fra FIL f√∏r session.\n"
 #~ "       --save-cookies=FILE     gem infokager i FIL efter session.\n"
 #~ "\n"
 
@@ -3910,8 +3785,8 @@ msgstr ""
 #~ "FTP-flag:\n"
 #~ "  -nr, --dont-remove-listing   fjern ikke `.listing'-filer.\n"
 #~ "  -g,  --glob=on/off           tolk (ikke) brug af jokertegn i filnavn.\n"
-#~ "       --passive-ftp           brug passiv overf¯rselsmetode.\n"
-#~ "       --retr-symlinks         hent filer (ikke kataloger) der er lÊnket "
+#~ "       --passive-ftp           brug passiv overf√∏rselsmetode.\n"
+#~ "       --retr-symlinks         hent filer (ikke kataloger) der er l√¶nket "
 #~ "til, ved rekursiv brug.\n"
 #~ "\n"
 
@@ -3935,12 +3810,12 @@ msgstr ""
 #~ "  -l,  --level=ANTAL           maksimalt antal rekursionsniveauer "
 #~ "(0=uendelig).\n"
 #~ "       --delete-after          slet hentede filer.\n"
-#~ "  -k,  --convert-links         konverter absolutte lÊnker til relative.\n"
-#~ "  -K,  --backup-converted      f¯r fil X konverteres, sikkerhedskopiÈr "
+#~ "  -k,  --convert-links         konverter absolutte l√¶nker til relative.\n"
+#~ "  -K,  --backup-converted      f√∏r fil X konverteres, sikkerhedskopi√©r "
 #~ "som X.orig.\n"
-#~ "  -m,  --mirror                sÊt passende flag for spejling af "
+#~ "  -m,  --mirror                s√¶t passende flag for spejling af "
 #~ "servere.\n"
-#~ "  -p,  --page-requisites       hent alle billeder osv. der er n¯dvendige "
+#~ "  -p,  --page-requisites       hent alle billeder osv. der er n√∏dvendige "
 #~ "for at vise HTML siden.\n"
 #~ "\n"
 
@@ -3971,19 +3846,19 @@ msgstr ""
 #~ "Hvad er tilladt ved rekursion:\n"
 #~ "  -A,  --accept=LISTE               liste med tilladte filtyper.\n"
 #~ "  -R,  --reject=LISTE               liste med ikke-tilladte filtyper.\n"
-#~ "  -D,  --domains=LISTE              liste med tilladte domÊner.\n"
-#~ "       --exclude-domains=LISTE      liste med ikke-tilladte domÊner.\n"
-#~ "       --follow-ftp                 f¯lg FTP-lÊnker fra HTML-dokumenter.\n"
-#~ "       --follow-tags=LIST           komma-separeret liste af fulgte HTML-"
-#~ "mÊrker.\n"
-#~ "  -G,  --ignore-tags=LIST           komma-separeret liste af ignorerede "
-#~ "HTML-mÊrker.\n"
-#~ "  -H,  --span-hosts                 f¯lg lÊnker til andre vÊrter.\n"
-#~ "  -L,  --relative                   f¯lg kun relative lÊnker.\n"
+#~ "  -D,  --domains=LISTE              liste med tilladte dom√¶ner.\n"
+#~ "       --exclude-domains=LISTE      liste med ikke-tilladte dom√¶ner.\n"
+#~ "       --follow-ftp                 f√∏lg FTP-l√¶nker fra HTML-dokumenter.\n"
+#~ "       --follow-tags=LIST           kommaadskilt liste over fulgte HTML-"
+#~ "m√¶rker.\n"
+#~ "  -G,  --ignore-tags=LIST           kommaadskilt liste over ignorerede "
+#~ "HTML-m√¶rker.\n"
+#~ "  -H,  --span-hosts                 f√∏lg l√¶nker til andre v√¶rter.\n"
+#~ "  -L,  --relative                   f√∏lg kun relative l√¶nker.\n"
 #~ "  -I,  --include-directories=LISTE  liste med tilladte katalognavne.\n"
 #~ "  -X,  --exclude-directories=LISTE  liste med ikke-tilladte "
 #~ "katalognavne.\n"
-#~ "  -np, --no-parent                  f¯lg ikke lÊnke til ovenliggende "
+#~ "  -np, --no-parent                  f√∏lg ikke l√¶nke til ovenliggende "
 #~ "katalog.\n"
 #~ "\n"
 
@@ -3993,7 +3868,7 @@ msgstr ""
 #~ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
 #~ "GNU General Public License for more details.\n"
 #~ msgstr ""
-#~ "Dette program distribueres i hÂb om at det bliver fundet nyttigt,\n"
+#~ "Dette program distribueres i h√•b om at det bliver fundet nyttigt,\n"
 #~ "men UDEN NOGEN GARANTIER; ikke engang for SALGBARHED eller\n"
 #~ "EGNETHED TIL NOGEN SPECIEL OPGAVE.\n"
 #~ "Se 'GNU General Public License' for detaljer.\n"
@@ -4002,16 +3877,16 @@ msgstr ""
 #~ msgstr "Starter WinHelp %s\n"
 
 #~ msgid "%s: Redirection cycle detected.\n"
-#~ msgstr "%s: Omdirigering l¯ber i ring.\n"
+#~ msgstr "%s: Omdirigering l√∏ber i ring.\n"
 
 #~ msgid "%s: %s: Not enough memory.\n"
 #~ msgstr "%s: %s: Ikke nok hukommelse.\n"
 
 #~ msgid "Connection to %s:%hu refused.\n"
-#~ msgstr "Kontakt med %s:%hu nÊgtet.\n"
+#~ msgstr "Kontakt med %s:%hu n√¶gtet.\n"
 
 #~ msgid "Will try connecting to %s:%hu.\n"
-#~ msgstr "Vil pr¯ve at kontakte %s:%hu.\n"
+#~ msgstr "Vil pr√∏ve at kontakte %s:%hu.\n"
 
 #~ msgid ""
 #~ "\n"
@@ -4021,12 +3896,12 @@ msgstr ""
 #~ msgstr ""
 #~ "\n"
 #~ "CTRL+Break modtaget, omdirigerer udskrifter til `%s'.\n"
-#~ "K¯rsel fortsÊtter i baggrunden.\n"
+#~ "K√∏rsel forts√¶tter i baggrunden.\n"
 #~ "Du kan stoppe Wget ved at trykke CTRL+ALT+DELETE.\n"
 #~ "\n"
 
 #~ msgid "Unknown/unsupported protocol"
-#~ msgstr "Protokollen er ukendt/ikke underst¯ttet"
+#~ msgstr "Protokollen er ukendt/ikke underst√∏ttet"
 
 #~ msgid "Invalid port specification"
 #~ msgstr "Port-specifikationen er ugyldig"

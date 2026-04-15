@@ -1,4 +1,122 @@
-$Id: Changelog.txt,v 1.472 2020/10/31 09:16:14 nanard Exp $
+$Id: Changelog.txt,v 1.515 2024/03/19 23:40:30 nanard Exp $
+
+VERSION 2.3.6 : released on 2024/03/20
+
+2024/03/05:
+  NFTables: rewrite rule parsing code to fix source/dest address parsing.
+
+2024/03/04:
+  NFTables: add upnp_nftables_family_split option to use NFPROTO_IPV4/IPV6
+  instead of the generic NFPROTO_INET
+
+VERSION 2.3.5 : released on 2024/03/02
+
+2024/02/25:
+  fix IGDv2 WANIPConnection XML service description for AddAnyPortMapping
+  out argument is NewReservedPort, not NewExternalPort
+
+2024/01/17:
+  default path for miniupnpd.conf is /etc/miniupnpd/miniupnpd.conf
+  under linux
+
+2024/01/15:
+  fix SUBSCRIBE timeout compliance (should be >= 1800 seconds)
+  PCP: fix enforcing min_lifetime minimum of 120secs
+  CACHE-CONTROL: max-age=1800 in M-SEARCH response
+
+2024/01/07:
+  pf: fix for OpenBSD 7.4
+
+VERSION 2.3.4 : released on 2024/01/04
+
+2024/01/04:
+  Fix parsing of action string in ExecuteSoapAction()
+
+2023/06/29:
+  Disable DeviceProtection service by default
+
+2023/06/23:
+  detect FDSSDP as a Microsoft client
+
+2023/05/27:
+  option enable_natpmp => enable_pcp_pmp
+  add a short list of build-time options in --version output
+  enable secure mode by default
+
+VERSION 2.3.3 : released on 2023/02/17
+
+2023/02/04:
+  Fix PinholeVerification()
+
+2023/01/28
+  Fix updating of existing pinhole leasetime by AddPinhole
+
+VERSION 2.3.2 : released on 2023/01/20
+
+2023/01/15:
+  Fix NFTables again (RULE_HANDLE using more than 32 bits)
+
+2022/10/21:
+  Add option to match rules description with regex
+
+VERSION 2.3.1 : released on 2022/10/16
+
+2022/10/10:
+  NFTables : fix for Big Endian. iport was always read as 0
+
+2022/08/06:
+  Fixes DeletePCPMap() for "IPv6 pinholes" with netfilter_nftables backend
+
+2022/06/02:
+  Fixes "Port Triggering" with OpenBSD 4.7+
+
+2022/05/18:
+  improve configure script for cross builds
+
+2022/02/19:
+  prefer non-reserved over reserved addresses in getifaddr()
+  pf: use external IP for NAT in double NAT setups
+  miniupnpd.init.d.script: support nftables
+
+VERSION 2.3.0 : released on 2022/01/23
+
+2021/12/01:
+  NFTables : use scripts to create table and chains
+  (see https://github.com/miniupnp/miniupnp/pull/584)
+
+2021/11/17:
+  NFTables : use the nat chain for inet rules (Sven Auhagen)
+  (see https://github.com/miniupnp/miniupnp/pull/562)
+
+VERSION 2.2.3 : released on 2021/08/21
+
+2021/08/18:
+  lease file for IPv6 pinholes
+
+2021/08/11:
+  Detect Microsoft User-Agent: and force IGDv1 in that case
+
+2021/06/18:
+  Fails on config parsing and init errors.
+  print errors during init to both syslog and stderr.
+
+2021/05/22:
+  dynamically retrieve `uname -r`
+
+VERSION 2.2.2 : released on 2021/05/13
+
+2021/04/22:
+  Add SO_REUSEPORT option for SSDP receive sockets
+
+2021/03/31:
+  GetExternalIPAddress returns empty string when the External IP address can
+    not be retrieved.
+
+2021/02/26:
+  iptables_removeall.sh: fix the cleanup of PREROUTING mangle chain
+
+VERSION 2.2.1 : released on 2020/12/20
+ (only minor build corrections)
 
 VERSION 2.2.0 : released on 2020/10/31
 
@@ -780,7 +898,7 @@ VERSION 1.6 : released the 2011/07/25
   preparing SSDP stuff for IP v6. Trying to conform to UDA v1.1
 
 2011/03/09:
-  Some modifications thanks to Daniel Dickinson to improve OpenWRT
+  Some modifications thanks to Daniel Dickinson to improve OpenWrt
   build.
   Fixed some warnings.
 
@@ -1279,7 +1397,7 @@ VERSION 1.0 :
 2006/11/23:
   now handling signal SIGINT
   setting HTTP socket with REUSEADDR thanks to Ryan Wagoner
-  daemon now tested on a Linksys WRT54G device running OpenWRT !
+  daemon now tested on a Linksys WRT54G device running OpenWrt !
 
 2006/11/21:
   disabling rtableid in pf code.

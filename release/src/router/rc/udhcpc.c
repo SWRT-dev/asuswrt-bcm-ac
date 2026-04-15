@@ -370,6 +370,10 @@ bound(int renew)
 		changed += nvram_set_env(strcat_r(prefix, "gateway", tmp), "router");
 	}
 
+	// always backup received dns
+	if ((value = getenv("dns") ? : getenv("router")))
+		nvram_set(strlcat_r(prefix, "dns_r", tmp, sizeof(tmp)), trim_r(value));
+
 	if (nvram_get_int(strcat_r(wanprefix, "dnsenable_x", tmp))) {
 		/* ex: android phone, the gateway is the DNS server. */
 		if ((value = getenv("dns") ? : getenv("router")))
@@ -1332,6 +1336,11 @@ deconfig6(char *wan_ifname, const int mode)
 			S46_DBG("STOP_S46_TUNNEL\n");
 		}
 		break;
+	case WAN_DSLITE:
+		nvram_set(ipv6_nvname_by_unit("ipv6_s46_env_aftr", unit), "");
+		stop_s46_tunnel(unit, 1);
+		S46_DBG("STOP_S46_TUNNEL\n");
+		break;
 	}
 
 	if (nvram_match("x_Setting", "0") && !strncmp(nvram_safe_get("territory_code"), "JP", 2)) {
@@ -1715,18 +1724,44 @@ bound6(char *wan_ifname, int bound)
 			S46_DBG("ENV:[%s]\n", environ[i]);
 			i++;
 		}
-		if (get_ipv6_service_by_unit(wan_unit) == IPV6_NATIVE_DHCP) {
-			value = safe_getenv("RA_ADDRESSES");
-			if (*value == '\0') {
-				snprintf(rbuf, sizeof(rbuf), "restart_wan_if %d", wan_unit);
-				S46_DBG("[CMD]:[%s]\n", rbuf);
-				notify_rc_and_wait(rbuf);
-				return 0;
+		break;
+	}
+
+	value = safe_getenv("RA_ADDRESSES");
+	if (*value) {
+		foreach(tmp, value, next) {
+			char *ptr = tmp;
+			value = strsep(&ptr,",");
+			break; /* only first prefix at the moment */
+		}
+		if (sscanf(value, "%[^/]/%d", addr, &size) == 2) {
+			nvram_set(ipv6_nvname_by_unit("ipv6_ra_addr", wan_unit), addr);
+			nvram_set_int(ipv6_nvname_by_unit("ipv6_ra_length", wan_unit), size);
+			S46_DBG("[RA_ADDR=%s/%d]\n", addr, size);
+		}
+	}
+
+	value = safe_getenv("RA_ROUTES");
+	if (*value) {
+		if (get_s46_ra_routes(value, ra_route, sizeof(ra_route)))
+			nvram_set(ipv6_nvname_by_unit("ipv6_ra_route", wan_unit), ra_route);
+		if (get_s46_ra_prefix(value, ra_prefix, sizeof(ra_prefix))) {
+			if (sscanf(ra_prefix, "%[^/]/%d", addr, &size) == 2) {
+				ra_changed = (!nvram_match(ipv6_nvname_by_unit("ipv6_ra_prefix", wan_unit), addr) ||
+					       nvram_get_int(ipv6_nvname_by_unit("ipv6_ra_perfix_length", wan_unit)) != size);
+				nvram_set(ipv6_nvname_by_unit("ipv6_ra_prefix", wan_unit), addr);
+				nvram_set_int(ipv6_nvname_by_unit("ipv6_ra_prefix_length", wan_unit), size);
 			}
 		}
-		break;
-	default:
-		break;
+	}
+
+	value = safe_getenv("AFTR");
+	if (*value) {
+		foreach(tmp, value, next) {
+			nvram_set(ipv6_nvname_by_unit("ipv6_s46_env_aftr", wan_unit), tmp);
+			S46_DBG("[AFTR=%s]\n", tmp);
+			break; /* only first AFTR at the moment */
+		}
 	}
 #endif
 
@@ -1838,9 +1873,6 @@ skip:
 		struct in6_addr lanaddr;
 		char addr6[INET6_ADDRSTRLEN];
 		char ipbuf[INET6_ADDRSTRLEN + 4];
-		char ra_prefix[INET6_ADDRSTRLEN + sizeof("/128")];
-		char ra_route[INET6_ADDRSTRLEN];
-		int ra_changed;
 
 	case WAN_LW4O6:
 		if (!nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp)))
@@ -1855,56 +1887,26 @@ skip:
 		rules = safe_getenv("MAPE");
 		rulebuf = NULL;
 		draft = 0;
-		value = safe_getenv("RA_ROUTES");
-		if (*value) {
-			if (get_s46_ra_routes(value, ra_route, sizeof(ra_route))) {
-				nvram_set(ipv6_nvname_by_unit("ipv6_ra_route", wan_unit), ra_route);
-			}
-		}
 		goto s46_mapcalc;
 	case WAN_V6PLUS:
 	case WAN_OCNVC:
-		//Get RA Addr
-		value = safe_getenv("RA_ADDRESSES");
-		if (*value) {
-			foreach(tmp, value, next) {
-				char *ptr = tmp;
-				value = strsep(&ptr,",");
-				break; /* only first prefix at the moment */
-			}
-		}
-		if (sscanf(value, "%[^/]/%d", addr, &size) == 2) {
-			nvram_set(ipv6_nvname_by_unit("ipv6_ra_addr", wan_unit), addr);
-			nvram_set_int(ipv6_nvname_by_unit("ipv6_ra_length", wan_unit), size);
-			S46_DBG("[RA_ADDR=%s/%d]\n", addr, size);
-		} else { //Workaround for system boot case.
-			get_s46_ra(wan_unit);
-		}
+		draft = 1;
+	case WAN_DSLITE:
+		/* Workaround for system boot case. */
+		if (!get_s46_ra(wan_unit))
+			S46_DBG("[Warning] Unable to obtain RA.\n");
 
-		//Get RA Prefix
 		if (get_ipv6_service_by_unit(wan_unit) == IPV6_NATIVE_DHCP) {
-			value = safe_getenv("RA_ROUTES");
-			if (*value) {
-				if (get_s46_ra_prefix(value, ra_prefix, sizeof(ra_prefix))) {
-					if (sscanf(ra_prefix, "%[^/]/%d", addr, &size) == 2) {
-						nvram_set(ipv6_nvname_by_unit("ipv6_ra_prefix", wan_unit), addr);
-						nvram_set_int(ipv6_nvname_by_unit("ipv6_ra_prefix_length", wan_unit), size);
-						ra_changed = (!nvram_match(ipv6_nvname_by_unit("ipv6_ra_prefix", wan_unit), addr) ||
-								  nvram_get_int(ipv6_nvname_by_unit("ipv6_ra_perfix_length", wan_unit)) != size);
-						if (ra_changed) {
-							eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
-						}
-						if (*addr) {
-							inet_pton(AF_INET6, addr, &lanaddr);
-							lanaddr.s6_addr16[7] = htons(0x0001);
-							inet_ntop(AF_INET6, &lanaddr, addr6, sizeof(addr6));
-							if (*addr6) {
-								snprintf(ipbuf, sizeof(ipbuf), "%s/%d", addr6, nvram_get_int(ipv6_nvname_by_unit("ipv6_ra_prefix_length", wan_unit)) ? : 64);
-								eval("ip", "-6", "addr", "add", ipbuf, "dev", nvram_safe_get("lan_ifname"));
-								S46_DBG("[CMD]:[ip -6 addr add %s dev %s]\n", ipbuf, nvram_safe_get("lan_ifname"));
-							}
-						}
-					}
+			if (ra_changed)
+				eval("ip", "-6", "addr", "flush", "scope", "global", "dev", lan_ifname);
+			if (nvram_match(ipv6_nvname_by_unit("ipv6_ra_prefix", wan_unit), "")) {
+				inet_pton(AF_INET6, addr, &lanaddr);
+				lanaddr.s6_addr16[7] = htons(0x0001);
+				inet_ntop(AF_INET6, &lanaddr, addr6, sizeof(addr6));
+				if (*addr6) {
+					snprintf(ipbuf, sizeof(ipbuf), "%s/%d", addr6, nvram_get_int(ipv6_nvname_by_unit("ipv6_ra_prefix_length", wan_unit)) ? : 64);
+					eval("ip", "-6", "addr", "add", ipbuf, "dev", nvram_safe_get("lan_ifname"));
+					S46_DBG("[CMD]:[ip -6 addr add %s dev %s]\n", ipbuf, nvram_safe_get("lan_ifname"));
 				}
 			}
 		}
@@ -1912,23 +1914,30 @@ skip:
 		//FIXME: wait for DNS
 		sleep(5);
 
-		draft = 1;
-		//start mechanism
 		if (wan_proto == WAN_V6PLUS) {
-			if (check_v6plusd(wan_unit)) {
+			if (check_v6plusd(wan_unit))
 				S46_DBG("[START] v6plusd\n");
-			} else {
+			else {
 				if (bound == 1 || wanaddr_changed || prefix_changed) {
 					snprintf(tmp, sizeof(tmp), V6PLUSD_PIDFILE, wan_unit);
 					kill_pidfile_s(tmp, SIGUSR1);
 				}
 			}
-		} else {
-			if (check_ocnvcd(wan_unit)) {
+		} else if (wan_proto == WAN_OCNVC) {
+			if (check_ocnvcd(wan_unit))
 				S46_DBG("[START] ocnvcd\n");
-			} else {
+			else {
 				if (bound == 1 || wanaddr_changed || prefix_changed) {
 					snprintf(tmp, sizeof(tmp), OCNVCD_PIDFILE, wan_unit);
+					kill_pidfile_s(tmp, SIGUSR1);
+				}
+			}
+		} else {
+			if (check_dslited(wan_unit))
+				S46_DBG("[START] dslited\n");
+			else {
+				if (bound == 1 || wanaddr_changed || prefix_changed) {
+					snprintf(tmp, sizeof(tmp), DSLITED_PIDFILE, wan_unit);
 					kill_pidfile_s(tmp, SIGUSR1);
 				}
 			}
@@ -1978,8 +1987,11 @@ skip:
 		start_ddns(NULL);
 	}
 #endif
-        if (nvram_get_int("telnetd_enable"))
-                notify_rc("restart_telnetd");
+		restart_telnet6_if_lan_v6addr_changed();
+
+#if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_TUXERA_SMBD)
+	notify_rc("restart_samba");
+#endif
 
 	return 0;
 }
@@ -2139,6 +2151,11 @@ start_dhcp6c(void)
 		/* Send Information-Request message */
 		snprintf(mode, sizeof(mode), "%s", "none");
 		dhcp6c_argv[index++] = "-r94";	/* S46_CONT_MAPE */
+		break;
+	case WAN_DSLITE:
+		/* Send Information-Request message */
+		snprintf(mode, sizeof(mode), "%s", "none");
+		dhcp6c_argv[index++] = "-r64";	/* OPTION_AFTR_NAME */
 		break;
 	}
 #endif
