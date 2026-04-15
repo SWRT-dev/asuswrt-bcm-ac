@@ -66,6 +66,10 @@
 #include "sched_v2.h"
 #endif /* RTCONFIG_SCHED_V2 */
 
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) || defined(RTCONFIG_IG_SITE2SITE) || defined(RTCONFIG_WIREGUARD)
+#include "vpn_utils.h"
+#endif
+
 #if defined(RTCONFIG_PTHSAFE_POPEN)
 #if defined(RTCONFIG_QCA)
 #define	popen	PS_popen
@@ -802,6 +806,7 @@ static inline int legal_vlanid(int vid) { return (vid < 0 || vid >= 4096)? 0 : 1
 extern in_addr_t inet_addr_(const char *addr);
 extern int inet_equal(const char *addr1, const char *mask1, const char *addr2, const char *mask2);
 extern int inet_intersect(const char *addr1, const char *mask1, const char *addr2, const char *mask2);
+extern int inet_overlap(const char *addr1, const char *mask1, const char *addr2, const char *mask2);
 extern int inet_deconflict(const char *addr1, const char *mask1, const char *addr2, const char *mask2, struct in_addr *result);
 
 extern void chld_reap(int sig);
@@ -890,6 +895,7 @@ extern int wl_get_chlist_band(char* wlif);
 extern int nvram_contains_word(const char *key, const char *word);
 extern int nvram_is_empty(const char *key);
 extern void nvram_commit_x(void);
+extern void nvram_pf_restore_default(const char *prefix_default, const char *prefix_target);
 extern int connect_timeout(int fd, const struct sockaddr *addr, socklen_t len, int timeout);
 extern int mtd_getinfo(const char *mtdname, int *part, int *size);
 #if defined(RTCONFIG_UBIFS)
@@ -994,8 +1000,10 @@ extern pid_t* find_pid_by_name(const char *);
 extern char *psname(int pid, char *buffer, int maxlen);
 extern int pidof(const char *name);
 extern int killall(const char *name, int sig);
+extern void killall_tk_period_wait(const char *name, int wait);
 extern int process_exists(pid_t pid);
 extern int module_loaded(const char *module);
+extern int ppid(int pid);
 
 // files.c
 extern int check_if_dir_empty(const char *dirpath);
@@ -1470,7 +1478,7 @@ enum wl_band_id {
 	WL_5G_2_BAND = 1,
 	WL_6G_BAND = 2,
 	WL_2G_BAND = 3,
-#elif defined(GT10)
+#elif defined(GT10) || defined(RTAX9000)
 	WL_5G_BAND = 0,
 	WL_5G_2_BAND = 1,
 	WL_2G_BAND = 2,
@@ -1610,7 +1618,7 @@ static inline int get_pagecache_ratio(void) { return 90; }
  */
 static inline int __absent_band(enum wl_band_id band)
 {
-	if (band < WL_2G_BAND || band >= WL_NR_BANDS)
+	if (band < 0 || band >= WL_NR_BANDS)
 		return 1;
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
 	if (band >= MAX_NR_WL_IF)
@@ -2136,6 +2144,23 @@ static inline int guest_wlif(char *ifname)
 }
 #endif
 
+#if defined(RTCONFIG_TCODE)
+static inline int __is_tcode_country(char *tcode, char *cc)
+{
+	if (!tcode || !cc)
+		return 0;
+	return !strncmp(tcode, cc, 2);
+}
+
+static inline int is_tcode_country(char *cc)
+{
+	return __is_tcode_country(nvram_safe_get("territory_code"), cc);
+}
+#else
+static inline int __is_tcode_country(char __attribute__((unused)) *tcode, char __attribute__((unused) *cc) { return 0; }
+static inline int is_tcode_country(char __attribute__((unused) *cc) { return 0; }
+#endif
+
 extern int init_gpio(void);
 extern int set_pwr_usb(int boolOn);
 #ifdef RT4GAC68U
@@ -2321,6 +2346,17 @@ extern int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned l
 #elif defined(RTCONFIG_RALINK_MT7621)
 extern int get_mt7621_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
 #endif
+#if defined(RTCONFIG_QCA)
+extern int find_vap_by_sta(char *sta_addr, char *vap);
+#if defined(RTCONFIG_NO_RELOAD_WIFI_DRV_IF_POSSIBLE)
+extern int __need_to_reload_wifi_drv(void);
+extern int save_wl_params_for_testing_reload_wifi_drv(void);
+#else
+static inline int __need_to_reload_wifi_drv(void) { return 1; }
+static inline int need_to_reload_wifi_drv(void) { return 1; }
+static inline int save_wl_params_for_testing_reload_wifi_drv(void) { return 0; }
+#endif	/* RTCONFIG_NO_RELOAD_WIFI_DRV_IF_POSSIBLE */
+#endif	/* RTCONFIG_QCA */
 #ifdef RTCONFIG_AMAS
 static inline int rtconfig_amas(void) { return 1; }
 extern int aimesh_re_mode(void);
@@ -2854,7 +2890,11 @@ extern int illegal_ipv4_netmask(char *netmask);
 extern void convert_mac_string(char *mac);
 extern int test_and_get_free_uint_network(int t_class, uint32_t *exp_ip, uint32_t exp_cidr, uint32_t excl);
 extern int test_and_get_free_char_network(int t_class, char *ip_cidr_str, uint32_t excl);
+extern int min_cidr(char *ipaddr);
+extern char *min_netmask(char *ipaddr, char *mask, size_t mask_len);
+extern char *network_addr(char *ipaddr, char *mask, char *nwaddr, size_t nwaddr_len);
 extern enum wan_unit_e get_first_connected_public_wan_unit(void);
+extern enum wan_unit_e get_first_connected_dual_wan_unit(void);
 #ifdef RTCONFIG_IPV6
 extern const char *get_wan6face(void);
 extern const char *ipv6_address(const char *ipaddr6);
@@ -2876,6 +2916,12 @@ extern int set_crt_parsed(const char *name, char *file_path);
 #endif
 extern int get_upstream_wan_unit(void);
 extern int __get_upstream_wan_unit(void) __attribute__((weak));
+#if defined(RTCONFIG_SWITCH_QCA8075_QCA8337_PHY_AQR107_AR8035_QCA8033)
+extern char *calc_sfpp_iface_ipaddr(char *ipaddr, size_t ipaddr_len);
+extern int sfpp_iface_in_wan(void);
+extern int add_nat_rule_for_gpon_sfp_module(FILE *fp);
+extern int add_filter_rule_for_gpon_sfp_module(FILE *fp);
+#endif
 extern int get_wifi_unit(char *wif);
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 #ifdef RTCONFIG_DPSTA
@@ -2888,6 +2934,12 @@ extern int psta_exist(void);
 extern int psta_exist_except(int unit);
 extern int psr_exist(void);
 extern int psr_exist_except(int unit);
+#endif
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) || defined(RTCONFIG_IG_SITE2SITE) || defined(RTCONFIG_WIREGUARD)
+#define VPNC_LOAD_CLIENT_LIST          0x01
+#define VPNC_LOAD_PPTP_OPT                     0x02
+extern int _get_new_vpnc_index(void);
+extern int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int load_flag);
 #endif
 
 struct ifino_s {
@@ -3070,6 +3122,12 @@ extern void run_postconf(char *name, char *config);
 extern void use_custom_config(char *config, char *target);
 extern void append_custom_config(char *config, FILE *fp);
 #endif
+
+/* scripts.c */
+extern void run_custom_script(char *name, int timeout, char *arg1, char *arg2);
+extern void run_postconf(char *name, char *config);
+extern void use_custom_config(char *config, char *target);
+extern void append_custom_config(char *config, FILE *fp);
 
 /* mt7620.c */
 #if defined(RTCONFIG_RALINK_MT7620)
@@ -4093,6 +4151,8 @@ extern int wl_set_wifiscan(char *ifname, int val);
 extern int wl_set_mcsindex(char *ifname, int *is_auto, int *idx, char *idx_type, int *stream);
 #endif
 
+extern int ParseIPv4OrIPv6 ( const char** ppszText, unsigned char* abyAddr, int* pnPort, int* pbIsIPv6 );
+
 #if defined(RTCONFIG_BCM_CLED)
 enum {
 	BCM_CLED_RED = 0,
@@ -4242,7 +4302,7 @@ enum {
 	WLIF_5G1 = 0,
 	WLIF_5G2 = 1,
 	WLIF_6G	 = 2,
-#elif defined(GT10)
+#elif defined(GT10) || defined(RTAX9000)
 	WLIF_2G  = 2,
 	WLIF_5G1 = 0,
 	WLIF_5G2 = 1,
@@ -4288,6 +4348,16 @@ extern char *server6_table[][2];
 
 #define CD_IPC_MAX_CONNECTION 5
 #endif
+extern void sync_profile_update_time(int feat);
+#ifdef RTCONFIG_TPVPN
+// tpvpn.c
+enum {
+	TPVPN_HMA = 0,
+	TPVPN_NORDVPN,
+};
+extern int is_tpvpn_configured(int provider, const char* region, const char* conntype, int unit);
+#endif
+
 #define SAFE_FREE(x)	if(x) {free(x); x=NULL;}
 #if defined(RTCONFIG_AMAS) && defined(RTCONFIG_AMAS_ADTBW)
 #define ACSD_SCORE_FILE	"/tmp/auto_chan_score.txt"
@@ -4309,6 +4379,8 @@ extern struct devif_spdled devif_spdled_list[];
 #if defined(XT8_V2)
 int check_pkgtb_boardid(char *ptr_pkgtb);
 #endif
+
+extern int adjust_62_nv_list(char *name);
 
 #if defined(RTCONFIG_SWRT_I2CLED)
 enum {
@@ -4344,3 +4416,4 @@ enum {
 extern void i2cled_control(int which, int onoff);
 #endif
 #endif	/* !__SHARED_H__ */
+

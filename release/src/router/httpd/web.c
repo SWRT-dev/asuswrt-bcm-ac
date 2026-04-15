@@ -18,14 +18,6 @@
  * ASUS Home Gateway Reference Design
  * Web Page Configuration Support Routines
  *
- * Copyright 2001, ASUSTeK Inc.
- * All Rights Reserved.
- *
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of ASUSTeK Inc.;
- * the contents of this file may not be disclosed to third parties, copied or
- * duplicated in any form, in whole or in part, without the prior written
- * permission of ASUSTeK Inc..
- *
  * $Id: web_ex.c,v 1.4 2007/04/09 12:01:50 shinjung Exp $
  */
 #ifndef _GNU_SOURCE
@@ -190,9 +182,11 @@ typedef unsigned long long u64;
 
 #ifdef RTCONFIG_HTTPS
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/md5.h>
-
+#include <openssl/opensslconf.h>
+#include <openssl/opensslv.h>
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define X509_getm_notBefore X509_get_notBefore
 #define X509_getm_notAfter X509_get_notAfter
@@ -551,6 +545,33 @@ char SambaVersion[64] = {0};
 
 void not_ej_initial_folder_var_file();
 
+int string_to_htmlencode(char *dest, const char *src, size_t len)
+{
+	int ret = 0;
+	char tmp[2] = {0};
+
+	if(src == NULL || strlen(src) > len)
+		return 0;
+
+	replace_char(src, '+', ' ');
+	for (; *src; src++) {
+		if(*src == '"')
+			ret += strlcat(dest, "&quot;", len);
+		else if(*src == '&')
+			ret += strlcat(dest, "&amp;", len);
+		else if(*src == '\'')
+			ret += strlcat(dest, "&#39;", len);
+		else if(*src == '<')
+			ret += strlcat(dest, "&lt;", len);
+		else if(*src == '>')
+			ret += strlcat(dest, "&gt;", len);
+		else{
+			snprintf(tmp, sizeof(tmp), "%c", *src);
+			ret += strlcat(dest, tmp, len);
+		}
+	}
+	return ret;
+}
 
 static long int strtonl(char *ptr, int n, int base) {
 	char *buf = (char *)malloc(n+1);
@@ -1204,10 +1225,15 @@ ej_nvram_clean_get(int eid, webs_t wp, int argc, char_t **argv)
 	int ret = 0;
 
 	if (ejArgs(argc, argv, "%s", &name) < 1) {
-		websError(wp, 400, "Insufficient args\n");
+		if(hook_get_json == 1)
+			websError(wp, 400, "\"Insufficient args\"");
+		else
+			websError(wp, 400, "Insufficient args\n");
 		return -1;
 	}
 
+	if(hook_get_json == 1)
+		websWrite(wp, "\"");
 	for (c = nvram_safe_get(name); *c; c++) {
 		if (isprint(*c) &&
 			*c != '"' && *c != '&' && *c != '<' && *c != '>')
@@ -1215,6 +1241,8 @@ ej_nvram_clean_get(int eid, webs_t wp, int argc, char_t **argv)
 		else
 			ret += websWrite(wp, "&#%d;", *c);
 	}
+	if(hook_get_json == 1)
+		websWrite(wp, "\"");
 
 	return ret;
 }
@@ -1718,7 +1746,7 @@ ej_nvram_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 
 #ifdef RTCONFIG_NVRAM_ENCRYPT
 	if(httpd_invalid_nvram_get_name(name))
-		return websWrite(wp, "");
+		return websWrite(wp, "%s", "");
 #endif
 
 	wl_nband_to_wlx(name, name_tmp, sizeof(name_tmp));
@@ -1747,7 +1775,6 @@ ej_nvram_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 #else
 	char_to_ascii_safe(buf, str, ret);
 #endif
-
 	ret = websWrite(wp, "%s", buf);
 
 	if (buf != tmp)
@@ -3794,6 +3821,7 @@ int nvram_check(char *name, char *value, struct nvram_tuple *t, char *output)
 	{
 		ret=1;
 		_dprintf("nvram_check fail: nvram %s over length\n", t->name);
+		logmessage("httpd", "nvram_check fail: nvram %s over length (%d > %d)", t->name, strlen(value), t->len);
 	}
 
 	if(ret == 1)
@@ -3915,6 +3943,7 @@ int validate_apply(webs_t wp, json_object *root)
 	char *action_script = websGetVar(wp, "action_script", "");
 	char cfg_action_script[256], acc_action_script[64], cfg_ver[9];
 	json_object *cfg_root = json_object_new_object();
+	int apply_lock = 0;
 
 	memset(cfg_action_script, 0, sizeof(cfg_action_script));
 	memset(acc_action_script, 0, sizeof(acc_action_script));
@@ -4388,9 +4417,12 @@ int validate_apply(webs_t wp, json_object *root)
 				/* Validating input value
 				 * return 1:pass 0:fail
 				 */
-				if(!validate_apply_input_value(name, value)){
-					dbg("validate %s=%s is illegal\n", name, value);
-					continue;
+// paldier - temporary woarkaround for port validation
+				if(!strstr(name, "list")) {
+					if(!validate_apply_input_value(name, value)){
+						dbg("validate %s=%s is illegal\n", name, value);
+						continue;
+					}
 				}
 #ifdef RTCONFIG_CFGSYNC
 				save_changed_param(cfg_root, name);
@@ -4639,7 +4671,9 @@ int validate_apply(webs_t wp, json_object *root)
 
 			if (check_cfg_changed(cfg_root)) {
 				/* save the changed nvram parameters */
+				apply_lock = file_lock(CFG_APPLY_LOCK);
 				json_object_to_file(CFG_JSON_FILE, cfg_root);
+				file_unlock(apply_lock);
 
 				/* change cfg_ver when setting changed */
 				memset(cfg_ver, 0, sizeof(cfg_ver));
@@ -5439,7 +5473,7 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv)
 	if ((do_apply = !strcmp(action_mode, "apply")) ||
 	    !strcmp(action_mode, "apply_new"))
 	{
-		int has_modify;
+		int has_modify, restart_wifi_srv __attribute__((unused)) = 0;
 		if (!(has_modify = validate_apply(wp, NULL))) {
 			websWrite(wp, "<script>no_changes_and_no_committing();</script>\n");
 		}
@@ -5587,22 +5621,30 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv)
 #if defined(RTCONFIG_RALINK) ||  defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ)
 			if (strstr(action_script, "restart_wireless") || rc_srv_in_act_scr(action_script, "restart_net")) {
 				restart_needed_time += sleep1 * nr_band + bss_sleep * nr_guest;
+				restart_wifi_srv = 1;
 			}
 			if (strstr(action_script, "restart_net_and_phy") || rc_srv_in_act_scr(action_script, "restart_all")) {
 				restart_needed_time += delta1 + sleep2 * nr_band + bss_sleep * nr_guest;
+				restart_wifi_srv = 1;
 			}
 #endif			
 #if defined(RTCONFIG_QCA)
 			if (strstr(action_script, "restart_allnet")) {
 				restart_needed_time += delta2 + sleep2 * nr_band + bss_sleep * nr_guest;
+				restart_wifi_srv = 1;
 			}
 #endif
 #if defined(RTCONFIG_CAPTIVE_PORTAL)
 			if (!strncmp(action_script, "set_captive_portal_wl", sizeof("set_captive_portal_wl") - 1)) {
 				restart_needed_time += delta3 + bss_sleep * nr_guest;
+				restart_wifi_srv = 1;
 			}
 #endif
 
+#if defined(RTCONFIG_NO_RELOAD_WIFI_DRV_IF_POSSIBLE)
+			if (restart_wifi_srv && !__need_to_reload_wifi_drv())
+				restart_needed_time -= min(14, restart_needed_time);
+#endif
 			websWrite(wp, "<script>restart_needed_time(%d);</script>\n", restart_needed_time);
 			_dprintf("restart_needed_time [%d]\n", restart_needed_time);
 		}
@@ -7275,13 +7317,12 @@ ej_IP_dhcpLeaseInfo(int eid, webs_t wp, int argc, char_t **argv)
 #define	MAC			1
 #define	HOSTNAME		2
 #define	IPV6_ADDRESS		3
-#define BUFSIZE			8192
+#define IPV6_BUFSIZE			8192
 
 static int compare_back(FILE *fp, int current_line, char *buffer, const size_t len);
 static int check_mac_previous(char *mac);
 static char *value(FILE *fp, int line, int token);
 static void find_hostname_by_mac(char *mac, char *hostname, int hostname_len);
-static void get_ipv6_client_info();
 static int total_lines = 0;
 
 /* Init File and clear the content */
@@ -7299,7 +7340,7 @@ void init_file(char *file)
 
 void save_file(const char *file, const char *fmt, ...)
 {
-	char buf[BUFSIZE];
+	char buf[IPV6_BUFSIZE];
 	va_list args;
 	FILE *fp;
 
@@ -7339,7 +7380,7 @@ static char *get_stok(char *str, char *dest, char delimiter, const size_t dest_s
 static char *value(FILE *fp, int line, int token)
 {
 	int i;
-	static char temp[BUFSIZE], buffer[BUFSIZE];
+	static char temp[IPV6_BUFSIZE], buffer[IPV6_BUFSIZE];
 	char *ptr;
 	int temp_len;
 
@@ -7381,7 +7422,7 @@ static char *value(FILE *fp, int line, int token)
 static int check_mac_previous(char *mac)
 {
 	FILE *fp;
-	char temp[BUFSIZE];
+	char temp[IPV6_BUFSIZE];
 	memset(temp, 0, sizeof(temp));
 
 	if ((fp = fopen(IPV6_CLIENT_LIST, "r")) == NULL)
@@ -7392,7 +7433,7 @@ static int check_mac_previous(char *mac)
 		return 0;
 	}
 
-	while (fgets(temp, BUFSIZE, fp)) {
+	while (fgets(temp, IPV6_BUFSIZE, fp)) {
 		if (strstr(temp, mac)) {
 			fclose(fp);
 			return 1;
@@ -7466,7 +7507,7 @@ END:
 	strlcpy(hostname, "", hostname_len);
 }
 
-static void get_ipv6_client_info()
+void get_ipv6_client_info()
 {
 	FILE *fp;
 	char buffer[128], ipv6_addr[128], mac[32];
@@ -7507,11 +7548,11 @@ static void get_ipv6_client_info()
 	fclose(fp);
 }
 
-static void get_ipv6_client_list(void)
+void get_ipv6_client_list(void)
 {
 	FILE *fp;
 	int line_index = 1;
-	char temp[BUFSIZE];
+	char temp[IPV6_BUFSIZE];
 	memset(temp, 0, sizeof(temp));
 	init_file(IPV6_CLIENT_LIST);
 
@@ -7524,12 +7565,12 @@ static void get_ipv6_client_list(void)
 	}
 
 	total_lines = 0;
-	while (fgets(temp, BUFSIZE, fp))
+	while (fgets(temp, IPV6_BUFSIZE, fp))
 		total_lines++;
 	fseek(fp, 0, SEEK_SET);
 	memset(temp, 0, sizeof(temp));
 
-	while (fgets(temp, BUFSIZE, fp)) {
+	while (fgets(temp, IPV6_BUFSIZE, fp)) {
 		compare_back(fp, line_index, temp, sizeof(temp));
 		value(fp, line_index, MAC);
 		line_index++;
@@ -7543,7 +7584,7 @@ static int ipv6_client_numbers(void)
 {
 	FILE *fp;
 	int numbers = 0;
-	char temp[BUFSIZE];
+	char temp[IPV6_BUFSIZE];
 
 	if ((fp = fopen(IPV6_CLIENT_LIST, "r")) == NULL)
 	{
@@ -7553,7 +7594,7 @@ static int ipv6_client_numbers(void)
 		return 0;
 	}
 
-	while (fgets(temp, BUFSIZE, fp))
+	while (fgets(temp, IPV6_BUFSIZE, fp))
 		numbers++;
 	fclose(fp);
 
@@ -7771,7 +7812,7 @@ const static struct {
 };
 
 #ifdef RTCONFIG_IPV6
-static int inet_raddr6_pton(const char *src, void *dst, void *buf)
+int inet_raddr6_pton(const char *src, void *dst, void *buf)
 {
 	char *sptr = (char *) src;
 	char *dptr = buf;
@@ -12167,6 +12208,9 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char *current_url;
 	char *config_name;
 	char command[128];
+#ifdef RTCONFIG_CFGSYNC
+	int apply_lock = 0;
+#endif
 	memset(command, 0, sizeof(command));
 	int i=0, j=0, len=0;
 #ifdef RTCONFIG_LANTIQ
@@ -12179,7 +12223,7 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 
 	action_mode = get_cgi_json("action_mode", root);
 	current_url = safe_get_cgi_json("current_page", root);
-	_dprintf("apply: %s %s\n", action_mode, current_url);
+	dbg("apply: %s %s\n", action_mode, current_url);
 
 #if defined(RTCONFIG_NOTIFICATION_CENTER) && (defined(RTCONFIG_IFTTT) || defined(RTCONFIG_ALEXA) || defined(RTCONFIG_GOOGLE_ASST))
 	if(check_user_agent(user_agent) == FROM_IFTTT || check_user_agent(user_agent) == FROM_ALEXA)
@@ -12239,7 +12283,9 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
                                         json_object_object_add(cfg_root, "action_script", json_object_new_string(action_para));
 
 				/* save the changed nvram parameters */
+				apply_lock = file_lock(CFG_APPLY_LOCK);
 				json_object_to_file(CFG_JSON_FILE, cfg_root);
+				file_unlock(apply_lock);
 
 				json_object_put(cfg_root);
 
@@ -12293,6 +12339,29 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			|| strncasecmp(system_cmd, "traceroute", 10) == 0
 			|| strncasecmp(system_cmd, "nslookup", 8) == 0
 		)){
+			/* validate input */
+			if(strncasecmp(system_cmd, "ping", 4) == 0){
+				int ping_count = 0;
+				char *g = NULL, *buf = NULL;
+				char *ping_argv1 = NULL, *ping_argv2 = NULL, *ping_argv3 = NULL, *ping_argv4 = NULL;
+				g = buf = strdup(system_cmd);
+
+				if((vstrsep(g, " ", &ping_argv1, &ping_argv2, &ping_argv3, &ping_argv4)) < 4){
+					dbg("too few arguments to ping function\n");
+					free(buf);
+					websRedirect_iframe(wp, current_url);
+					goto APPLY_FINISH;
+				}
+
+				if(!isValid_digit_string(ping_argv3) || safe_atoi(ping_argv3) < 1 || safe_atoi(ping_argv3) > 99){
+					dbg("ping count error\n");
+					free(buf);
+					websRedirect_iframe(wp, current_url);
+					goto APPLY_FINISH;
+				}
+
+				free(buf);
+			}
 #if defined(RTCONFIG_DUALWAN)
 			int sel = 1;
 			char *p, *u, *wan, tmp[32] = "";
@@ -14609,7 +14678,7 @@ extern int g_cl;
 int 
 wait_rc_misc()
 {
-	int count, cnt, wait_misc = 0;
+	int count = 0, wait_misc = 0;
 #ifdef RPAX56
 	int wait_ex = nvram_get_int("wait_ex") ? : 2;
 #else
@@ -14661,6 +14730,7 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 
 #ifdef RTCONFIG_COMFW
 	int comfw_rem_len = 0;
+	int remlen_chk = 0;
 
 	_dprintf("%s: comfw stream len=%d\n", __func__, len);
 #endif
@@ -14831,12 +14901,12 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 #ifdef HND_ROUTER
 	len = len - ex_len;
 
-	_dprintf("\nfile len is %d\n", len);
 #endif
 	filelen = len;
 	cnt = 0;
 	offset = 0;
 
+	_dprintf("\npipe to fifo, filelen(=len) is %d\n", len);
 #ifdef RTCONFIG_COMFW
 	if(cf_force_write) {
 		_dprintf("\n..write pre-read-cf to fifo.\n");
@@ -14900,7 +14970,9 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 		}
 	}
 
+	_dprintf("\n~End of pipe to fifo, filelen=%d, len=%d\n", filelen, len);
 #ifdef HND_ROUTER
+	_dprintf("\nhnd add len of ex_len:%d (len:%d)\n", ex_len, len);
 	len += ex_len;
 #endif
 
@@ -14908,8 +14980,10 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	while (len > 0)
 	{
 		len--;
-		if((ch = fgetc(stream)) == EOF)
+		if((ch = fgetc(stream)) == EOF) {
+			_dprintf("have eof ? len=%d\n", len);
 			break;
+		}
 
 		if (filelen>0)
 		{
@@ -14961,9 +15035,18 @@ err:
 	while (len > 0) {
 		len--;
 		if((ch = fgetc(stream)) == EOF) {
-			_dprintf("remained len:%d not slurp ?!\n", len);
+			_dprintf("remained len:%d not slurp ?! continue slurp...\n", len);
+			len++;
+#ifdef RTCONFIG_COMFW
+			remlen_chk++;
+#endif
+		}
+#ifdef RTCONFIG_COMFW
+		if(remlen_chk >= 4) {
+			_dprintf("could be wrong comfw_rem_len, leave it. (len=%d)(comfw_rem_len=%d)\n", len, comfw_rem_len);
 			break;
 		}
+#endif
 	}
 }
 #endif
@@ -17698,8 +17781,6 @@ static void do_lp55xx_cgi(char *url, FILE *stream)
 	int lp55xx_enable = safe_atoi(get_cgi_json("lp55xx_enable", root));
 	int prestate = 0;
 
-	logmessage("HTTPD","%s: [%s] [%s]\n", __func__, action_mode, lp55xx_enable?"Enable":"Disable");
-
 	if (!strcmp(action_mode, "LedCtrlLC")) {
 		nvram_set_int("lp55xx_lp5523_user_enable", lp55xx_enable);
 		prestate = 1;
@@ -17924,8 +18005,6 @@ static void do_detwan_cgi(char *url, FILE *stream)
 	json_object *new_root = json_object_new_object();
 	char state[CKN_STR2];
 
-	logmessage("HTTPD","%s: [%s]\n", __func__, action_mode);
-
 	if (!strcmp(action_mode, "GetWanStatus")) {
 		memset(state, '\0', sizeof(state));
 		GetWanStatus(state);
@@ -18063,9 +18142,6 @@ static void do_athX_state_cgi(char *url, FILE *stream)
 	int band = safe_atoi(get_cgi_json("band", root));
 	char *param = get_cgi_json("param", root);
 	char *value = get_cgi_json("value", root);
-
-	logmessage("HTTPD","%s: [ATH%d] %s %s %s\n", __func__, band, action_mode, param, value);
-	_dprintf("%s: [ATH%d] %s %s %s\n", __func__, band, action_mode, param, value);
 
 	if (!strcmp(action_mode, "GET")) {
 		json_object *new_root = json_object_new_object();
@@ -19145,6 +19221,10 @@ do_mobile_dev_mode_cgi(char *url, FILE *stream)
 	action = safe_get_cgi_json("action", root);
 	maclist = safe_get_cgi_json("maclist", root);
 
+	adjust_62_nv_list("bwdpi_game_list");
+	adjust_62_nv_list("bwdpi_stream_list");
+	adjust_62_nv_list("bwdpi_wfh_list");
+
 	if(!isValidEnableOption(do_rc, 1)){
 		HTTPD_DBG("invalid option\n");
 		ret = HTTP_INVALID_ENABLE_OPT;
@@ -19192,8 +19272,7 @@ do_mobile_dev_mode_cgi(char *url, FILE *stream)
 					ret = HTTP_OVER_MAX_RULE_LIMIT;
 					goto FINISH;
 				}
-				if(strlen(add_list) != 0)
-					strlcat(add_list, "<", sizeof(add_list));
+				strlcat(add_list, "<", sizeof(add_list));
 				strlcat(add_list, word, sizeof(add_list));
 				find_del_list += remove_client_in_list(del_list, word);
 				find_del2_list += remove_client_in_list(del2_list, word);
@@ -19265,6 +19344,10 @@ do_mobile_game_mode_cgi(char *url, FILE *stream)
 	char bwdpi_game_list[2048] = {0}, bwdpi_stream_list[2048] = {0}, bwdpi_wfh_list[2048] = {0};
 	struct json_object *root = json_object_new_object();
 
+	adjust_62_nv_list("bwdpi_game_list");
+	adjust_62_nv_list("bwdpi_stream_list");
+	adjust_62_nv_list("bwdpi_wfh_list");
+
 	do_json_decode(root);
 	do_rc = safe_get_cgi_json("do_rc", root);
 	action = safe_get_cgi_json("action", root);
@@ -19302,8 +19385,8 @@ do_mobile_game_mode_cgi(char *url, FILE *stream)
 					ret = HTTP_OVER_MAX_RULE_LIMIT;
 					goto FINISH;
 				}
-				if(bwdpi_game_list[0] != '\0')
-					strlcat(bwdpi_game_list, "<", sizeof(bwdpi_game_list));
+
+				strlcat(bwdpi_game_list, "<", sizeof(bwdpi_game_list));
 				strlcat(bwdpi_game_list, word, sizeof(bwdpi_game_list));
 				find_stream_list += remove_client_in_list(bwdpi_stream_list, word);
 				find_wfh_list += remove_client_in_list(bwdpi_wfh_list, word);
@@ -21338,6 +21421,7 @@ do_del_client_data_cgi(char *url, FILE *stream) {
 	struct json_object *mac_list_array = json_object_new_array();
 #ifdef RTCONFIG_CFGSYNC
 	struct json_object *cfg_root = json_object_new_object();
+	int apply_lock = 0;
 #endif
 	struct json_object *root = json_object_new_object();
 
@@ -21503,7 +21587,9 @@ do_del_client_data_cgi(char *url, FILE *stream) {
 
 		if (check_cfg_changed(cfg_root)) {
 			/* save the changed nvram parameters */
+			apply_lock = file_lock(CFG_APPLY_LOCK);
 			json_object_to_file(CFG_JSON_FILE, cfg_root);
+			file_unlock(apply_lock);
 
 			/* change cfg_ver when setting changed */
 			memset(cfg_ver, 0, sizeof(cfg_ver));
@@ -21986,7 +22072,7 @@ struct mime_handler mime_handlers[] = {
 #endif
 #ifdef RTCONFIG_WIREGUARD
 	{ "wgs_client.png", "image/png", no_cache_IE7, NULL, do_wgs_client_png, NULL },
-	{ "wgs_client.conf", "application/force-download", NULL, NULL, do_wgs_client_conf, do_auth },
+	{ "wgs_client.conf", "application/octet-stream", NULL, NULL, do_wgs_client_conf, do_auth },
 #endif
 	{ "Nologin.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "error_page.htm*", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
@@ -21998,9 +22084,9 @@ struct mime_handler mime_handlers[] = {
 	{ "ure_success.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "ureip.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "remote.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "js/jquery.js", "text/javascript", no_cache_IE7, NULL, do_file, NULL },
+	{ "js/jquery.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "js/https_redirect/https_redirect.js", "text/javascript", no_cache_IE7, NULL, do_ej, NULL },
-	{ "require/require.min.js", "text/javascript", no_cache_IE7, NULL, do_file, NULL },
+	{ "require/require.min.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "httpd_check.xml", "text/xml", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "repage.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "chdom.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
@@ -22035,8 +22121,8 @@ struct mime_handler mime_handlers[] = {
 	{ "update_customList.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "manifest.appcache", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "offline.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "wcdma_list.js", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
-	{ "help_content.js", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
+	{ "wcdma_list.js", "text/javascript", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
+	{ "help_content.js", "text/javascript", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "httpd_check.htm", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "manifest.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "update_cloudstatus.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
@@ -22078,7 +22164,7 @@ struct mime_handler mime_handlers[] = {
 	{ "**.tgz", "application/octet-stream", NULL, NULL, do_file, NULL },
 	{ "**.zip", "application/octet-stream", NULL, NULL, do_file, NULL },
 	{ "**.ipk", "application/octet-stream", NULL, NULL, do_file, NULL },
-	{ "**.css", "text/css", NULL, NULL, do_file, NULL },
+	{ "**.css", "text/css", cache_object, NULL, do_file, NULL },
 #if defined(RTCONFIG_IFTTT) || defined(RTCONFIG_ALEXA) || defined(RTCONFIG_GOOGLE_ASST)
 	{ "images/New_ui/asustitle.png", "image/png", no_cache_IE7, do_html_post_and_get, do_file, NULL },
 	{ "images/New_ui/smh_step_2_text.png", "image/png", no_cache_IE7, do_html_post_and_get, do_file, NULL },
@@ -22095,13 +22181,13 @@ struct mime_handler mime_handlers[] = {
 	{ "**.js", "text/javascript", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "**.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
-	{ "**.CFG", "application/force-download", NULL, do_html_post_and_get, do_prf_file, do_auth },
+	{ "**.CFG", "application/octet-stream", NULL, do_html_post_and_get, do_prf_file, do_auth },
 	{ "**.crt", "application/force-download", NULL, NULL, do_file, do_auth },
-	{ "uploadIconFile.tar", "application/force-download", NULL, NULL, do_uploadIconFile_file, do_auth },
-	{ "networkmap.tar", "application/force-download", NULL, NULL, do_networkmap_file, do_auth },
-	{ "upnp.log", "application/force-download", NULL, NULL, do_upnp_file, do_auth },
-	{ "upnpc_xml.log", "application/force-download", NULL, NULL, do_upnpc_xml_file, do_auth },
-	{ "mDNSNetMonitor.log", "application/force-download", NULL, NULL, do_dnsnet_file, do_auth },
+	{ "uploadIconFile.tar", "application/x-tar", NULL, NULL, do_uploadIconFile_file, do_auth },
+	{ "networkmap.tar", "application/x-tar", NULL, NULL, do_networkmap_file, do_auth },
+	{ "upnp.log", "application/octet-stream", NULL, NULL, do_upnp_file, do_auth },
+	{ "upnpc_xml.log", "application/octet-stream", NULL, NULL, do_upnpc_xml_file, do_auth },
+	{ "mDNSNetMonitor.log", "application/octet-stream", NULL, NULL, do_dnsnet_file, do_auth },
 	{ "ftpServerTree.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_ftpServerTree_cgi, do_auth },//andi
 	{ "**.ovpn", "application/force-download", NULL, NULL, do_prf_ovpn_file, do_auth },
 	{ "QIS_default.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_qis_default, do_auth },
@@ -22122,8 +22208,8 @@ struct mime_handler mime_handlers[] = {
 #ifdef RTCONFIG_HTTPS
 	{ "upload_cert_key.cgi*", "text/html", no_cache_IE7, do_upload_cert_key, do_upload_cert_key_cgi, do_auth },
 #endif
-	{ "cert_key.tar", "application/force-download", NULL, do_html_post_and_get, do_download_cert_key_cgi, do_auth },
-	{ "cert.tar", "application/force-download", NULL, do_html_post_and_get, do_download_cert_cgi, do_auth },
+	{ "cert_key.tar", "application/x-tar", NULL, do_html_post_and_get, do_download_cert_key_cgi, do_auth },
+	{ "cert.tar", "application/x-tar", NULL, do_html_post_and_get, do_download_cert_cgi, do_auth },
 #if defined(RTCONFIG_IFTTT) || defined(RTCONFIG_ALEXA) || defined(RTCONFIG_GOOGLE_ASST)
 	{ "get_IFTTTPincode.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_get_IFTTTPincode_cgi, do_auth },
 	{ "send_IFTTTPincode.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_send_IFTTTPincode_cgi, do_auth },
@@ -22141,26 +22227,26 @@ struct mime_handler mime_handlers[] = {
 	{ "enable_remote_control.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_enable_remote_control_cgi, do_auth },
 	{ "check_Auth.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_check_Auth_cgi, do_auth },
 	{ "auto_guestnetwork.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_auto_guestnetwork_cgi, do_auth },
-	{ "syslog.txt*", "application/force-download", syslog_txt, do_html_post_and_get, do_log_cgi, do_auth },
+	{ "syslog.txt*", "text/plain", syslog_txt, do_html_post_and_get, do_log_cgi, do_auth },
 #ifdef RTCONFIG_QTN  //RT-AC87U
-	{ "tmp/qtn_diagnostics.cgi*", "application/force-download", NULL, NULL, do_qtn_diagnostics, do_auth },
+	{ "tmp/qtn_diagnostics.cgi*", "application/octet-stream", NULL, NULL, do_qtn_diagnostics, do_auth },
 #endif
 #ifdef RTCONFIG_USB_MODEM
-	{ "modemlog.txt*", "application/force-download", modemlog_txt, do_html_post_and_get, do_modemlog_cgi, do_auth },
+	{ "modemlog.txt*", "text/plain", modemlog_txt, do_html_post_and_get, do_modemlog_cgi, do_auth },
 #endif
 #ifdef RTCONFIG_TCPDUMP
-	{ "udhcpc.pcap*", "application/force-download", NULL, NULL, do_file, NULL },
-	{ "**.pcap*", "application/force-download", NULL, NULL, do_file, NULL },
+	{ "udhcpc.pcap*", "application/octet-stream", NULL, NULL, do_file, NULL },
+	{ "**.pcap*", "application/octet-stream", NULL, NULL, do_file, NULL },
 #endif
 #ifdef RTCONFIG_DUMP4000
-	{ "**.pcap*", "application/force-download", NULL, NULL, do_file, NULL },
+	{ "**.pcap*", "application/octet-stream", NULL, NULL, do_file, NULL },
 #endif
 #ifdef RTCONFIG_DSL
 	{ "dsllog.cgi*", "text/txt", no_cache_IE7, do_html_post_and_get, do_adsllog_cgi, do_auth },
 #endif
 	// Viz 2010.08 vvvvv
 	{ "update.cgi*", "text/javascript", no_cache_IE7, do_html_post_and_get, do_update_cgi, do_auth }, // jerry5
-	{ "bwm/*.gz", NULL, no_cache, do_html_post_and_get, wo_bwmbackup, do_auth }, // jerry5
+	{ "bwm/*.gz", NULL, no_cache, do_html_post_and_get, wo_bwmbackup, do_auth }, /* jerry5 */
 	// end Viz  ^^^^^^^^
 #ifdef TRANSLATE_ON_FLY
 	{ "change_lang.cgi*", "text/html", no_cache_IE7, do_lang_post, do_lang_cgi, do_auth },
@@ -22168,7 +22254,7 @@ struct mime_handler mime_handlers[] = {
 #endif //TRANSLATE_ON_FLY
 #ifdef RTCONFIG_OPENVPN
 	{ "vpnupload.cgi*", "text/html", no_cache_IE7, do_vpnupload_post, do_vpnupload_cgi, do_auth },
-	{ "server_ovpn.cert", "application/force-download", NULL, do_html_post_and_get, do_server_ovpn_file, do_auth },
+	{ "server_ovpn.cert", "application/x-x509-ca-cert", NULL, do_html_post_and_get, do_server_ovpn_file, do_auth },
 	{ "upload_server_ovpn_cert.cgi*", "text/html", no_cache_IE7, do_upload_server_ovpn_cert_post, do_upload_server_ovpn_cert_cgi, do_auth },
 #endif
 #ifdef RTCONFIG_CAPTIVE_PORTAL
@@ -22177,15 +22263,15 @@ struct mime_handler mime_handlers[] = {
 	{ "splash_page_del.cgi*", "text/html", no_cache_IE7, do_splash_page_del, do_splash_page_cgi, do_auth },
 #endif
 #ifdef RTCONFIG_IPSEC
-	{ "ipsec.log", "application/force-download", NULL, NULL, do_ipsec_file, do_auth },
+	{ "ipsec.log", "application/octet-stream", NULL, NULL, do_ipsec_file, do_auth },
 	{ "clear_file.cgi*", "text/javascript", no_cache_IE7, do_html_post_and_get, do_clear_file_cgi, do_auth },
 	{ "ipsecupload.cgi*", "text/html", no_cache_IE7, do_ipsecupload_post, do_ipsecupload_cgi, do_auth },
 	{ "caupload.cgi*", "text/html", no_cache_IE7, do_caupload_post, NULL, do_auth },
 	{ "renew_ikev2_cert_key.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_renew_ikev2_cert_key, do_auth },
-	{ "renew_ikev2_cert_mobile.pem", "application/force-download", NULL, NULL, do_renew_ikev2_cert_pem, do_auth },
-	{ "renew_ikev2_cert_windows.der", "application/force-download", NULL, NULL, do_renew_ikev2_cert_der, do_auth },
-	{ "ikev2_cert_mobile.pem", "application/force-download", NULL, NULL, do_ikev2_cert_pem, do_auth },
-	{ "ikev2_cert_windows.der", "application/force-download", NULL, NULL, do_ikev2_cert_der, do_auth },
+	{ "renew_ikev2_cert_mobile.pem", "application/x-pem-file", NULL, NULL, do_renew_ikev2_cert_pem, do_auth },
+	{ "renew_ikev2_cert_windows.der", "application/x-x509-ca-cert", NULL, NULL, do_renew_ikev2_cert_der, do_auth },
+	{ "ikev2_cert_mobile.pem", "application/x-pem-file", NULL, NULL, do_ikev2_cert_pem, do_auth },
+	{ "ikev2_cert_windows.der", "application/x-x509-ca-cert", NULL, NULL, do_ikev2_cert_der, do_auth },
 	{ "get_ipsec_clientlist.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_get_ipsec_clientlist_cgi, do_auth },
 	{ "set_ipsec_clientlist.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_set_ipsec_clientlist_cgi, do_auth },
 	{ "ipsec_cert_info.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_ipsec_cert_info_cgi, do_auth },
@@ -22213,7 +22299,7 @@ struct mime_handler mime_handlers[] = {
 #endif
 #if defined(HND_ROUTER) && defined(RTCONFIG_VISUALIZATION)
 	{ "json.cgi*", "application/json", no_cache_IE7, (void *) vis_do_json_set, vis_do_json_get, do_auth },
-	{ "visdata.db*", "application/force-download", NULL, (void *) vis_do_visdbdwnld_cgi, NULL, do_auth },
+	{ "visdata.db*", "application/octet-stream", NULL, (void *) vis_do_visdbdwnld_cgi, NULL, do_auth },
 #endif
 #if 0 // obsoleted, RTCONFIG_RGBLED
 	{ "aurargb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_aurargb_cgi, do_auth },
@@ -22227,7 +22313,7 @@ struct mime_handler mime_handlers[] = {
 	{ "update_wlanlog.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_update_wlanlog_cgi, do_auth },
 	{ "rog_first_qos.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_rog_first_qos_cgi, do_auth },
 	{ "feedback_mail.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_feedback_mail_cgi, do_auth },
-	{ "dfb_log.cgi", "application/force-download", NULL, do_html_post_and_get, do_dfb_log_file, do_auth },
+	{ "dfb_log.cgi", "application/octet-stream", NULL, do_html_post_and_get, do_dfb_log_file, do_auth },
 	{ "clean_offline_clientlist.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_clean_offline_clientlist_cgi, do_auth },
 	{ "set_fw_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_set_fw_path_cgi, do_auth },
 #ifdef RTCONFIG_IPERF3
@@ -22243,6 +22329,9 @@ struct mime_handler mime_handlers[] = {
 #endif
 #ifdef RTCONFIG_ACCOUNT_BINDING
 	{ "get_eptoken.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_get_eptoken_cgi, NULL },
+	{ "asusrouter_request_token.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_asusrouter_request_token_cgi, NULL },
+	{ "asusrouter_request_access_token.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_asusrouter_request_access_token_cgi, NULL },
+	{ "endpoint_request_token.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_endpoint_request_token_cgi, NULL },
 #endif
 #ifdef RTCONFIG_WL_SCHED_V2
 	{ "get_wl_sched.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_get_wl_sched_cgi, do_auth },
@@ -22402,6 +22491,7 @@ int ej_get_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 	int sh_num;
 	char **folder_list = NULL;
 	int first_pool, result, i;
+	char folder_name[1024] = {0};
 
 	websWrite(wp, "function get_cifs_status(){\n");
 	//websWrite(wp, "    return %d;\n", nvram_get_int("samba_running"));
@@ -22476,6 +22566,8 @@ int ej_get_AiDisk_status(int eid, webs_t wp, int argc, char **argv){
 				for (i = 0; i < sh_num; ++i){
 					websWrite(wp, ", ");
 
+					memset(folder_name, 0, sizeof(folder_name));
+					string_to_htmlencode(folder_name, folder_list[i], sizeof(folder_name));
 					websWrite(wp, "\"%s\"", folder_list[i]);
 
 				}
@@ -22711,6 +22803,7 @@ int draw_permissions_of_pms(webs_t wp, const char *const account, const disk_inf
 #else
 	char ascii_user[64];
 #endif
+	char folder_name[1024] = {0};
 
 	if(is_group)
 		snprintf(target, 8, "group");
@@ -22840,11 +22933,12 @@ int draw_permissions_of_pms(webs_t wp, const char *const account, const disk_inf
 							webdav_right = 0;
 					}
 #endif
-
+					memset(folder_name, 0, sizeof(folder_name));
+					string_to_htmlencode(folder_name, folder_list[j], sizeof(folder_name));
 #ifdef RTCONFIG_WEBDAV_PENDING
-					websWrite(wp, "                    [\"%s\", %d, %d, %d]", folder_list[j], samba_right, ftp_right, webdav_right);
+					websWrite(wp, "                    [\"%s\", %d, %d, %d]", folder_name, samba_right, ftp_right, webdav_right);
 #else
-					websWrite(wp, "                    [\"%s\", %d, %d]", folder_list[j], samba_right, ftp_right);
+					websWrite(wp, "                    [\"%s\", %d, %d]", folder_name, samba_right, ftp_right);
 #endif
 
 					if(j != sh_num-1)
@@ -23617,6 +23711,7 @@ int ej_get_folder_tree(int eid, webs_t wp, int argc, char **argv){
 	int disk_order = -1, partition_order = -1;
 	disk_info_t *disks_info, *follow_disk;
 	partition_info_t *follow_partition;
+	char folder_name[1024] = {0};
 
 	if (strlen(layer_order) <= 0){
 		printf("No input \"layer_order\"!\n");
@@ -23678,7 +23773,9 @@ int ej_get_folder_tree(int eid, webs_t wp, int argc, char **argv){
 						else
 							websWrite(wp, ", ");
 
-						websWrite(wp, "\"%s#%u#0\"", folder_list[i], i);
+						memset(folder_name, 0, sizeof(folder_name));
+						string_to_htmlencode(folder_name, folder_list[i], sizeof(folder_name));
+						websWrite(wp, "\"%s#%u#0\"", folder_name, i);
 					}
 				}
 				else if (layer == 1 && disk_count == disk_order){
@@ -23720,6 +23817,7 @@ int ej_get_share_tree(int eid, webs_t wp, int argc, char **argv){
 	int disk_order = -1, partition_order = -1;
 	disk_info_t *disks_info, *follow_disk;
 	partition_info_t *follow_partition;
+	char folder_name[1024] = {0};
 
 	if (strlen(layer_order) <= 0){
 		printf("No input \"layer_order\"!\n");
@@ -23781,7 +23879,9 @@ int ej_get_share_tree(int eid, webs_t wp, int argc, char **argv){
 						else
 							websWrite(wp, ", ");
 
-						websWrite(wp, "\"%s#%u#0\"", share_list[i], i);
+						memset(folder_name, 0, sizeof(folder_name));
+						string_to_htmlencode(folder_name, share_list[i], sizeof(folder_name));
+						websWrite(wp, "\"%s#%u#0\"", folder_name, i);
 					}
 				}
 				else if (layer == 1 && disk_count == disk_order){
@@ -24565,7 +24665,7 @@ int ej_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/asuswebstorage", "r");
 	char line[PATH_MAX], buf[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX];
 
 	websWrite(wp, "cloud_sync=\"%s\";\n", nvram_safe_get("cloud_sync"));
 
@@ -24576,7 +24676,7 @@ int ej_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -24630,7 +24730,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/asuswebstorage", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], captcha_url[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], captcha_url[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -24642,7 +24742,7 @@ int ej_UI_cloud_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -24718,7 +24818,7 @@ int ej_UI_cloud_dropbox_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/dropbox", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_dropbox_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -24730,7 +24830,7 @@ int ej_UI_cloud_dropbox_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -24806,7 +24906,7 @@ int ej_UI_cloud_ftpclient_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/ftpclient", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_ftpclient_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -24818,7 +24918,7 @@ int ej_UI_cloud_ftpclient_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -24894,7 +24994,7 @@ int ej_UI_cloud_sambaclient_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/sambaclient", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_sambaclient_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -24906,7 +25006,7 @@ int ej_UI_cloud_sambaclient_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -24982,7 +25082,7 @@ int ej_UI_cloud_usbclient_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/smartsync/.logs/usbclient", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
+	char status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX], rule_num[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "cloud_usbclient_status=\"WAITING\";\n"); //gauss change status fromm 'ERROR' to 'WAITING' 2014.11.4
@@ -24994,7 +25094,7 @@ int ej_UI_cloud_usbclient_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
 	memset(error_msg, 0, PATH_MAX);
@@ -25070,7 +25170,7 @@ int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 	FILE *fp = fopen("/tmp/Cloud/log/WebDAV", "r");
 	char line[PATH_MAX], buf[PATH_MAX], dest[PATH_MAX];
 	int line_num;
-	char rulenum[PATH_MAX], status[16], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX];
+	char rulenum[PATH_MAX], status[17], mounted_path[PATH_MAX], target_obj[PATH_MAX], error_msg[PATH_MAX], full_capa[PATH_MAX], used_capa[PATH_MAX];
 
 	if(fp == NULL){
 		websWrite(wp, "rs_rulenum=\"\";\n");
@@ -25082,7 +25182,7 @@ int ej_UI_rs_status(int eid, webs_t wp, int argc, char **argv){
 		return 0;
 	}
 
-	memset(status, 0, 16);
+	memset(status, 0, 17);
 	memset(rulenum, 0, PATH_MAX);
 	memset(mounted_path, 0, PATH_MAX);
 	memset(target_obj, 0, PATH_MAX);
@@ -25203,6 +25303,13 @@ int ej_webdavInfo(int eid, webs_t wp, int argc, char **argv) {
 
 	return 0;
 }
+
+#ifdef RTCONFIG_SOFTWIRE46
+int restart_auto46det(int eid, webs_t wp, int argc, char **argv) {
+	notify_rc("restart_auto46det");
+	return 0;
+}
+#endif
 
 int start_autodet(int eid, webs_t wp, int argc, char **argv) {
 	if(strcmp(nvram_safe_get("autodet_proceeding"), "1")){
@@ -26017,7 +26124,7 @@ int ej_backup_nvram(int eid, webs_t wp, int argc, char_t **argv)
 		if (*k == 0) continue;
 		v = nvram_safe_get(k);
 
-		websWrite(wp, "\t%s: '", k);
+		websWrite(wp, "\t%s: \"", k);
 		for (; *v; v++) {
 			if (isprint(*v) &&
 			    *v != '"' && *v != '&' && *v != '<' && *v != '>' && *v != '\\')
@@ -26031,12 +26138,12 @@ int ej_backup_nvram(int eid, webs_t wp, int argc, char_t **argv)
 			else
 				websWrite(wp, "&#%d", *v);
 		}
-		websWrite(wp, "',\n");
+		websWrite(wp, "\",\n");
 	}
 	free(list);
-	websWrite(wp, "\thttp_id: '");
+	websWrite(wp, "\thttp_id: \"");
 	websWrite(wp, "%s", nvram_safe_get("http_id"));
-	websWrite(wp, "'};\n");
+	websWrite(wp, "\"};\n");
 
 	return 0;
 }
@@ -26289,6 +26396,7 @@ ej_bwdpi_status(int eid, webs_t wp, int argc, char_t **argv)
 	}
 	else
 		websWrite(wp, "[]");
+	return 0;
 }
 
 static int
@@ -26479,12 +26587,13 @@ enum{
 	}
 
 static int
-ookla_exec(char *type, char *id)
+ookla_exec(char *type, char *id, char *iface)
 {
 	int pid;
 	int retval = 0;
+	char *iface_arg;
 
-	OOKLA_DBG(" type=%s, id=%s\n", type, id);
+	OOKLA_DBG(" type=%s, id=%s, iface=%s\n", type, id, iface);
 
 
 	/* check folder and files */
@@ -26494,21 +26603,26 @@ ookla_exec(char *type, char *id)
 	/* kill old ookla process */
 	if (pidof("ookla") > 0) doSystem("killall -9 ookla");
 
+	if (!strcmp(iface, ""))
+		iface_arg = NULL;
+	else
+		iface_arg = "-I";
+
 	nvram_set_int("ookla_state", OOKLA_STATE_RUN);
 	if (!strcmp(type, "") && !strcmp(id, "")) {
-		char *cmd[] = {"ookla", "-c", "http://www.speedtest.net/api/embed/vz0azjarf5enop8a/config", "-f", "jsonl", NULL};
+		char *cmd[] = {"ookla", "-c", "http://www.speedtest.net/api/embed/vz0azjarf5enop8a/config", "-f", "jsonl", iface_arg, iface, NULL};
 		if (f_exists(OOKLA_RESULT)) unlink(OOKLA_RESULT);
 		retval = _eval(cmd, ">"OOKLA_RESULT, 0, &pid);
 	}
 	else if (!strcmp(type, "list") && !strcmp(id, "")) {
-		char *cmd[] = {"ookla", "-c", "http://www.speedtest.net/api/embed/vz0azjarf5enop8a/config", "-f", "jsonl", "-L", NULL};
+		char *cmd[] = {"ookla", "-c", "http://www.speedtest.net/api/embed/vz0azjarf5enop8a/config", "-f", "jsonl", "-L", iface_arg, iface, NULL};
 		if (f_exists(OOKLA_SERVERS)) unlink(OOKLA_SERVERS);
 		retval = _eval(cmd, ">"OOKLA_SERVERS, 0, &pid);
 	}
 	else if (!strcmp(type, "") && strcmp(id, "")) {
 		/* check xss for input "id" */
 		if (check_xss_blacklist(id, 0)) return retval;
-		char *cmd[] = {"ookla", "-c", "http://www.speedtest.net/api/embed/vz0azjarf5enop8a/config", "-f", "jsonl", "-s", id, NULL};
+		char *cmd[] = {"ookla", "-c", "http://www.speedtest.net/api/embed/vz0azjarf5enop8a/config", "-f", "jsonl", "-s", id, iface_arg, iface, NULL};
 		if (f_exists(OOKLA_RESULT)) unlink(OOKLA_RESULT);
 		retval = _eval(cmd, ">"OOKLA_RESULT, 0, &pid);
 	}
@@ -26520,17 +26634,19 @@ static void
 do_ookla_speedtest_exe_cgi(char *url, FILE *stream)
 {
 	int retval __attribute__((unused)) = 0;
-	char *type = NULL, *id = NULL;
+	char *type = NULL, *id = NULL, *iface = NULL;
 	struct json_object *root = json_object_new_object();
 
 	do_json_decode(root);
 	type = get_cgi_json("type", root);
 	id = get_cgi_json("id", root);
+	iface = get_cgi_json("iface", root);
 
 	if (type == NULL) type = "";
 	if (id == NULL) id = "";
+	if (iface == NULL) iface = "";
 
-	retval = ookla_exec(type, id);
+	retval = ookla_exec(type, id, iface);
 
 	if (root != NULL) json_object_put(root);
 }
@@ -26590,7 +26706,7 @@ ej_ookla_speedtest_get_history(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int retval = 0;
 	FILE *fp = NULL;
-	char buf[1024] = {0};
+	char buf[2048] = {0};
 
 	if ((fp = fopen(OOKLA_HISTORY, "r")) != NULL)
 	{
@@ -27231,20 +27347,20 @@ ej_get_upload_icon(int eid, webs_t wp, int argc, char **argv) {
 
 	if(check_if_file_exist(file_name)) {
 		ret = 1; //find file
-		if(from_app != 0)
+		if(from_app != 0 || hook_get_json == 1)
 			websWrite(wp, "\"");
 		dump_file(wp, file_name);
-		if(from_app != 0)
+		if(from_app != 0 || hook_get_json == 1)
 			websWrite(wp, "\"");
 	}else
 		goto FINISH;
 
 FINISH:
 	if(ret == 0){ //no file
-		if(from_app != 0)
+		if(from_app != 0 || hook_get_json == 1)
 			websWrite(wp, "\"");
 		websWrite(wp, "NoIcon");
-		if(from_app != 0)
+		if(from_app != 0 || hook_get_json == 1)
 			websWrite(wp, "\"");
 	}
 
@@ -27374,12 +27490,15 @@ ej_get_upload_icon_count_list(int eid, webs_t wp, int argc, char **argv) {
 	}
 	closedir(dirp);
 
-	if(from_app == 0){
-		websWrite(wp, "upload_icon_count=\"%d\";\n", file_count);
-		websWrite(wp, "upload_icon_list=\"%s\";\n", allMacList);
-	}else{
+	if(from_app != 0 || hook_get_json == 1){
+		websWrite(wp, "{");
 		websWrite(wp, "\"upload_icon_count\":\"%d\",\n", file_count);
 		websWrite(wp, "\"upload_icon_list\":\"%s\"\n", allMacList);
+		websWrite(wp, "}");
+	}else
+	{
+		websWrite(wp, "upload_icon_count=\"%d\";\n", file_count);
+		websWrite(wp, "upload_icon_list=\"%s\";\n", allMacList);
 	}
 
 	return 0;
@@ -28528,11 +28647,14 @@ int is_cfg_server_ready()
 void notify_cfg_server(json_object *cfg_root)
 {
 	char cfg_ver[9];
+	int apply_lock = 0;
 
 	if (is_cfg_server_ready()) {
 		if (check_cfg_changed(cfg_root)) {
 			/* save the changed nvram parameters */
+			apply_lock = file_lock(CFG_APPLY_LOCK);
 			json_object_to_file(CFG_JSON_FILE, cfg_root);
+			file_unlock(apply_lock);
 
 			/* change cfg_ver when setting changed */
 			srand(time(NULL));
@@ -30484,14 +30606,19 @@ ej_get_realip(int eid, webs_t wp, int argc, char **argv)
 static int
 ej_get_header_info(int eid, webs_t wp, int argc, char **argv)
 {
+	int bIsIPv6 = 0, nPort = 0, bSuccess = 0, port_len = 0;
+	unsigned char abyAddr[16] = {0};
+	char port_t[8] = {0}, current_page_name_temp[128] = {0};
+	char host_name_temp[64] = {0}, host_name_copy_t[256] = {0};
+	const char *host_name_copy = NULL;
+	char *host_name_copy_temp = NULL;
 	struct json_object *item = json_object_new_object();
-
-	char host_name_temp[64];
-	char current_page_name_temp[128];
-	char *host_name_copy = NULL, *host_name_copy_temp = NULL;
 
 	memset(host_name_temp, 0, sizeof(host_name_temp));
 	memset(current_page_name_temp, 0, sizeof(current_page_name_temp));
+
+	strlcpy(host_name_copy_t, host_name, sizeof(host_name_copy_t));
+	host_name_copy = host_name_copy_t;
 
 	if(strncmp(DUT_DOMAIN_NAME, host_name, strlen(DUT_DOMAIN_NAME)) == 0) {
 		strlcpy(host_name_temp, DUT_DOMAIN_NAME, sizeof(host_name_temp));
@@ -30502,8 +30629,14 @@ ej_get_header_info(int eid, webs_t wp, int argc, char **argv)
 		strlcpy(host_name_temp, "repeater.asus.com", sizeof(host_name_temp));
 	}
 #endif
-	else {
-		host_name_copy = strdup(host_name);
+	else if(ParseIPv4OrIPv6(&host_name_copy, abyAddr, &nPort, &bIsIPv6)){
+		if(nPort != 0)
+			port_len = snprintf(port_t, sizeof(port_t), "%d", htons(nPort)) + 1;
+
+		strncpy(host_name_temp, host_name, strlen(host_name) - port_len);
+		host_name_temp[strlen(host_name) - port_len] = '\0';
+	}
+	else{
 		host_name_copy_temp = strtok(host_name_copy,":");
 		snprintf(host_name_temp, sizeof(host_name_temp), "%s", host_name_copy_temp);
 	}
@@ -30532,7 +30665,6 @@ ej_get_header_info(int eid, webs_t wp, int argc, char **argv)
 
 	websWrite(wp, "%s", json_object_to_json_string(item));
 
-	free(host_name_copy);
 	json_object_put(item);
 
 	return 0;
@@ -32639,6 +32771,9 @@ struct ej_handler ej_handlers[] = {
 	{ "getWebdavInfo", ej_webdavInfo},
 	{ "start_autodet", start_autodet},
 	{ "start_force_autodet", start_force_autodet},
+#ifdef RTCONFIG_SOFTWIRE46
+	{ "restart_auto46det", restart_auto46det},
+#endif
 #ifdef RTCONFIG_QCA_PLC_UTILS
 	{ "start_plcdet", start_plcdet},
 	{ "plc_status", ej_plc_status},
@@ -33219,6 +33354,7 @@ struct AiMesh_whitelist AiMesh_whitelists[] = {
 	{"update_applist.asp", NULL},
 	{"Advanced_TimeMachine.asp", NULL},
 	{"mediaserver.asp", NULL},
+	{"gettree.asp", NULL},
 	{"Advanced_AiDisk_samba.asp", NULL},
 	{"Advanced_AiDisk_ftp.asp", NULL},
 	{"aidisk/*", NULL},
@@ -33294,3 +33430,4 @@ int last_time_lock_warning(void)
 	}
 	return 0;
 }
+

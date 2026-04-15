@@ -1350,7 +1350,12 @@ char *get_default_ssid(int unit, int subunit)
 		strlcat(ssid, "_XT8", sizeof(ssid));
 #else
 		strlcat(ssid, "_", sizeof(ssid));
-		strlcat(ssid, get_productid(), sizeof(ssid));
+		char *pid = get_productid();
+		if (strstr(pid, "ExpertWiFi_"))
+			pid += strlen("ExpertWiFi_");
+		else if (strstr(pid, "ZenWiFi_"))
+			pid += strlen("ZenWiFi_");
+		strlcat(ssid, pid, sizeof(ssid));
 #endif
 
 #endif

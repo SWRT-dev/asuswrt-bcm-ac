@@ -173,7 +173,7 @@ endif
 else
 ifeq ($(wildcard $(SRCBASE)/router/networkmap/*.c),)
 all: 
-	-cp -f prebuild/networkmap networkmap
+	-cp -f prebuild/$(BUILD_NAME)/networkmap networkmap
 else
 all: $(EXEC)
 endif
@@ -225,4 +225,3 @@ endif
 else
 	rm -rf *.o $(EXEC) *~
 endif
-

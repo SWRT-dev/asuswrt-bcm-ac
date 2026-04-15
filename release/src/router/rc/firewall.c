@@ -126,7 +126,7 @@ char *g_buf_alloc(char *g_buf_now)
  */
 static inline int dmz_enabled(void)
 {
-	int dmz_enabled = !nvram_match("dmz_ip", ""), dmz1_enabled = 0;
+	int dmz_enabled = !illegal_ipv4_address(nvram_safe_get("dmz_ip")), dmz1_enabled = 0;
 
 #if defined(RTCONFIG_MULTIWAN_CFG)
 	dmz1_enabled = (get_nr_wan_unit() == 2) && nvram_match("wans_mode", "lb") && !nvram_match("dmz1_ip", "");
@@ -950,6 +950,9 @@ char *iprange_ex_conv(char *ip, char *buf)
 	int mask;
 
 	strcpy(buf, "");
+
+	if (!ip || (ip && (strchr(ip, ':') || strchr(ip, '/') || strlen(ip) > INET_ADDRSTRLEN)))
+		return ip;
 
 	//printf("## iprange_ex_conv: %s, %d, %s\n", ip_name, idx, ip);	// tmp test
 	// scan all ip string
@@ -1853,12 +1856,12 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 #ifdef RTCONFIG_MULTIWAN_CFG
 		if (get_nr_wan_unit() == 2 && nvram_match("wans_mode", "lb")) {
 			/* dualwan + load-balance */
-			if (!nvram_match("dmz_ip", "")) {
+			if (!illegal_ipv4_address(nvram_safe_get("dmz_ip"))) {
 				fprintf(fp, "-A VSERVER -i %s -j DNAT --to %s\n", wan_if, nvram_safe_get("dmz_ip"));
 				if (wanx_rules)
 					fprintf(fp, "-A VSERVER -i %s -j DNAT --to %s\n", wanx_if, nvram_safe_get("dmz_ip"));
 			}
-			if (!nvram_match("dmz1_ip", "")) {
+			if (!illegal_ipv4_address(nvram_safe_get("dmz_ip"))) {
 				fprintf(fp, "-A VSERVER -i %s -j DNAT --to %s\n", wan_if, nvram_safe_get("dmz1_ip"));
 				if (wanx_rules)
 					fprintf(fp, "-A VSERVER -i %s -j DNAT --to %s\n", wanx_if, nvram_safe_get("dmz1_ip"));
@@ -2718,7 +2721,12 @@ start_default_filter(int lanunit)
 	char *nv, *nvp, *b;
 	char *enable, *srcip, *accessType;
 	char *lan_if = nvram_safe_get("lan_ifname");
-	int evalRet;
+	int evalRet, n;
+#ifdef CONFIG_BCMWL5
+	int debug = factory_debug();
+#else
+	int debug = IS_ATE_FACTORY_MODE();
+#endif
 
 	if (!is_routing_enabled())
 		return;
@@ -2726,12 +2734,14 @@ start_default_filter(int lanunit)
 	if ((fp = fopen("/tmp/filter.default", "w")) == NULL)
 		return;
 	fprintf(fp, "*filter\n"
-		":INPUT DROP [0:0]\n"
-		":FORWARD DROP [0:0]\n"
+		":INPUT %s [0:0]\n"
+		":FORWARD %s [0:0]\n"
 		":OUTPUT ACCEPT [0:0]\n"
 		":ACCESS_RESTRICTION - [0:0]\n"
 		":logaccept - [0:0]\n"
-		":logdrop - [0:0]\n");
+		":logdrop - [0:0]\n",
+		debug ? "ACCEPT" : "DROP",
+		debug ? "ACCEPT" : "DROP");
 #ifdef RTCONFIG_PROTECTION_SERVER
 	fprintf(fp, ":%sWAN - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
 	fprintf(fp, ":%sLAN - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
@@ -2848,7 +2858,7 @@ start_default_filter(int lanunit)
 	}
 
 	fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
-	fprintf(fp, "-A INPUT -m state --state INVALID -j DROP\n");
+	fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n", debug ? "ACCEPT" : "DROP");
 
 	/* Specific IP access restriction */
 	write_access_restriction(fp);
@@ -2917,18 +2927,40 @@ start_default_filter(int lanunit)
 	if ((fp = fopen("/tmp/filter_ipv6.default", "w")) == NULL)
 		return;
 	fprintf(fp, "*filter\n"
-		":INPUT DROP [0:0]\n"
-		":FORWARD DROP [0:0]\n"
+		":INPUT %s [0:0]\n"
+		":FORWARD %s [0:0]\n"
 		":OUTPUT %s [0:0]\n"
 		":logaccept - [0:0]\n"
 		":logdrop - [0:0]\n",
+		debug ? "ACCEPT" : "DROP",
+		debug ? "ACCEPT" : "DROP",
 		ipv6_enabled() ? "ACCEPT" : "DROP");
 
 	if (ipv6_enabled()) {
 		fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
-		fprintf(fp, "-A INPUT -m state --state INVALID -j DROP\n");
+		fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n", debug ? "ACCEPT" : "DROP");
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", lan_if);
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", "lo");
+
+#ifdef RTCONFIG_SOFTWIRE46
+		if (!strncmp(nvram_safe_get("territory_code"), "JP", 2)) {
+			fprintf(fp, "-A INPUT -i %s -j ACCEPT\n", lan_if);
+			fprintf(fp, "-A INPUT -i lo -j ACCEPT\n");
+			switch (get_ipv6_service()) {
+#ifdef RTCONFIG_6RELAYD
+			case IPV6_PASSTHROUGH:
+#endif
+			case IPV6_NATIVE_DHCP:
+				/* allow responses from the dhcpv6 server */
+				fprintf(fp, "-A INPUT -p udp --sport 547 --dport 546 -j ACCEPT\n");
+				break;
+			}
+			for (n = 0; n < sizeof(allowed_local_icmpv6)/sizeof(int); n++) {
+				fprintf(fp, "-A INPUT -p ipv6-icmp --icmpv6-type %i -j ACCEPT\n", allowed_local_icmpv6[n]);
+			}
+		}
+#endif
+
 		//fprintf(fp, "-A FORWARD -m state --state INVALID -j DROP\n");
 		fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
 		fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_if, lan_if);
@@ -3078,7 +3110,7 @@ void write_UrlFilter(char *chain, char *lan_if, char *lan_ip, char *logdrop, FIL
 			srcips[0] = '\0';
 			if (addr && *addr)
 			{
-				char srcAddr[32];
+				char srcAddr[64];
 				int src_type = addr_type_parse(addr, srcAddr, sizeof(srcAddr));
 				if (src_type == TYPE_IP)
 					snprintf(srcips, sizeof(srcips), "-s %s", srcAddr);
@@ -3344,7 +3376,7 @@ filter_setting(int wan_unit, char *lan_if, char *lan_ip, char *logaccept, char *
 
 	fprintf(fp, "*filter\n"
 	    ":INPUT ACCEPT [0:0]\n"
-	    ":FORWARD ACCEPT [0:0]\n"
+	    ":FORWARD %s [0:0]\n"
 	    ":OUTPUT ACCEPT [0:0]\n"
 	    ":INPUT_PING - [0:0]\n"
 	    ":INPUT_ICMP - [0:0]\n"
@@ -3381,7 +3413,8 @@ filter_setting(int wan_unit, char *lan_if, char *lan_ip, char *logaccept, char *
 		":VPNCI - [0:0]\n"
 #endif
 	    ":logaccept - [0:0]\n"
-	    ":logdrop - [0:0]\n");
+	    ":logdrop - [0:0]\n",
+	    nvram_match("fw_enable_x", "1") ? "DROP" : "ACCEPT");
 
 #ifdef RTCONFIG_PROTECTION_SERVER
 	fprintf(fp, ":%sWAN - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
@@ -4140,16 +4173,6 @@ TRACE_PT("writing Parental Control\n");
 		}
 	}
 
-#ifdef RTCONFIG_IPV6
-	if (ipv6_enabled() && *wan6face) {
-		if (nvram_match("ipv6_fw_enable", "1")) {
-			fprintf(fp_ipv6, "-A FORWARD -o %s -i %s -j %s\n", wan6face, lan_if, logaccept);
-		} else {	// The default DROP rule from the IPv6 firewall would take care of it
-	fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", wan6face, lan_if, logdrop);
-		}
-	}
-#endif
-
 	/* Accept the redirect, might be seen as INVALID, packets */
 	fprintf(fp, "-A FORWARD -i %s -o %s -j %s\n", lan_if, lan_if, logaccept);
 #ifdef RTCONFIG_IPV6
@@ -4309,7 +4332,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 		if(apply) {
-			v4v6_ok = IPT_V4;
+			v4v6_ok = IPT_V4|IPT_V6;
 
 			// LAN/WAN filter
 			nv = nvp = strdup(nvram_safe_get("filter_lwlist"));
@@ -4322,8 +4345,8 @@ TRACE_PT("writing Parental Control\n");
 					g_buf_init(); // need to modified
 
 					setting = filter_conv(protoptr, flagptr, iprange_ex_conv(srcip, srcipbuf), srcport, iprange_ex_conv(dstip, dstipbuf), dstport);
-					if (srcip) v4v6_ok = ipt_addr_compact(srcipbuf, v4v6_ok, (v4v6_ok == IPT_V4));
-					if (dstip) v4v6_ok = ipt_addr_compact(dstipbuf, v4v6_ok, (v4v6_ok == IPT_V4));
+					if (srcip) v4v6_ok = ipt_addr_compact((*srcipbuf)?srcipbuf:srcip, v4v6_ok, (v4v6_ok == IPT_V4));
+					if (dstip) v4v6_ok = ipt_addr_compact((*dstipbuf)?dstipbuf:dstip, v4v6_ok, (v4v6_ok == IPT_V4));
 
 					/* separate lanwan timematch */
 					strcpy(lanwan_buf, lanwan_timematch);
@@ -4342,6 +4365,8 @@ TRACE_PT("writing Parental Control\n");
 				}
 				if(nv) free(nv);
 			}
+			//restore
+			v4v6_ok = IPT_V4;
 		}
 		// ICMP
 		foreach(ptr, nvram_safe_get("filter_lw_icmp_x"), icmplist)
@@ -4476,7 +4501,7 @@ TRACE_PT("write porttrigger\n");
 
 	// Allow from LAN
 	if (nvram_get_int("fw_enable_x"))
-		fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, "ACCEPT");
+		fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, logaccept);
 
 	/* Enable Virtual Servers
 	 * Accepts all DNATed connection, including VSERVER, UPNP, BATTLEIPs, etc
@@ -4624,6 +4649,21 @@ TRACE_PT("write wl filter\n");
 
 #ifdef RTCONFIG_DNSFILTER
 	dnsfilter_dot_rules(fp);
+#ifdef RTCONFIG_IPv6
+	if (ipv6_enabled())
+		dnsfilter6_dot_rules(fp_ipv6);
+#endif
+#endif
+
+	// Allow LAN -> X after all (URL/Keyword/Network...) filter.
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled() && *wan6face) {
+		if (nvram_match("ipv6_fw_enable", "1")) {
+			fprintf(fp_ipv6, "-A FORWARD -o %s -i %s -j %s\n", wan6face, lan_if, logaccept);
+		} else {	// The default DROP rule from the IPv6 firewall would take care of it
+			fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", wan6face, lan_if, logdrop);
+		}
+	}
 #endif
 
 #ifdef RTCONFIG_WIREGUARD
@@ -5503,15 +5543,6 @@ TRACE_PT("writing Parental Control\n");
 // ~ oleg patch
 		/* Filter out invalid WAN->WAN connections */
 		fprintf(fp, "-A FORWARD -o %s ! -i %s -j %s\n", wan_if, lan_if, logdrop);
-#ifdef RTCONFIG_IPV6
-		 if (ipv6_enabled() && *wan6face) {
-			if (nvram_match("ipv6_fw_enable", "1")) {
-				fprintf(fp_ipv6, "-A FORWARD -o %s -i %s -j %s\n", wan6face, lan_if, logaccept);
-			} else {	// The default DROP rule from the IPv6 firewall would take care of it
-			fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", wan6face, lan_if, logdrop);
-			}
-		}
-#endif
 		if (strcmp(wanx_if, wan_if) && inet_addr_(wanx_ip) && dualwan_unit__nonusbif(unit)) {
 			fprintf(fp, "-A FORWARD -o %s ! -i %s -j %s\n", wanx_if, lan_if, logdrop);
 #ifdef RTCONFIG_AMAS_WGN
@@ -5689,7 +5720,7 @@ TRACE_PT("writing Parental Control\n");
 		}
 
 		if(apply) {
-			v4v6_ok = IPT_V4;
+			v4v6_ok = IPT_V4|IPT_V6;
 
 			// LAN/WAN filter
 			nv = nvp = strdup(nvram_safe_get("filter_lwlist"));
@@ -5700,10 +5731,9 @@ TRACE_PT("writing Parental Control\n");
 					(void)protoflag_conv(proto, protoptr, 0);
 					(void)protoflag_conv(proto, flagptr, 1);
 					g_buf_init(); // need to modified
-
 					setting = filter_conv(protoptr, flagptr, iprange_ex_conv(srcip, srcipbuf), srcport, iprange_ex_conv(dstip, dstipbuf), dstport);
-					if (srcip) v4v6_ok = ipt_addr_compact(srcipbuf, v4v6_ok, (v4v6_ok == IPT_V4));
-					if (dstip) v4v6_ok = ipt_addr_compact(dstipbuf, v4v6_ok, (v4v6_ok == IPT_V4));
+					if (srcip) v4v6_ok = ipt_addr_compact((*srcipbuf)?srcipbuf:srcip, v4v6_ok, (v4v6_ok == IPT_V4));
+					if (dstip) v4v6_ok = ipt_addr_compact((*dstipbuf)?dstipbuf:dstip, v4v6_ok, (v4v6_ok == IPT_V4));
 					for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 						if(!is_wan_connect(unit))
 							continue;
@@ -5737,6 +5767,8 @@ TRACE_PT("writing Parental Control\n");
 				}
 				if(nv) free(nv);
 			}
+			//restore
+			v4v6_ok = IPT_V4;
 		}
 
 		// ICMP
@@ -5926,7 +5958,7 @@ TRACE_PT("write porttrigger\n");
 
 	// Allow from LAN
 	if (nvram_get_int("fw_enable_x"))
-		fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, "ACCEPT");
+		fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, logaccept);
 
 	/* Enable Virtual Servers
 	 * Accepts all DNATed connection, including VSERVER, UPNP, BATTLEIPs, etc
@@ -6054,6 +6086,22 @@ TRACE_PT("write wl filter\n");
 	dnsfilter_dot_rules(fp);
 #endif
 
+	// Allow LAN -> X after all (URL/Keyword/Network...) filter.
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit) {
+		if(!is_wan_connect(unit))
+			continue;
+
+#ifdef RTCONFIG_IPV6
+		if ((get_ipv6_service_by_unit(unit) != IPV6_DISABLED)) {
+			if (nvram_match("ipv6_fw_enable", "1")) {
+				fprintf(fp_ipv6, "-A FORWARD -o %s -i %s -j %s\n", get_wan6_ifname(unit), lan_if, logaccept);
+			} else {	// The default DROP rule from the IPv6 firewall would take care of it
+				fprintf(fp_ipv6, "-A FORWARD -o %s ! -i %s -j %s\n", get_wan6_ifname(unit), lan_if, logdrop);
+			}
+		}
+#endif
+	}
+
 #ifdef RTCONFIG_WIREGUARD
 	fprintf(fp, "-A FORWARD -j WGCF\n");
 #ifdef RTCONFIG_IPV6
@@ -6064,8 +6112,10 @@ TRACE_PT("write wl filter\n");
 
 #ifdef RTCONFIG_OPENVPN
 	fprintf(fp, "-A FORWARD -j OVPNCF\n");
+#ifdef RTCONFIG_IPV6
 	if (ipv6_enabled())
 		fprintf(fp_ipv6, "-A FORWARD -j OVPNCF\n");
+#endif
 #endif
 
 #ifdef RTCONFIG_VPNC
@@ -6073,6 +6123,10 @@ TRACE_PT("write wl filter\n");
 	// if (ipv6_enabled())
 		// fprintf(fp_ipv6, "-A FORWARD -j VPNCF\n");
 #endif
+
+	// Allow from LAN
+	if (nvram_get_int("fw_enable_x"))
+		fprintf(fp, "-A FORWARD -i %s -j %s\n", lan_if, "ACCEPT");
 
 	// Default rule
 	if (nvram_get_int("fw_enable_x"))
@@ -7211,3 +7265,4 @@ void rule_apply_checking(char *caller, int line, char *rule_path, int ret) {
 		eval("cp", rule_path, dst_file);
 	}
 }
+

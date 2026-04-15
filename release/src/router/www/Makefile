@@ -72,16 +72,10 @@ ifeq ($(and $(RTCONFIG_AMAS),$(RTCONFIG_WIFI_SON)),y)
 endif
 	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rfL || true
 	cp ../www/sysdep/$(SWRT_NAME)/www $(INSTALLDIR)/. -rfL || true
-ifeq ($(or $(RTCONFIG_LANTIQ),$(RTCONFIG_QCA),$(RTCONFIG_RALINK)),y)
-	cp ../www/sysinfo/lantiq/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
-else ifeq ($(K3),y)
-	cp ../www/sysinfo/k3/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
-else ifeq ($(R7000P),y)
-	cp ../www/sysinfo/r7000p/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
-else ifeq ($(or $(EA6700),$(DIR868L),$(R6300V2)),y)
-	cp ../www/sysinfo/ea6700/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
-else
+ifeq ($(RTCONFIG_BCMARM),y)
 	cp ../www/sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
+else
+	cp ../www/sysinfo/lantiq/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
 endif
 	rm -rf $(INSTALLDIR)/www/sysinfo
 	rm -rf $(INSTALLDIR)/www/Makefile

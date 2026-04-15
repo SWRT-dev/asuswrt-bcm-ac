@@ -16,14 +16,14 @@ NOTE：
 
 2. Run `sudo apt-get update` in terminal, and then run
 `
-sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget libncurses5:i386 libelf1:i386 lib32z1 lib32stdc++6 gtk-doc-tools intltool binutils-dev cmake lzma liblzma-dev lzma-dev uuid-dev liblzo2-dev xsltproc dos2unix libstdc++5 docbook-xsl-* sharutils autogen shtool gengetopt libltdl-dev libtool-bin
+sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget libncurses5:i386 libelf1:i386 lib32z1 lib32stdc++6 gtk-doc-tools intltool binutils-dev cmake lzma liblzma-dev lzma-dev uuid-dev liblzo2-dev xsltproc dos2unix libstdc++5 docbook-xsl-* sharutils autogen shtool gengetopt libltdl-dev libtool-bin pkg-config
 `
 
 3. Run `git clone https://github.com/SWRT-dev/asuswrt-bcm-ac` to clone the source code 
 
 4. Run `git clone https://github.com/SWRT-dev/bcm-toolchains` to clone the toolchains
 
-5. Run `cd bcmhnd-toolchains` to enter the directory, and follow commands step by step 
+5. Run `cd bcm-toolchains` to enter the directory, and follow commands step by step 
 
     `sudo mkdir -p /opt/toolchains/`
 
@@ -49,7 +49,15 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
     `sudo ln -sf /bin/bash /bin/sh`
 
-6. Build firmware
+6. Run `git clone https://github.com/SWRT-dev/bcmhnd-toolchains` to clone the toolchains
+
+7. Run `cd bcmhnd-toolchains` to enter the directory, and follow commands step by step 
+
+    `sudo ln -sf $(pwd)/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+
+    `sudo ln -sf $(pwd)/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/`
+
+8. Build firmware
 
 	`cd asuswrt-bcm-ac/release/src-rt-6.x.4708`
 

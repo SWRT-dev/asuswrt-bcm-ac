@@ -144,6 +144,7 @@ static int initsigs[] = {
 };
 
 static char *defenv[] = {
+	"USER=root",	/* keep it on first item and modified at run-time. */
 	"TERM=vt100",
 	"HOME=/",
 	//"PATH=/usr/bin:/bin:/usr/sbin:/sbin",
@@ -162,7 +163,6 @@ static char *defenv[] = {
 	"LD_LIBRARY_PATH=/lib:/usr/lib:/opt/lantiq/usr/lib:/opt/lantiq/usr/sbin/:/tmp/wireless/lantiq/usr/lib/",
 #endif
 	"SHELL=" SHELL,
-	"USER=root",
 	"TMOUT=0",
 #ifdef RTCONFIG_DMALLOC
 /*
@@ -2609,6 +2609,7 @@ static int console_init(void)
 
 static pid_t run_shell(int timeout, int nowait)
 {
+	char user_env[sizeof("USER=XXX") + 32];
 	char *argv_shell[] = { SHELL, NULL };
 	char *argv_login[] = { LOGIN, "-p", NULL };
 	char **argv = argv_login;
@@ -2623,6 +2624,8 @@ static pid_t run_shell(int timeout, int nowait)
 	if (waitfor(STDIN_FILENO, timeout) <= 0)
 		return 0;
 
+	snprintf(user_env, sizeof(user_env), "USER=%s", nvram_get("http_username")? : "admin");
+	defenv[0] = user_env;
 #if defined(BC109) || defined(EBG19) || defined(EBG15) || defined(EBP15)
         if (!nvram_match("shell_login", "1")) {
                 printf("run SHELL as pre-test\n");
@@ -3597,6 +3600,21 @@ void set_ethsw_ifnames()
 		nvram_set("sdn_ifnames", nvram_safe_get("wired_ifnames"));
 		break;
 	}
+}
+
+void init_subunit(void)
+{
+
+#if defined(RTCONFIG_AMAS)
+#if defined(RTCONFIG_FRONTHAUL_DWB) || defined(RTCONFIG_MSSID_PRELINK) || defined(RTCONFIG_FRONTHAUL_DBG) || defined(RTCONFIG_VIF_ONBOARDING)
+	init_amas_subunit();
+#endif
+#endif
+
+#ifdef RTCONFIG_OWE_TRANS
+    append_owe_trans_vif(); // reserve vif for OWE-Transition mode
+#endif
+
 }
 
 // intialized in this area
@@ -17250,9 +17268,10 @@ int init_nvram(void)
 		nvram_set_int("ct_expect_max", 150);
 #endif
 
+	init_subunit();
+
 #if defined(RTCONFIG_AMAS)
 #if defined(RTCONFIG_FRONTHAUL_DWB) || defined(RTCONFIG_MSSID_PRELINK) || defined(RTCONFIG_FRONTHAUL_DBG) || defined(RTCONFIG_VIF_ONBOARDING)
-	init_amas_subunit();
 #if defined(RTCONFIG_FRONTHAUL_DWB)
 	if (nvram_get_int("fh_ap_enabled") >= 0)
 		nvram_set("fh_ap_bss", "0");  // Fronthaul AP is be control by cfg daemon. So disable it when booted.
@@ -17275,10 +17294,6 @@ int init_nvram(void)
 		amas_stop_acsd_config_init(model);
 #endif
 #endif
-#endif
-
-#ifdef RTCONFIG_OWE_TRANS
-	append_owe_trans_vif(); // reserve vif for OWE-Transition mode
 #endif
 
 	if(nvram_match("wifison_ready", "1"))
@@ -18095,9 +18110,7 @@ NO_USB_CAP:
 #endif
 
 #ifdef RTCONFIG_AMAS
-#if !defined(SWRT_VER_MAJOR_B)
 	add_rc_support("amas");
-#endif
 	if (nvram_get_int("amas_bdl"))
 	add_rc_support("amas_bdl");
 #endif
@@ -18501,6 +18514,14 @@ int init_nvram2(void)
 	nvram_set("fb_req_cnt", "0");
 #endif /* RTCONFIG_FRS_FEEDBACK */
 
+#if defined(RTCONFIG_BWDPI)
+	if(!nvram_match("extendno", nvram_safe_get("extendno_org"))){
+		adjust_62_nv_list("bwdpi_game_list");
+		adjust_62_nv_list("bwdpi_stream_list");
+		adjust_62_nv_list("bwdpi_wfh_list");
+	}
+#endif
+
 	// upgrade/downgrade dont keep info
 	if(!nvram_match("extendno", nvram_safe_get("extendno_org"))){
 		nvram_set("mfp_ip_requeue", "");
@@ -18640,6 +18661,10 @@ void force_free_caches()
 	if (model==MODEL_RTN53||model==MODEL_RTN10D1) {
 		free_caches(FREE_MEM_PAGE, 2, 0);
 	}
+#endif
+
+#ifdef RTCONFIG_BCMARM
+	f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);
 #endif
 }
 
@@ -19765,9 +19790,7 @@ def_boot_reinit:
 	f_write_string("/proc/sys/kernel/core_pattern", "/tmp/core-%e-%g-%p-%s-%t-%u", 0, 0);
 	f_write_string("/proc/sys/fs/suid_dumpable", "2", 0, 0);
 #endif
-#ifdef RTCONFIG_BCMARM
 	f_write_string("/proc/sys/kernel/print-fatal-signals", "1", 0, 0);
-#endif
 
 	for (i = 0; i < sizeof(fatalsigs) / sizeof(fatalsigs[0]); i++) {
 		signal(fatalsigs[i], handle_fatalsigs);
@@ -20001,6 +20024,10 @@ def_boot_reinit:
 	reset_stacksize(ASUSRT_STACKSIZE);
 #endif
 #ifdef RTCONFIG_SOFTWIRE46
+	if (nvram_match("x_Setting", "0") && !strncmp(nvram_safe_get("territory_code"), "JP", 2)) {
+		init_wan46();
+		nvram_set("ipv6_service", "ipv6pt");
+	}
 	nvram_set("s46_mapsvr_id", "");
 #endif
 
@@ -20012,7 +20039,7 @@ def_boot_reinit:
 #endif
 
 #ifdef RTCONFIG_ASD
-	nvram_set("3rd-party", "swrt");
+	nvram_set("3rd-party", "merlin");
 #endif
 
 #if defined(RTCONFIG_BCMBSD_V2)
@@ -20271,45 +20298,6 @@ void sync_boot_state()
 
 #endif
 
-int init_pass_nvram(void){
-#if defined(RTCONFIG_BCMARM)
-	if (!nvram_get_int("x_Setting")) {
-		nvram_set("forget_it", cfe_nvram_safe_get_raw("forget_it"));
-	}
-#elif defined(RTCONFIG_RALINK)
-	/* PASS */
-	{
-		char pass[MAX_PASS_LEN + 1];
-	        memset(pass, 0, sizeof(pass));
-		if (FRead(pass, OFFSET_PASS, MAX_PASS_LEN) < 0) {
-			_dprintf("READ ASUS PASS: Out of scope\n");
-			nvram_unset("forget_it");
-		 } else {
-			int len = strlen(pass);
-			int i;
-			if (pass[0] == 0xff)
-				nvram_unset("forget_it");
-			else
-			{
-				for(i = 0; i < MAX_PASS_LEN && pass[i] != '\0'; i++) {
-					if ((unsigned char)pass[i] == 0xff)
-					{
-						pass[i] = '\0';
-						break;
-					}
-				}
-				nvram_set("forget_it", pass);
-			}
-		}
-	}
-#endif
-
-	if (strcmp(nvram_safe_get("forget_it"), "") && !nvram_contains_word("rc_support", "defpass"))
-		add_rc_support("defpass");
-
-	return 0;
-}
-
 int init_main(int argc, char *argv[])
 {
 	int state, i;
@@ -20566,7 +20554,6 @@ int init_main(int argc, char *argv[])
 				(state != SIGQUIT /* HALT */))
 #endif
 			stop_vlan();
-			stop_logger();
 
 #if defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)
 			_dprintf("sync during rebooting...\n");
@@ -20590,6 +20577,7 @@ int init_main(int argc, char *argv[])
 #endif
 				}
 #endif
+				stop_logger();
 #if defined(RTCONFIG_QCA) && defined(RTCONFIG_QCA8033)
 				stop_lan_port();
 				start_lan_port(5);
@@ -21248,7 +21236,7 @@ _dprintf("%s %d turnning on power on ethernet here\n", __func__, __LINE__);
 int reboothalt_main(int argc, char *argv[])
 {
 	int reboot = (strstr(argv[0], "reboot") != NULL);
-	int def_reset_wait = 20;
+	int def_reset_wait = 30;
 
 	nvram_set("sys_reboot_reason", "rbt_manual");
 	if(nvram_match("ahs_rbt_act", "1"))
@@ -21256,7 +21244,7 @@ int reboothalt_main(int argc, char *argv[])
 		nvram_set("ahs_rbt_act", "");
 		nvram_set("sys_reboot_reason", "rbt_AHS");
 	}
-	logmessage("ATE", "action: %s", reboot ? "Rebooting..." : "Shutting down...");
+	logmessage("system", reboot ? "Rebooting..." : "Shutting down...");
 	_dprintf(reboot ? "Rebooting..." : "Shutting down...");
 	g_reboot = 1;
 	f_write_string("/tmp/reboot", "1", 0, 0);
@@ -21274,7 +21262,7 @@ int reboothalt_main(int argc, char *argv[])
 	int wait = nvram_get_int("reset_wait") ? : def_reset_wait;
 	/* In the case we're hung, we'll get stuck and never actually reboot.
 	 * The only way out is to pull power.
-	 * So after 'reset_wait' seconds (default: 20), forcibly crash & restart.
+	 * So after 'reset_wait' seconds (default: 30), forcibly crash & restart.
 	 */
 	if (fork() == 0) {
 		if ((wait < 10) || (wait > 120)) wait = 10;
@@ -21560,3 +21548,4 @@ void reconfig_manual_wan_ifnames(void) {
 			break;
 	}
 }
+

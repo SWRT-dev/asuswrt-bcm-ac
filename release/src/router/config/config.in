@@ -249,11 +249,7 @@ config RTCONFIG_DDNS
 config RTCONFIG_INADYN
 	bool "Dynamic DNS"
 	depends on RTCONFIG_DDNS
-	default n
-
-config RTCONFIG_ASUSDDNS_ACCOUNT_BASE
-	bool "ASUS DDNS for Account base"
-	default n
+	default y
 
 config RTCONFIG_L7
 	bool "Layer 7 Netfilter"
@@ -635,6 +631,10 @@ config RTCONFIG_SAMBA3
 	depends on RTCONFIG_SAMBASRV
 	default n
 
+config RTCONFIG_AWSIOT
+	bool "Compile with aws-iot"
+	default n
+
 config RTCONFIG_SAMBA36X
 	bool "Compile with Samba 3.6.x"
 	depends on RTCONFIG_SAMBASRV
@@ -983,6 +983,11 @@ config RTCONFIG_WIFI_QCA9990_QCA9990
 
 config RTCONFIG_WIFI_QCA9994_QCA9994
 	bool "Qualcomm Atheros QCA9994 and QCA9994 WiFi chip (Cascade)"
+	depends on RTCONFIG_QCA
+	default n
+
+config RTCONFIG_NO_RELOAD_WIFI_DRV_IF_POSSIBLE
+	bool "Don't reload WiFi driver if possible"
 	depends on RTCONFIG_QCA
 	default n
 
@@ -1516,6 +1521,10 @@ config RTCONFIG_DEBUG
 
 config RTCONFIG_DMALLOC
 	bool "Link with dmalloc that is used to detect memory leak."
+	default n
+
+config RTCONFIG_VALGRIND
+	bool "Compiled valgrind"
 	default n
 
 config RTCONFIG_HAS_5G
@@ -2686,3 +2695,4 @@ config RTCONFIG_SWRT_LED_RGB
 config RTCONFIG_ENTWARE
 	bool "install entware"
 	default n
+

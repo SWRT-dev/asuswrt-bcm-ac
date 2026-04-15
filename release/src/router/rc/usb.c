@@ -3363,7 +3363,7 @@ start_samba(void)
 	char smbd_cmd[32];
 
 	if (getpid() != 1) {
-		notify_rc_after_wait("start_samba");
+		notify_rc_and_wait_1min("start_samba");
 		return;
 	}
 
@@ -3567,7 +3567,7 @@ start_samba(void)
 void stop_samba(int force)
 {
 	if(!force && getpid() != 1){
-		notify_rc_after_wait("stop_samba");
+		notify_rc_and_wait_1min("stop_samba");
 		return;
 	}
 
@@ -3849,9 +3849,8 @@ void start_dms(void)
 			fprintf(f,
 				"serial=%s\n"
 				"uuid=%s\n"
-				"model_number=%s.%s\n",
-				serial, uuid,
-				rt_version, rt_serialno);
+				"model_number=%s\n",
+				serial, uuid, get_productid());
 
 			nv = nvram_safe_get("dms_sort");
 			if (!*nv || isdigit(*nv))

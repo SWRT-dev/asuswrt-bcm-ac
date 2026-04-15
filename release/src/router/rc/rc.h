@@ -421,6 +421,7 @@ extern int pincheck(const char *a);
 extern int isValidChannel(int is_2G, char *channel);
 extern int setPSK(const char *psk);
 extern int getPSK(void);
+extern int init_pass_nvram(void);
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 extern int start_envrams(void);
 extern int chk_envrams_proc(void);
@@ -625,7 +626,7 @@ extern int FREAD(unsigned int addr_sa, int len);
 extern void ate_run_in(void);
 #endif
 extern int gen_ralink_config(int band, int is_iNIC);
-extern int get_channel(int band);
+extern int ra_get_channel(int band);
 extern int __need_to_start_wps_band(char *prefix);
 extern int need_to_start_wps_band(int wps_band);
 extern void start_wsc_pin_enrollee(void);
@@ -1417,6 +1418,9 @@ extern int found_default_route(int wan_unit);
 #ifdef RTCONFIG_QCA_PLC_UTILS
 extern int autodet_plc_main(int argc, char *argv[]);
 #endif
+#ifdef RTCONFIG_SOFTWIRE46
+extern int auto46det_main(int argc, char *argv[]);
+#endif
 extern int autodet_main(int argc, char *argv[]);
 extern int detwan_main(int argc, char *argv[]);
 extern int dpdt_ant_main(int argc, char *argv[]);
@@ -1893,6 +1897,8 @@ extern long fappend(FILE *out, const char *fname);
 extern long fappend_file(const char *path, const char *fname);
 extern void logmessage(char *logheader, char *fmt, ...);
 extern char *trim_r(char *str);
+extern int is_valid_char_for_volname(char c);
+extern int is_valid_volname(const char *name);
 extern void restart_lfp(void);
 extern int get_meminfo_item(const char *name);
 extern void setup_timezone(void);
@@ -1980,6 +1986,8 @@ extern void create_custom_passwd(void);
 extern void stop_samba(int force);
 extern void start_samba(void);
 extern void start_write_smb_conf(void);
+extern void stop_wsdd(void);
+extern void start_wsdd(void);
 #endif
 #ifdef RTCONFIG_WEBDAV
 extern void stop_webdav(void);
@@ -2076,24 +2084,18 @@ extern void create_openvpn_passwd();
 #endif
 
 #ifdef RTCONFIG_TPVPN
-// tpvpn.c
-enum {
-	TPVPN_HMA = 0,
-	TPVPN_NORDVPN,
-};
-int is_tpvpn_configured(int provider, const char* region, const char* conntype, int unit);
-#ifdef RTCONFIG_OPENVPN
 extern void tpvpn_gen_hma_list();
 extern int hmavpn_main(int argc, char **argv);
-extern int nordvpn_main(int argc, char **argv);
 #endif
+#ifdef RTCONFIG_NORDVPN
+extern int nordvpn_main(int argc, char **argv);
 #endif
 
 // wanduck.c
 #if defined(RTCONFIG_LANWAN_LED) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_HND_ROUTER_AX)
 extern int update_wan_leds(int wan_unit, int link_wan_unit);
 #endif
-#if defined(RTCONFIG_LANWAN_LED) || defined(RTCONFIG_LAN4WAN_LED) || defined(XWR3100)
+#if defined(RTCONFIG_LANWAN_LED) || defined(RTCONFIG_LAN4WAN_LED)
 int LanWanLedCtrl(void);
 #endif
 extern int wanduck_main(int argc, char *argv[]);
@@ -2200,9 +2202,16 @@ extern void add_ip6_lanaddr(void);
 extern void start_ipv6_tunnel(void);
 extern void stop_ipv6_tunnel(void);
 #ifdef RTCONFIG_SOFTWIRE46
+#define S46_DEBUG	"/tmp/S46_DEBUG"
 #define S46_MAP_PATH	"/tmp/v6maps.%d"
 #define S46_LOG_PATH	"/jffs/s46.log"
 #define S46_RETRY_TIME	3
+enum S46_SVRURL_TYPE {
+	GET_NTT_HGW_URL			= 0,
+	GET_V6PLUS_URL,
+	SET_V6PLUS_URL,
+	GET_OCNVC_URL
+};
 enum S46_MAPSVR_STATE {
 	S46_MAPSVR_INIT			= 0,
 	S46_MAPSVR_OK			= 1,
@@ -2211,7 +2220,6 @@ enum S46_MAPSVR_STATE {
 	S46_MAPSVR_NO_RESPONSE		= 4,
 	S46_MAPSVR_MAX
 };
-extern void set_s46_ra_addr(int wan_unit, int wan_type, char *wan_ifname);
 extern int s46_mapcalc(int wan_unit, int wan_proto, char *rules, char *peerbuf, size_t peerbufsz,
 		       char *addr6buf, size_t addr6bufsz, char *addr4buf, size_t addr4bufsz,
 		       int *poffset, int *ppsidlen, int *ppsid, char **fmrs, int draft);
@@ -2226,6 +2234,8 @@ extern void restart_v6plusd(int unit);
 extern void start_ocnvcd(int unit);
 extern void stop_ocnvcd(int unit);
 extern void restart_ocnvcd(int unit);
+extern void start_auto46det(void);
+extern void stop_auto46det(void);
 //s46comm.c
 extern void s46print(const char *logpath, const char *format, ...);
 #define S46_DBG(fmt, args...) \
@@ -2234,10 +2244,14 @@ extern void s46print(const char *logpath, const char *format, ...);
 	} while(0)
 extern int _nvram_check(const char *name, const char *value);
 extern int _nvram_set_check(const char *name, const char *value);
-extern void fmrs2file(int unit);
+extern int wan46det(int unit);
 extern int ce_dad_check(int unit);
 extern int s46_ntt_hgw(int unit);
+extern char *get_s46_ra(int unit);
+extern char *get_s46_url(char *s, int sz, int type, ...);
 extern char *calc_s46_port_range(int usable, int psid, int psidlen, int offset, char *ret, int retsz);
+extern void fmrs2file(int unit);
+extern void init_wan46(void);
 // v6plusd.c
 #define V6PLUSD_PIDFILE "/var/run/v6plusd.%d.pid"
 extern char *s46_jpne_maprules(char *id, char *idbuf, size_t idlen, long *rsp_code);
@@ -2436,7 +2450,7 @@ extern int start_wps(void);
 extern void stop_upnp(void);
 extern void start_upnp(void);
 extern void reload_upnp(void);
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
 extern int update_asus_ddns_token();
 extern int update_asus_ddns_token_main(int argc, char *argv[]);
 #endif
@@ -3044,6 +3058,11 @@ extern int start_hapdevent(void);
 extern void stop_hapdevent(void);
 #endif
 
+#ifdef RTCONFIG_AWSIOT
+extern int start_awsiot(void);
+extern void stop_awsiot(void);
+#endif
+
 extern char *cfe_nvram_get(const char *name);
 static INLINE int
 cfe_nvram_match(char *name, char *match) {
@@ -3433,3 +3452,4 @@ int transform_wanlanstatus(wanlan_st_t *wlst);
 void wl_apply_akm_by_auth_mode(int unit, int subunit, char *sp_prefix_auth);
 extern void save_sys_time(void);
 #endif	/* __RC_H__ */
+

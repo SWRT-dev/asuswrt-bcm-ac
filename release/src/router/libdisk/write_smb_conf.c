@@ -31,7 +31,7 @@
 #include "usb_info.h"
 #include "disk_initial.h"
 #include "disk_share.h"
-
+#include <shared.h>
 #include <linux/version.h>
 
 #ifdef RTCONFIG_PERMISSION_MANAGEMENT
@@ -319,14 +319,20 @@ int main(int argc, char *argv[])
 
 	if(!nvram_get_int("stop_samba_speedup")){
 #if defined(RTCONFIG_SWRT_FASTPATH)
-		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_KEEPALIVE\n");
+		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE IPTOS_THROUGHPUT SO_RCVBUF=131072 SO_SNDBUF=131072\n");
 		fprintf(fp, "strict locking = no\n");
 		fprintf(fp, "deadtime = 10\n");
 		fprintf(fp, "follow symlinks = no\n");
 		fprintf(fp, "unix extensions = no\n");
+		fprintf(fp, "strict locking = no\n");
+		fprintf(fp, "fake oplocks = yes\n");
+		fprintf(fp, "oplocks = no\n");
+		fprintf(fp, "posix locking = no\n");
+		fprintf(fp, "kernel oplocks = no\n");
+		fprintf(fp, "use mmap = yes\n");
 #else
-#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ8074)
-		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE\n");
+#if defined(RTCONFIG_SAMBA36X) || defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ8074)
+		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_KEEPALIVE\n");
 #elif defined(RTCONFIG_ALPINE)
 		fprintf(fp, "socket options = TCP_NODELAY IPTOS_LOWDELAY IPTOS_THROUGHPUT SO_RCVBUF=5048576 SO_SNDBUF=5048576\n");
 #elif defined(RTCONFIG_BCMARM)
@@ -408,9 +414,11 @@ int main(int argc, char *argv[])
 	fprintf(fp, "store dos attributes = yes\n");
 #endif
 	fprintf(fp, "dos filemode = yes\n");
+#if !defined(RTCONFIG_SWRT_FASTPATH)
 	fprintf(fp, "oplocks = yes\n");
 	fprintf(fp, "level2 oplocks = yes\n");
 	fprintf(fp, "kernel oplocks = no\n");
+#endif
 
 	if(nvram_invmatch("re_mode", "1"))
 	{
