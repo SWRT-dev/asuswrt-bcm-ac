@@ -224,22 +224,6 @@ function addRow_Group(){
 		};
 		manually_dhcp_list_array[document.form.dhcp_staticip_x_0.value.toUpperCase()] = item_para;
 
-		if(vpn_fusion_support) {
-			var policy_flag = false;
-			$.each(vpnc_dev_policy_list_array, function(index, value){
-				if(value[0] == document.form.dhcp_staticip_x_0.value){
-					policy_flag = true;
-					return false;
-				}
-			});
-			if(!policy_flag){
-				var newRuleArray = new Array();
-				newRuleArray.push(document.form.dhcp_staticip_x_0.value);
-				newRuleArray.push("0");
-				newRuleArray.push("0");
-				vpnc_dev_policy_list_array.push(newRuleArray);
-			}
-		}
 
 		document.form.dhcp_staticip_x_0.value = "";
 		document.form.dhcp_staticmac_x_0.value = "";

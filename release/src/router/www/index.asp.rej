@@ -1,9 +1,0 @@
-diff a/release/src/router/www/index.asp b/release/src/router/www/index.asp	(rejected hunks)
-@@ -114,7 +114,6 @@
- <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
- <script type="text/javascript" src="/disk_functions.js"></script>
- <script language="JavaScript" type="text/javascript" src="/form.js"></script>
--<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
- <script>
- //if(usb_support) addNewScript("/disk_functions.js");
- 

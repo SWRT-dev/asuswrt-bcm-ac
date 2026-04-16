@@ -33,6 +33,45 @@
 #dns_list_Block{
 	font-family: Microsoft Yahei UI, Arial, Helvetica, MS UI Gothic, MS P Gothic, sans-serif;
 	width:825px;
+	border: 1px solid #FFF;
+}
+
+#aftr_Block_PC{
+	border:1px outset #999;
+	background-color:#576D73;
+	position:absolute;
+	*margin-top:26px;
+	margin-left:2px;
+	*margin-left:-353px;
+	width:346px;
+	text-align:left;
+	height:auto;
+	overflow-y:auto;
+	z-index:200;
+	padding: 1px;
+	display:none;
+}
+#aftr_Block_PC div{
+	background-color:#576D73;
+	height:auto;
+	*height:20px;
+	line-height:20px;
+	text-decoration:none;
+	font-family: Lucida Console;
+	padding-left:2px;
+}
+
+#aftr_Block_PC a{
+	background-color:#EFEFEF;
+	color:#FFF;
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	text-decoration:none;
+}
+#aftr_Block_PC div:hover{
+	background-color:#3366FF;
+	color:#FFFFFF;
+	cursor:default;
 }
 
 </style>

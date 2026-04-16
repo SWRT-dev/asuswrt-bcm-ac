@@ -7239,3 +7239,52 @@ int adjust_62_nv_list(char *name)
 	return 0;
 }
 
+
+/* Backward compatible to old models that doesn't use LAN MAC address to register/update ASUS DDNS.
+ * Copy get_macaddr() in ez-ipupdate and then adjust last byte for IPQ806X/IPQ807X.
+ */
+char *get_ddns_macaddr(void)
+{
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ8074)
+static char mac_buf[6], mac_buf_str[18];
+#endif
+int model = get_model();
+char *mac = get_lan_hwaddr();
+
+/* Some model use LAN MAC address to register ASUSDDNS account.
+ * To keep consistency, don't use get_wan_hwaddr() to rewrite below code.
+ */
+switch (model) {
+case MODEL_RTN56U:
+vram_get("et1macaddr");
+ed(RTCONFIG_QCA)
+/* Below models has 380 firmwares which use et0macaddr to register ddns name.
+ * To compatible with 380 firmware, we mustn't use get_lan_hwaddr() on those
+ * QCA-based models due to it returns value of et1macaddr.
+ * For newer QCA-based models, which already use get_lan_hwaddr(), e.g.,
+ * RP-AC51, RT-ACRH17 (RT-AC82U), Lyra series, and VRZ-AC1300, don't append
+ * model name to below list and just use return value of get_lan_hwaddr().
+ */
+case MODEL_RTAC55U:
+case MODEL_RTAC55UHP:
+case MODEL_RT4GAC55U:
+case MODEL_PLN12:
+case MODEL_PLAC56:
+case MODEL_PLAC66U:
+case MODEL_RPAC66:
+case MODEL_RTAC58U:
+case MODEL_BRTAC828:
+vram_get("et0macaddr");
+dif
+}
+
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ8074)
+/* Make sure last bytes of MAC address is aligned to 4. */
+ether_atoe(mac, mac_buf);
+mac_buf[5] &= 0xFC;
+ether_etoa(mac_buf, mac_buf_str);
+mac = mac_buf_str;
+#endif
+
+return mac;
+}

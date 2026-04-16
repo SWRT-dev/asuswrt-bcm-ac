@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python2
 
 # mklibs.py: An automated way to create a minimal /lib/ directory.
 #

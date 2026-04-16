@@ -3727,6 +3727,13 @@ NOIP:
 	/* Sync time */
 	refresh_ntpc();
 
+#if defined(RTCONFIG_HTTPS)
+	/* Update WAN IP to server certificate if it changed and httpds is enabled on WAN. */
+	if (nvram_match("misc_http_x", "1")) {
+		update_srv_cert_if_wan_ip_changed(wan_unit);
+	}
+#endif
+
 #ifdef RTCONFIG_VPN_FUSION
 	vpnc_set_internet_policy(1);
 #endif

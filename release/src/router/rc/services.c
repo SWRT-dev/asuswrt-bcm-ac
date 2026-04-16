@@ -1373,7 +1373,7 @@ void start_dnsmasq(void)
 	FILE *fp;
 	char *lan_ifname, *lan_ipaddr, *lan_hostname;
 	char *value, *value2;
-	int /*i,*/ have_dhcp = 0;
+	int /*i,*/ have_dhcp = 0, n;
 	char *mac, *ip, *dns, *hostname, *lan_domain;
 	char *nv, *nvp, *b;
 	unsigned char ea[ETHER_ADDR_LEN];
@@ -1676,6 +1676,13 @@ void start_dnsmasq(void)
 			    "expand-hosts\n", value);	// expand hostnames in hosts file
 	}
 
+	if (nvram_get_int("dns_fwd_local") != 1) {
+		fprintf(fp, "bogus-priv\n"			// don't forward private reverse lookups upstream
+			    "domain-needed\n");			// don't forward plain name queries upstream
+		if (*value)
+			fprintf(fp, "local=/%s/\n", value);	// don't forward local domain queries upstream
+	}
+
 	if ((is_routing_enabled() && nvram_get_int("dhcp_enable_x"))
 		|| ((repeater_mode()
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
@@ -1944,11 +1951,12 @@ void start_dnsmasq(void)
 			fprintf(fp, "dhcp-option=lan,option6:23,[::]\n");
 		else
 #endif
-		if ((*value && ipv6_address(value)) || (*value2 && ipv6_address(value2)))
+		const char *p = NULL, *p2 = NULL;
+		if ((*value && *(p = ipv6_address(value))) || (*value2 && *(p2 = ipv6_address(value2))))
 			fprintf(fp, "dhcp-option=lan,option6:23,%s%s%s\n",
-				(*value && ipv6_address(value) ? value : "0.0.0.0"),
-				(*value && ipv6_address(value) && *value2 && ipv6_address(value2) ? "," : ""),
-				(*value2 && ipv6_address(value2) ? value2 : ""));
+				(*value && *p ? value : "0.0.0.0"),
+				(*value && *p && *value2 && *p2 ? "," : ""),
+				(*value2 && *p2 ? value2 : ""));
 		else
 			fprintf(fp, "dhcp-option=lan,option6:23,[::]\n");
 
@@ -2023,6 +2031,47 @@ void start_dnsmasq(void)
 	fprintf(fp, "script-arp\n");
 #endif
 	fprintf(fp, "edns-packet-max=1232\n");
+
+	/* Block iCloud Private Relay */
+	fprintf(fp, "address=/mask.icloud.com/mask-h2.icloud.com/\n");
+
+	/* Protect against VU#598349 */
+	fprintf(fp,"dhcp-name-match=set:wpad-ignore,wpad\n"
+		   "dhcp-ignore-names=tag:wpad-ignore\n");
+
+#ifdef RTCONFIG_DNSSEC
+#ifdef RTCONFIG_DNSPRIVACY
+	if (nvram_get_int("dnspriv_enable") && nvram_get_int("dnssec_enable") == 2) {
+		fprintf(fp, "proxy-dnssec\n");
+	} else
+#endif
+	if (nvram_get_int("dnssec_enable")) {
+		fprintf(fp, "trust-anchor=.,20326,8,2,E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D\n"
+			    "dnssec\n");
+
+		/* If NTP isn't set yet, wait until rc's ntp signals us to start validating time */
+		if (!nvram_get_int("ntp_ready"))
+			fprintf(fp, "dnssec-no-timecheck\n");
+
+		if (nvram_match("dnssec_check_unsigned_x", "0"))
+			fprintf(fp, "dnssec-check-unsigned=no\n");
+	}
+#endif
+	if (nvram_match("dns_norebind", "1"))
+		fprintf(fp, "stop-dns-rebind\n");
+
+	/* Instruct clients like Firefox to not auto-enable DoH */
+	n = nvram_get_int("dns_priv_override");
+	if ((n == 1) ||
+	    (n == 0 && (
+#ifdef RTCONFIG_DNSPRIVACY
+	       nvram_get_int("dnspriv_enable") ||
+#endif
+	       (nvram_get_int("dnsfilter_enable_x") && nvram_get_int("dnsfilter_mode")) )	// DNSFilter enabled in Global mode
+	    )
+	) {
+		fprintf(fp, "address=/use-application-dns.net/\n");
+	}
 
 	append_custom_config("dnsmasq.conf", fp);
 	/* close fp move to the last */
@@ -6341,6 +6390,72 @@ stop_telnetd(void)
 		killall_tk("telnetd");
 }
 
+#ifdef RTCONFIG_IPV6
+int start_telnetd6(void)
+{
+	int ret = 0;
+	const char *p = NULL;
+	char *value;
+	char *telnetd_ipv6_argv[] = { "telnetd", "-b", NULL, NULL };
+
+	if (!nvram_get_int("telnetd_enable"))
+		return 0;
+
+	if (!is_routing_enabled() || !ipv6_enabled())
+		return 0;
+
+	if (getpid() != 1) {
+		notify_rc("start_telnetd6");
+		return 0;
+	}
+
+	setup_passwd();
+	//chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
+	p = getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_PREFIXLEN);
+	if (p != NULL) {
+		value = strchr(p, '/');
+		if (value)
+			*value = '\0';
+
+		telnetd_ipv6_argv[2] = (char *) p;
+		ret = _eval(telnetd_ipv6_argv, NULL, 0, NULL);
+	}
+
+	return ret;
+}
+
+void stop_telnetd6(void)
+{
+	pid_t *pid, *list = NULL;
+	int l;
+	char *q, *buf, path[sizeof("/proc/XXX/cmdline") + 10];
+
+	if (getpid() != 1) {
+		notify_rc("stop_telnetd6");
+		return;
+	}
+
+	list = find_pid_by_name("telnetd");
+	for (pid = list; pid && *pid; ++pid) {
+		snprintf(path, sizeof(path), "/proc/%d/cmdline", *pid);
+		if ((l = f_read_string(path, buf, sizeof(buf))) <= 0)
+			continue;
+		for (q = buf; (q - buf) <= l; ++q) {
+			if (*q == '\0')
+				*q = ' ';
+		}
+		*q = '\0';
+		if ((q = strchr(buf, ':')) != NULL && strchr(q + 1, ':'))
+			kill_pid_tk(*pid);
+		free(buf);
+	}
+	if (list)
+		free(list);
+	if (pids("telnetd"))
+		killall_tk("telnetd");
+}
+#endif
+
 #if defined(RTCONFIG_SMARTDNS)
 void start_smartdns(void)
 {
@@ -6611,25 +6726,7 @@ start_httpd(void)
 	}
 
 #ifdef RTCONFIG_HTTPS
-#ifdef RTCONFIG_LETSENCRYPT
-	if(nvram_match("le_enable", "1")) {
-		if(!is_le_cert(HTTPD_CERT) || !cert_key_match(HTTPD_CERT, HTTPD_KEY)) {
-			cp_le_cert(LE_FULLCHAIN, HTTPD_CERT);
-			cp_le_cert(LE_KEY, HTTPD_KEY);
-		}
-	}
-	else if(nvram_match("le_enable", "2")){
-		if(f_exists(UPLOAD_CERT) && f_exists(UPLOAD_KEY)){
-			eval("cp", UPLOAD_CERT, HTTPD_CERT);
-			eval("cp", UPLOAD_KEY, HTTPD_KEY);
-		}
-	}
-	else
-#endif
-	{ // generate cert/key in httpd
-		unlink(HTTPD_CERT);
-		unlink(HTTPD_KEY);
-	}
+	prepare_cert_in_etc();
 
 	enable = nvram_get_int("http_enable");
 	if (enable != 0) {
@@ -11632,6 +11729,9 @@ stop_services(void)
 	stop_jitterentropy();
 #else
 	stop_haveged();
+#endif
+#ifdef RTCONFIG_BRCM_HOSTAPD
+	stop_wps_pbcd();
 #endif
 }
 
@@ -16790,6 +16890,9 @@ check_ddr_done:
 	else if (strcmp(script, "time") == 0)
 	{
 		if(action & RC_SERVICE_STOP) {
+#ifdef RTCONFIG_CROND
+			stop_cron();
+#endif
 #ifdef RTCONFIG_BWDPI
 			stop_hour_monitor_service();
 #endif
@@ -16815,6 +16918,9 @@ check_ddr_done:
 			start_firewall(wan_primary_ifunit(), 0);
 #ifdef RTCONFIG_BWDPI
 			start_hour_monitor_service();
+#endif
+#ifdef RTCONFIG_CROND
+			start_cron();
 #endif
 		}
 	}
@@ -17682,10 +17788,6 @@ retry_wps_enr:
 		start_firewall(wan_primary_ifunit(), 0);
 	}
 #endif
-	else if (strcmp(script, "sh") == 0) {
-		_dprintf("%s: shell: %s\n", __FUNCTION__, cmd[1]);
-		if(cmd[1]) system(cmd[1]);
-	}
 	else if (strcmp(script, "leds") == 0) {
 		setup_leds();
 	}

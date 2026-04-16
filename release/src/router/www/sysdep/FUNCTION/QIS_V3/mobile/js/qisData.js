@@ -48,6 +48,11 @@ var wanObj = {
 	"ocnvc": {
 		"ipv6_service": "ipv6pt"
 	},
+
+	"dslite": {
+		"ipv6_service": "ipv6pt",
+		"wan_s46_dslite_mode": "0"
+	},
 	
 	"vpn": {
 		"wan_heartbeat_x": ""
@@ -282,11 +287,12 @@ var systemVariable = {
 	"maxPasswordLen": 32,
 	"originWansExtwan": "",
 	"originWansDualwan": "",
+	"originWansMode": "",
 	"manualWanSetup": false,
 	"wanDnsenable": "",
 	"detwanResult": {
 		"wanType": "",
-		"isIPConflict": false,
+		"isIPConflict": false
 	},
 	"isNewFw": 0,
 	"newFwVersion": "",

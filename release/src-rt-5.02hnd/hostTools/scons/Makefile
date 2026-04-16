@@ -30,7 +30,7 @@ build_scons: $(APP)-$(VERSION).tar.gz
 		cd $(APP_DIR); \
 		tar --strip-components=1 -xzf $(CURR_DIR)/$(APP)-$(VERSION).tar.gz -C $(APP_DIR); \
 		echo "$(APP)-$(VERSION) is untarred"; \
-		python setup.py install --standard-lib --prefix=$(APP_DIR); \
+		python2 setup.py install --standard-lib --prefix=$(APP_DIR); \
 		cd $(CURR_DIR); \
 		echo "Done building $(APP)-$(VERSION)"; \
 	fi;

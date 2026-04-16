@@ -4583,5 +4583,49 @@ enum {
 };
 extern void i2cled_control(int which, int onoff);
 #endif
+
+enum{
+	ASUS_NV_PP_1 = 1,
+	ASUS_NV_PP_2,
+	ASUS_NV_PP_3,
+	ASUS_NV_PP_4,
+	ASUS_NV_PP_5,
+	ASUS_NV_PP_6,
+	ASUS_NV_PP_7,
+	ASUS_NV_PP_8,
+	ASUS_NV_PP_9,
+	ASUS_NV_PP_10,
+	ASUS_NV_PP_11,
+	ASUS_NV_PP_MAX
+};
+
+enum{
+	ASUS_PP_AUTOUPGRADE,
+	ASUS_PP_ASD,
+	ASUS_PP_AHS,
+	ASUS_PP_ACCOUNT_BINDING,
+	ASUS_PP_CONFIG_TRANSFER,
+	ASUS_PP_DDNS,
+	ASUS_PP_MAX,
+};
+
+struct ASUS_PP_table {
+	char *name;
+	char *version;
+	int id;
+};
+extern struct ASUS_PP_table ASUS_PP_t[];
+
+extern int webapi_get_b(const int id, char *buf, size_t len);
+extern int get_ASUS_privacy_policy_state(const int id);
+extern int get_ASUS_privacy_policy(void);
+extern int get_ASUS_privacy_policy_ver(const int id);
+extern char *rfctime(const time_t *timep, char *ts_string, int len);
+extern void update_ntp_ts(time_t bf_time, int ntp_diff_ts);
+
+extern char *get_ddns_macaddr(void);
+
+#define IP_RULE_PREF_VPNS                                                     90
+
 #endif	/* !__SHARED_H__ */
 

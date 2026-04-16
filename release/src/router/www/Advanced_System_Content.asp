@@ -402,7 +402,7 @@ function initial(){
 		$('input[name="usb_idle_timeout"]').prop("disabled", false);
 	}
 
-	$("#https_download_cert").css("display", (le_enable != "1" && orig_http_enable != "0")? "": "none");
+	$("#https_download_cert").css("display", (le_enable == "0" && orig_http_enable != "0")? "": "none");
 
 	$("#login_captcha_tr").css("display", captcha_support? "": "none");
 
@@ -604,7 +604,7 @@ function applyRule(){
 			
 			if (('<% nvram_get("enable_ftp"); %>' == "1")
 				&& ('<% nvram_get("ftp_tls"); %>' == "1")) {
-					action_script_tmp += ";restart_ftpd";
+					action_script_tmp += "restart_ftpd;";
 			}
 		}
 
@@ -1621,14 +1621,44 @@ function reset_portconflict_hint(){
 }
 
 function save_cert_key(){
-	location.href = "cert.tar";
+	location.href = "cert.crt";
+}
+
+function clear_server_cert_key(){
+	$.ajax({url: "clear_file.cgi?clear_file_name=server_certs"})
+	showLoading();
+	setTimeout(function(){
+		setInterval(function(){
+			var http = new XMLHttpRequest
+			http.onreadystatechange=function(){
+				if(http.readyState==4 && http.status==200){
+					top.location.href="/Advanced_System_Content.asp"
+				}
+			},
+
+			http.open("GET","/httpd_check.xml",!0);
+			http.send(null);
+		}, 1000);
+	}, 1000)
 }
 
 function clear_cert_key(){
-	if(confirm("You will be automatically logged out for the renewal, are you sure you want to continue?")){
+	if(confirm(`<#DDNS_Install_Root_Cert_Desc#>`)){
 		$.ajax({url: "clear_file.cgi?clear_file_name=cert.tgz"})
 		showLoading();
-		setTimeout(refreshpage, 1000);
+		setTimeout(function(){
+			setInterval(function(){
+				var http = new XMLHttpRequest
+				http.onreadystatechange=function(){
+					if(http.readyState==4 && http.status==200){
+						top.location.href="/Advanced_System_Content.asp"
+					}
+				},
+
+				http.open("GET","/httpd_check.xml",!0);
+				http.send(null);
+			}, 1000);
+		}, 1000)
 	}
 }
 

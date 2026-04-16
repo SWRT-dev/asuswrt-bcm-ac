@@ -141,9 +141,9 @@ else # epivers.h doesn't exist
 
 	# Now get tag for src/include from automerger log
 	[ -n "$VERBOSE" ] && \
-		echo "DBG: python $GETCOMPVER_PATH $MERGERLOG src/include"
+echo "DBG: python2 $GETCOMPVER_PATH $MERGERLOG src/include"
 
-	COMPTAG=$(python $GETCOMPVER_PATH $MERGERLOG src/include 2> $NULL | sed -e 's/[[:space:]]*//g')
+COMPTAG=$(python2 $GETCOMPVER_PATH $MERGERLOG src/include 2> $NULL | sed -e 's/[[:space:]]*//g')
 
 	echo "DBG: Component Tag String Derived = $COMPTAG"
 

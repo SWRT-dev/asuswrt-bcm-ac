@@ -319,7 +319,7 @@ endif
 
 # Variables of general utility.
 WLAN_Perl := perl
-WLAN_Python := python
+WLAN_Python := python2
 WLAN_WINPFX ?= Z:
 
 # These macros are used to stash an extra copy of generated source files,

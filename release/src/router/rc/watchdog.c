@@ -112,6 +112,9 @@
 #if defined(RTCONFIG_QCA_PLC_UTILS) || defined(RTCONFIG_QCA_PLC2)
 #include <plc_utils.h>
 #endif
+#ifdef RTCONFIG_BCMWL6
+extern int restore_defaults_g;
+#endif
 
 #include <auth_common.h>
 
@@ -10469,6 +10472,9 @@ wdp:
 			system("sh /tmp/mnt/sda1/auto_test.sh");
 		}
 #endif
+#ifdef RTCONFIG_FRS_FEEDBACK
+	feedback_check();
+#endif /* RTCONFIG_FRS_FEEDBACK */
 	if(check_auth_code)
 		check_auth_code();
 }

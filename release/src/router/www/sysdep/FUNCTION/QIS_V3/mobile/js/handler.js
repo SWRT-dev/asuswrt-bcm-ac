@@ -4098,7 +4098,11 @@ goTo.Wireless = function(){
 		$("#wifi_conn_guideline_desc").html("#DEFPASSTYPE can be found on the label at the back/bottom of your ASUS device.".replace("#DEFPASSTYPE", "WiFi Password"));/* untranslated */
 	}
 
-	goTo.loadPage("wireless_setting", false);
+	if(systemVariable.productid.indexOf('EBG') != '-1'){
+		apply.submitQIS();
+	}else{
+		goTo.loadPage("wireless_setting", false);
+	}
 };
 
 goTo.Modem = function(){

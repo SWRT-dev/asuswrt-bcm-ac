@@ -573,6 +573,7 @@ var ipsec_srv_support = isSupport("ipsec_srv");
 var ipsec_cli_support = isSupport("ipsec_cli");
 var traffic_analyzer_support = isSupport("traffic_analyzer");
 var traffic_limiter_support = isSupport("traffic_limiter");
+var dns_dpi_support = isSupport("dns_dpi");
 var force_upgrade_support = isSupport("fupgrade");
 var odm_support = isSupport("odm");
 var adBlock_support = isSupport("adBlock");

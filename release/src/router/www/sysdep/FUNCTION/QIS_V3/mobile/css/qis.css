@@ -300,7 +300,7 @@ a{
 	background-color:rgba(79,79,79,62);
 	padding-left:11px;
 }
-#welcome_button{
+.welcome_button{
 	cursor:pointer;
 	width:600px;
 	max-width:600px;

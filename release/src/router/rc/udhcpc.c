@@ -1705,18 +1705,14 @@ bound6(char *wan_ifname, int bound)
 
 #ifdef RTCONFIG_SOFTWIRE46
 	int wan_proto = -1;
+	int ra_changed = 0;
+	char ra_prefix[INET6_ADDRSTRLEN + sizeof("/128")];
+	char ra_route[INET6_ADDRSTRLEN];
 
-	S46_DBG("[wan_if]:[%s], [bound]:[%d]\n", wan_ifname, bound);
 	switch (wan_proto = get_wan_proto(prefix)) {
 		int i;
-		char rbuf[32];
 	case WAN_MAPE:
-		i = 0;
-		while(environ[i] != NULL) {
-			S46_DBG("ENV:[%s]\n", environ[i]);
-			i++;
-		}
-		break;
+	case WAN_DSLITE:
 	case WAN_V6PLUS:
 	case WAN_OCNVC:
 		i = 0;
