@@ -114,8 +114,8 @@ while($line=<F>){
 		$plusminus=$val;
 	    }
 	}
-	die "Couldn't open temp file $globalname$name.vql: $!" unless
-	    open(G,">$globalname$name.vql");
+	die "Couldn't open temp file temp$$.vql: $!" unless
+	    open(G,">temp$$.vql");
 	print G "$count $dim 0 ";
 	if($seqp=~/non/){
 	    print G "0\n$list\n";
@@ -124,9 +124,14 @@ while($line=<F>){
 	}
 	close(G);
 
-	my $command="latticebuild $globalname$name.vql > $globalname$name.vqh";
+	my $command="latticebuild temp$$.vql > $globalname$name.vqh";
 	print ">>> $command\n";
 	die "Couldn't build latticebook.\n\tcommand:$command\n" 
+	    if syst($command);
+
+	my $command="latticehint $globalname$name.vqh $thlist > temp$$.vqh";
+	print ">>> $command\n";
+	die "Couldn't pre-hint latticebook.\n\tcommand:$command\n" 
 	    if syst($command);
 
 	if(-e $datafile){
@@ -138,27 +143,32 @@ while($line=<F>){
 	    }
 	    
 	    if($seqp=~/cull/){
-		my $command="$restune $globalname$name.vqh $datafile 1 > temp$$.vqh";
+		my $command="$restune temp$$.vqh $datafile 1 > $globalname$name.vqh";
 		print ">>> $command\n";
 		die "Couldn't tune latticebook.\n\tcommand:$command\n" 
 		    if syst($command);
 	    }else{
-		my $command="$restune $globalname$name.vqh $datafile > temp$$.vqh";
+		my $command="$restune temp$$.vqh $datafile > $globalname$name.vqh";
 		print ">>> $command\n";
 		die "Couldn't tune latticebook.\n\tcommand:$command\n" 
 		    if syst($command);
 	    }
 
-	    my $command="mv temp$$.vqh $globalname$name.vqh";
+	    my $command="latticehint $globalname$name.vqh $thlist > temp$$.vqh";
 	    print ">>> $command\n";
-	    die "Couldn't rename latticebook.\n\tcommand:$command\n" 
+	    die "Couldn't post-hint latticebook.\n\tcommand:$command\n" 
 		if syst($command);
 
 	}else{
 	    print "No matching training file; leaving this codebook untrained.\n";
 	}
 
-	my $command="rm $globalname$name.vql";
+	my $command="mv temp$$.vqh $globalname$name.vqh";
+	print ">>> $command\n";
+	die "Couldn't rename latticebook.\n\tcommand:$command\n" 
+	    if syst($command);
+
+	my $command="rm temp$$.vql";
 	print ">>> $command\n";
 	die "Couldn't remove temp files.\n\tcommand:$command\n" 
 	    if syst($command);

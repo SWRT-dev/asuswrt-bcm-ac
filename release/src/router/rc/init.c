@@ -122,6 +122,10 @@
 #include <openvpn_config.h>
 #endif
 
+#ifdef RTCONFIG_TCODE
+extern int noasusddns(void);
+#endif
+
 static int fatalsigs[] = {
 	SIGILL,
 	SIGABRT,
@@ -10401,7 +10405,7 @@ int init_nvram(void)
 		add_rc_support("ofdma");
 #ifdef RTCONFIG_BRCM_HOSTAPD
 		add_rc_support("wpa3");
-#endif		
+#endif
 
 		break;
 #endif
@@ -18095,9 +18099,7 @@ NO_USB_CAP:
 #endif
 
 #ifdef RTCONFIG_AMAS
-#if !defined(SWRT_VER_MAJOR_B)
 	add_rc_support("amas");
-#endif
 	if (nvram_get_int("amas_bdl"))
 	add_rc_support("amas_bdl");
 #endif
@@ -18322,7 +18324,10 @@ int init_nvram2(void)
 #ifdef RTAC1200GP
 		snprintf(hostname, sizeof(hostname), "%s-%02X%02X", "RT-AC1200G", ea[4], ea[5]);
 #else
-		snprintf(hostname, sizeof(hostname), "%s-%02X%02X", get_productid(), ea[4], ea[5]);
+		if(is_swrt_mod())
+			snprintf(hostname, sizeof(hostname), "%s-%02X%02X", nvram_get("modelname"), ea[4], ea[5]);
+		else
+			snprintf(hostname, sizeof(hostname), "%s-%02X%02X", get_productid(), ea[4], ea[5]);
 #endif
 		if (!restore_defaults_g && !nvram_invmatch("computer_name", "")) {
 			/* migrate from computer_name on fw upgrade */
@@ -18514,6 +18519,10 @@ int init_nvram2(void)
 #if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
 		nvram_set_int("auto_upgrade", 0);
 #endif
+#ifdef RTCONFIG_FTP_SSL
+		// The ftp_tls is enabled by default when upgrading or downgrading the version.
+		nvram_set("ftp_tls", "1");
+#endif
 	}
 
 	/// TODO: unset old dhcpc_mode once all UI drop it.
@@ -18546,6 +18555,16 @@ int init_nvram2(void)
 	init_ahs_bhc_params();
 #endif /* RTCONFIG_AHS */
 #endif /* RTCONFIG_FRS_LIVE_UPDATE */
+
+#ifdef RTCONFIG_WEBDAV
+  // The enable_webdav_lock is enabled by default when upgrading or downgrading the version.
+  if(!nvram_match("extendno", nvram_safe_get("extendno_org"))){
+    nvram_set("enable_webdav_lock", "1");
+    nvram_set("webdav_lock_times", "3");
+    nvram_set("webdav_lock_interval", "2");
+  }
+#endif
+
 	return 0;
 }
 
@@ -20012,7 +20031,10 @@ def_boot_reinit:
 #endif
 
 #ifdef RTCONFIG_ASD
-	nvram_set("3rd-party", "swrt");
+	if(is_swrt_mod())
+		nvram_set("3rd-party", "swrt");
+	else
+		nvram_set("3rd-party", "merlin");
 #endif
 
 #if defined(RTCONFIG_BCMBSD_V2)
@@ -21560,3 +21582,4 @@ void reconfig_manual_wan_ifnames(void) {
 			break;
 	}
 }
+

@@ -4,16 +4,16 @@ AUTOMAKE_OPTIONS = foreign
 
 INCLUDES = -I$(top_srcdir)/include @OGG_CFLAGS@
 
-check_PROGRAMS = test
+noinst_PROGRAMS = test
 
-check: $(check_PROGRAMS)
+check: $(noinst_PROGRAMS)
 	./test$(EXEEXT)
 
 test_SOURCES = util.c util.h write_read.c write_read.h test.c
-test_LDADD = ../lib/libvorbisenc.la ../lib/libvorbis.la @OGG_LIBS@ @VORBIS_LIBS@
+test_LDADD = ../lib/libvorbisenc.la ../lib/libvorbis.la @OGG_LIBS@
 
 debug:
-	$(MAKE) check CFLAGS="@DEBUG@"
+	$(MAKE) all CFLAGS="@DEBUG@"
 
 profile:
-	$(MAKE) check CFLAGS="@PROFILE@"
+	$(MAKE) all CFLAGS="@PROFILE@"

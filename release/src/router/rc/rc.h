@@ -2077,11 +2077,6 @@ extern void create_openvpn_passwd();
 
 #ifdef RTCONFIG_TPVPN
 // tpvpn.c
-enum {
-	TPVPN_HMA = 0,
-	TPVPN_NORDVPN,
-};
-int is_tpvpn_configured(int provider, const char* region, const char* conntype, int unit);
 #ifdef RTCONFIG_OPENVPN
 extern void tpvpn_gen_hma_list();
 extern int hmavpn_main(int argc, char **argv);

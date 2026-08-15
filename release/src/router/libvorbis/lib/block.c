@@ -5,13 +5,13 @@
  * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
  * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
  *                                                                  *
- * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2015             *
+ * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2009             *
  * by the Xiph.Org Foundation http://www.xiph.org/                  *
  *                                                                  *
  ********************************************************************
 
  function: PCM data vector blocking, windowing and dis/reassembly
- last mod: $Id: block.c 19457 2015-03-03 00:15:29Z giles $
+ last mod: $Id: block.c 16227 2009-07-08 06:58:46Z xiphmont $
 
  Handle windowing, overlap-add, etc of the PCM vectors.  This is made
  more amusing by Vorbis' current two allowed block sizes.
@@ -30,6 +30,16 @@
 #include "lpc.h"
 #include "registry.h"
 #include "misc.h"
+
+static int ilog2(unsigned int v){
+  int ret=0;
+  if(v)--v;
+  while(v){
+    ret++;
+    v>>=1;
+  }
+  return(ret);
+}
 
 /* pcm accumulator examples (not exhaustive):
 
@@ -174,19 +184,14 @@ static int _vds_shared_init(vorbis_dsp_state *v,vorbis_info *vi,int encp){
   private_state *b=NULL;
   int hs;
 
-  if(ci==NULL||
-     ci->modes<=0||
-     ci->blocksizes[0]<64||
-     ci->blocksizes[1]<ci->blocksizes[0]){
-    return 1;
-  }
+  if(ci==NULL) return 1;
   hs=ci->halfrate_flag;
 
   memset(v,0,sizeof(*v));
   b=v->backend_state=_ogg_calloc(1,sizeof(*b));
 
   v->vi=vi;
-  b->modebits=ov_ilog(ci->modes-1);
+  b->modebits=ilog2(ci->modes);
 
   b->transform[0]=_ogg_calloc(VI_TRANSFORMB,sizeof(*b->transform[0]));
   b->transform[1]=_ogg_calloc(VI_TRANSFORMB,sizeof(*b->transform[1]));
@@ -199,14 +204,8 @@ static int _vds_shared_init(vorbis_dsp_state *v,vorbis_info *vi,int encp){
   mdct_init(b->transform[1][0],ci->blocksizes[1]>>hs);
 
   /* Vorbis I uses only window type 0 */
-  /* note that the correct computation below is technically:
-       b->window[0]=ov_ilog(ci->blocksizes[0]-1)-6;
-       b->window[1]=ov_ilog(ci->blocksizes[1]-1)-6;
-    but since blocksizes are always powers of two,
-    the below is equivalent.
-   */
-  b->window[0]=ov_ilog(ci->blocksizes[0])-7;
-  b->window[1]=ov_ilog(ci->blocksizes[1])-7;
+  b->window[0]=ilog2(ci->blocksizes[0])-6;
+  b->window[1]=ilog2(ci->blocksizes[1])-6;
 
   if(encp){ /* encode/decode differ here */
 
@@ -236,10 +235,8 @@ static int _vds_shared_init(vorbis_dsp_state *v,vorbis_info *vi,int encp){
     if(!ci->fullbooks){
       ci->fullbooks=_ogg_calloc(ci->books,sizeof(*ci->fullbooks));
       for(i=0;i<ci->books;i++){
-        if(ci->book_param[i]==NULL)
-          goto abort_books;
         if(vorbis_book_init_decode(ci->fullbooks+i,ci->book_param[i]))
-          goto abort_books;
+          return -1;
         /* decode codebooks are now standalone after init */
         vorbis_staticbook_destroy(ci->book_param[i]);
         ci->book_param[i]=NULL;
@@ -281,15 +278,6 @@ static int _vds_shared_init(vorbis_dsp_state *v,vorbis_info *vi,int encp){
       look(v,ci->residue_param[i]);
 
   return 0;
- abort_books:
-  for(i=0;i<ci->books;i++){
-    if(ci->book_param[i]!=NULL){
-      vorbis_staticbook_destroy(ci->book_param[i]);
-      ci->book_param[i]=NULL;
-    }
-  }
-  vorbis_dsp_clear(v);
-  return -1;
 }
 
 /* arbitrary settings and spec-mandated numbers get filled in here */
@@ -772,14 +760,14 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       if(v->lW){
         if(v->W){
           /* large/large */
-          const float *w=_vorbis_window_get(b->window[1]-hs);
+          float *w=_vorbis_window_get(b->window[1]-hs);
           float *pcm=v->pcm[j]+prevCenter;
           float *p=vb->pcm[j];
           for(i=0;i<n1;i++)
             pcm[i]=pcm[i]*w[n1-i-1] + p[i]*w[i];
         }else{
           /* large/small */
-          const float *w=_vorbis_window_get(b->window[0]-hs);
+          float *w=_vorbis_window_get(b->window[0]-hs);
           float *pcm=v->pcm[j]+prevCenter+n1/2-n0/2;
           float *p=vb->pcm[j];
           for(i=0;i<n0;i++)
@@ -788,7 +776,7 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       }else{
         if(v->W){
           /* small/large */
-          const float *w=_vorbis_window_get(b->window[0]-hs);
+          float *w=_vorbis_window_get(b->window[0]-hs);
           float *pcm=v->pcm[j]+prevCenter;
           float *p=vb->pcm[j]+n1/2-n0/2;
           for(i=0;i<n0;i++)
@@ -797,7 +785,7 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
             pcm[i]=p[i];
         }else{
           /* small/small */
-          const float *w=_vorbis_window_get(b->window[0]-hs);
+          float *w=_vorbis_window_get(b->window[0]-hs);
           float *pcm=v->pcm[j]+prevCenter;
           float *p=vb->pcm[j];
           for(i=0;i<n0;i++)
@@ -861,32 +849,17 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       if(b->sample_count>v->granulepos){
         /* corner case; if this is both the first and last audio page,
            then spec says the end is cut, not beginning */
-       long extra=b->sample_count-vb->granulepos;
-
-        /* we use ogg_int64_t for granule positions because a
-           uint64 isn't universally available.  Unfortunately,
-           that means granposes can be 'negative' and result in
-           extra being negative */
-        if(extra<0)
-          extra=0;
-
         if(vb->eofflag){
           /* trim the end */
-          /* no preceding granulepos; assume we started at zero (we'd
+          /* no preceeding granulepos; assume we started at zero (we'd
              have to in a short single-page stream) */
           /* granulepos could be -1 due to a seek, but that would result
              in a long count, not short count */
 
-          /* Guard against corrupt/malicious frames that set EOP and
-             a backdated granpos; don't rewind more samples than we
-             actually have */
-          if(extra > (v->pcm_current - v->pcm_returned)<<hs)
-            extra = (v->pcm_current - v->pcm_returned)<<hs;
-
-          v->pcm_current-=extra>>hs;
+          v->pcm_current-=(b->sample_count-v->granulepos)>>hs;
         }else{
           /* trim the beginning */
-          v->pcm_returned+=extra>>hs;
+          v->pcm_returned+=(b->sample_count-v->granulepos)>>hs;
           if(v->pcm_returned>v->pcm_current)
             v->pcm_returned=v->pcm_current;
         }
@@ -904,20 +877,6 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
         if(extra)
           if(vb->eofflag){
             /* partial last frame.  Strip the extra samples off */
-
-            /* Guard against corrupt/malicious frames that set EOP and
-               a backdated granpos; don't rewind more samples than we
-               actually have */
-            if(extra > (v->pcm_current - v->pcm_returned)<<hs)
-              extra = (v->pcm_current - v->pcm_returned)<<hs;
-
-            /* we use ogg_int64_t for granule positions because a
-               uint64 isn't universally available.  Unfortunately,
-               that means granposes can be 'negative' and result in
-               extra being negative */
-            if(extra<0)
-              extra=0;
-
             v->pcm_current-=extra>>hs;
           } /* else {Shouldn't happen *unless* the bitstream is out of
                spec.  Either way, believe the bitstream } */
@@ -1036,7 +995,7 @@ int vorbis_synthesis_lapout(vorbis_dsp_state *v,float ***pcm){
 
 }
 
-const float *vorbis_window(vorbis_dsp_state *v,int W){
+float *vorbis_window(vorbis_dsp_state *v,int W){
   vorbis_info *vi=v->vi;
   codec_setup_info *ci=vi->codec_setup;
   int hs=ci->halfrate_flag;

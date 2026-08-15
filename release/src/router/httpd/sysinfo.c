@@ -133,7 +133,14 @@ void read_meminfo(meminfo_t *m)
 	f = fopen("/proc/meminfo", "r");
 	if (!f)
 		return;
-
+#if defined(RTCONFIG_BCMARM)
+	fgets(field, sizeof(field) - 1, f);
+	if(strstr(field, "total")){
+		fgets(field, sizeof(field), f);
+		fgets(field, sizeof(field), f);
+	}else
+		fseek(f, 0, SEEK_SET);
+#endif
 	while (fscanf(f, " %63[^:]: %d kB", field, &size) == 2) {
 		for (i = 0; i < MI_MAX; i++) {
 			if (strcmp(field, meminfo_name[i]) == 0) {
@@ -191,7 +198,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				int count = 0;
 				char model[64];
 #if defined(BCM4912)
-					strcpy(model, "BCM4912 - Cortex A53 ARMv8");
+				strcpy(model, "BCM4912 - Cortex A53 ARMv8");
+#elif defined(BCM6765)
+				strcpy(model, "BCM6765 - Cortex A53 ARMv8");
+#elif defined(BCM6764)
+				strcpy(model, "BCM6764 - Cortex A7 ARMv7");
 #elif defined(RTCONFIG_HND_ROUTER_BE_4916)
 					strcpy(model, "BCM4916 - Cortex A53 ARMv8");
 #elif defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK_MT7622) || defined(RTCONFIG_MT798X)
@@ -229,7 +240,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					    && !strcmp(variant, "0xa")
 					    && !strcmp(part, "0x801")
 					    && (!strcmp(arch, "7") || !strcmp(arch, "8")))
+#if defined(RTCONFIG_SOC_IPQ53XX)
+						sprintf(model, "IPQ53xx - Cortex A53 ARMv8 revision %s", revision);
+#else
 						sprintf(model, "IPQ60xx - Cortex A53 ARMv8 revision %s", revision);
+#endif
 					else if (!strcmp(variant, "0x2")
 					    && !strcmp(part, "0xd03")
 					    && !strcmp(arch, "7"))
@@ -303,7 +318,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 		} else if(strcmp(type,"cpu.freq") == 0) {
 #if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_BCMARM)
-#if defined(BCM4912)
+#if defined(BCM4912) || defined(BCM6765) || defined(BCM6764)
 			if (1)
 				strcpy(result, "2000");
 			else
@@ -339,13 +354,20 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 #elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK_MT7622)
 			int freq = 0;
 			char *buffer;
-
+#if defined(RTCONFIG_LANTIQ) && defined(RTCONFIG_MUSL_LIBC)//kernel4.9
+			buffer = read_whole_file("/sys/kernel/debug/clk/cpu0clk/clk_rate");
+#else
 			buffer = read_whole_file("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq");
+#endif
 
 			if (buffer) {
 				sscanf(buffer, "%d", &freq);
 				free(buffer);
+#if defined(RTCONFIG_LANTIQ) && defined(RTCONFIG_MUSL_LIBC)//kernel4.9
+				sprintf(result, "%d", (freq/1000000));
+#else
 				sprintf(result, "%d", (freq/1000));
+#endif
 			}
 			else
 				strcpy(result, "0");//bug?
@@ -482,18 +504,23 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				fclose(fp);
 			}
 		} else if(strcmp(type,"conn.active") == 0) {
-			char buf[256];
+			char buf[256], proto[20];
 			FILE* fp;
 			unsigned int established = 0;
 
-			fp = fopen("/proc/net/nf_conntrack", "r");
+			eval("cp", "/proc/net/nf_conntrack", "/tmp/conntrack.tmp");
+
+			fp = fopen("/tmp/conntrack.tmp", "r");
 			if (fp) {
 				while (fgets(buf, sizeof(buf), fp) != NULL) {
-				if (strstr(buf,"ESTABLISHED") || ((strstr(buf,"udp")) && (strstr(buf,"ASSURED"))))
-					established++;
+					strlcpy(proto, buf, sizeof(proto));
+					if ((strstr(proto, "tcp") && strstr(buf, "ESTABLISHED")) ||
+					    (strstr(proto, "udp") && strstr(buf, "ASSURED")))
+						established++;
 				}
 				fclose(fp);
 			}
+			unlink("/tmp/conntrack.tmp");
 			sprintf(result,"%u",established);
 
 		} else if(strcmp(type,"conn.max") == 0) {
@@ -553,7 +580,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					else
 						strlcpy(result, buffer, sizeof result);
 
-					if (tmp = strstr(result, "FWID"))
+					if ((tmp = strstr(result, "FWID")))
 						*tmp = '\0';
 
 					replace_char(result, '\n', ' ');
@@ -562,7 +589,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				unlink("/tmp/output.txt");
 			}
 #elif defined(RTCONFIG_LANTIQ)
+#if defined(RTCONFIG_MUSL_LIBC)//kernel4.9
+			char *buffer = read_whole_file("/opt/intel/etc/wave_components.ver");
+#else
 			char *buffer = read_whole_file("/rom/opt/lantiq/etc/wave_components.ver");
+#endif
 
 			if (buffer) {
 				tmp = strstr(buffer, "wave_release_minor=");
@@ -571,6 +602,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				else
 					strcpy(result,"Unknow");
 				replace_char(result, '\n', ' ');
+				replace_char(result, '\"', ' ');
 				free(buffer);
 			}
 			unlink("/rom/opt/lantiq/etc/wave_components.ver");
@@ -675,6 +707,25 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					}
 				}
 			}
+
+#if RTCONFIG_WIREGUARD
+		} else if(strncmp(type,"wgcstatus",9) == 0 ) {
+			int num = 0;
+
+			sscanf(type,"wgcstatus.%d", &num);
+
+                        if (num > 0)
+			{
+				if (is_wgc_connected(num))
+				{
+					strlcpy(result, "1", sizeof(result));
+				} else {
+					strlcpy(result, "0", sizeof(result));
+				}
+			} else {
+				strlcpy(result, "0", sizeof(result));
+			}
+#endif
 
 		} else if(strcmp(type,"ethernet.rtk") == 0 ) {
 #ifdef RTCONFIG_EXT_RTL8365MB
@@ -790,29 +841,18 @@ unsigned int get_phy_temperature(int radio)
 		return *temp / 2 + 20;
 	}
 #elif defined(RTCONFIG_LANTIQ)
-	int temp = 0, retval = 0;
-	FILE *fp;
-
+	int temp = 0;
 	if (radio == 0 || radio == 1) {
-		char buffer[99];
-		char iw[]="iwpriv wlan0 gTemperature";
-		char s[]="wlan0     gTemperature:%%d %%*[0-9 ]";
-		if (radio == 0) {
-			snprintf(iw, sizeof(iw), "iwpriv wlan0 gTemperature");
-			snprintf(s, sizeof(s), "wlan0     gTemperature:%%d %%*[0-9 ]");
-		} else if (radio == 1) {
-			snprintf(iw, sizeof(iw), "iwpriv wlan2 gTemperature");
-			snprintf(s, sizeof(s), "wlan2     gTemperature:%%d %%*[0-9 ]");
-		}
-		if ((fp = popen(iw, "r")) != NULL) {
-			if(fgets(buffer, 99, fp) != NULL) {
-				sscanf(buffer, s, &temp);
-			}
-			pclose(fp);
-			retval = temp;
-		}
+		char buffer[32];
+#if defined(RTCONFIG_MUSL_LIBC)//kernel4.9
+		doSystem("iw %s iwlwav gTemperature > %s", get_vphyifname(radio), "/tmp/radio_temp");
+#else
+		doSystem("iwpriv %s gTemperature > %s", get_wififname(radio), "/tmp/radio_temp");
+#endif
+		f_read_string("/tmp/radio_temp", buffer, sizeof(buffer));
+		sscanf(buffer, "%*[^:]:%d", &temp);
 	}
-	return retval;
+	return temp;
 #elif defined(RTCONFIG_QCA)
 	char thermal_path[64];
 	char value[16];

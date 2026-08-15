@@ -237,7 +237,7 @@ function show_hide_auto_mode_opts(value){
 
 function update_coretmp(e){
   $.ajax({
-    url: '/ajax_coretmp.asp',
+    url: '/ajax_fan.asp',
     dataType: 'script', 
 	
     error: function(xhr){

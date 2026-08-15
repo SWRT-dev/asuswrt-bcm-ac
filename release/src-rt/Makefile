@@ -171,7 +171,8 @@ export CURRENT_BRANCH := $(shell git branch | grep "*" | sed 's/* //g')
 ifneq ($(RCNO),)
 RCSTRING:=rc$(RCNO)
 RC_EXT_NO1=$(shell expr $(RCNO) + 1)
-RC_EXT_NO=$(shell expr $(RC_EXT_NO1) \* 10000)
+RC_EXT_NO2=$(shell expr $(RC_EXT_NO1) \* 10000)
+RC_EXT_NO=$(shell expr $(RC_EXT_NO2) + 20)
 
 # At runtime, set the tag of RCNO.
 export RUN_TAG=$(shell git tag -fa asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)$(RCSTRING) -m "Released $(RCSTRING)" HEAD)
@@ -695,6 +696,7 @@ endif
 	@echo 'EXTENDNO=$(EXTENDNO)' > router/extendno.conf
 	@echo '#define RT_FWVER "$(SWRT_VER_MINOR)"' >> router/shared/version.h
 	@echo '#define RT_FWEXTENDNO "$(SWRTEXTENDNO)"' >> router/shared/version.h
+	@echo '#define RT_FWSWRTNAME "$(SWRT_NAME)"' >> router/shared/version.h
 	@-$(MAKE) -f model-desc.mak
 
 rt_ver_ntools:

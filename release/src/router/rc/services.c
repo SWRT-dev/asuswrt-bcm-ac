@@ -172,11 +172,9 @@ static const struct itimerval zombie_tv = { {0,0}, {307, 0} };
 
 static const char dmhosts[] = "/etc/hosts.dnsmasq";
 static const char dmresolv[] = "/tmp/resolv.conf";
+static const char dmservers[] = "/tmp/resolv.dnsmasq";
 #if defined(RTCONFIG_SMARTDNS)
-static const char dmservers[] = "/tmp/resolv.dnsmasq";
 static const char sdservers[] = "/tmp/resolv.smartdns";
-#else
-static const char dmservers[] = "/tmp/resolv.dnsmasq";
 #endif
 
 #ifdef RTCONFIG_TOAD
@@ -2038,7 +2036,7 @@ void start_dnsmasq(void)
 		system("dnsmasq --log-async -d 2>/tmp/dhcp.logs &");
 	else
 #endif
-	eval("dnsmasq", "--log-async");
+		eval("dnsmasq", "--log-async");
 
 	TRACE_PT("end\n");
 }
@@ -7499,7 +7497,7 @@ start_iperf3_server(void)
 	pid_t pid;
 	
 	if(nvram_get_int("iperf3_svr_port") != 0) {
-		strcpy(iperf3_svr_port, nvram_safe_get("iperf3_svr_port"));
+		snprintf(iperf3_svr_port, sizeof(iperf3_svr_port), "%d", safe_atoi(nvram_safe_get("iperf3_svr_port")));
 		iperf3_argv[3] = iperf3_svr_port;
 	}
 

@@ -66,6 +66,10 @@
 #include "sched_v2.h"
 #endif /* RTCONFIG_SCHED_V2 */
 
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) || defined(RTCONFIG_IG_SITE2SITE) || defined(RTCONFIG_WIREGUARD)
+#include "vpn_utils.h"
+#endif
+
 #if defined(RTCONFIG_PTHSAFE_POPEN)
 #if defined(RTCONFIG_QCA)
 #define	popen	PS_popen
@@ -890,6 +894,7 @@ extern int wl_get_chlist_band(char* wlif);
 extern int nvram_contains_word(const char *key, const char *word);
 extern int nvram_is_empty(const char *key);
 extern void nvram_commit_x(void);
+extern void nvram_pf_restore_default(const char *prefix_default, const char *prefix_target);
 extern int connect_timeout(int fd, const struct sockaddr *addr, socklen_t len, int timeout);
 extern int mtd_getinfo(const char *mtdname, int *part, int *size);
 #if defined(RTCONFIG_UBIFS)
@@ -2890,6 +2895,13 @@ extern int psr_exist(void);
 extern int psr_exist_except(int unit);
 #endif
 
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) || defined(RTCONFIG_IG_SITE2SITE) || defined(RTCONFIG_WIREGUARD)
+#define VPNC_LOAD_CLIENT_LIST          0x01
+#define VPNC_LOAD_PPTP_OPT                     0x02
+extern int _get_new_vpnc_index(void);
+extern int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int load_flag);
+#endif
+
 struct ifino_s {
 	char ifname[IFNAMSIZ];
 	ino_t inode;
@@ -4093,6 +4105,8 @@ extern int wl_set_wifiscan(char *ifname, int val);
 extern int wl_set_mcsindex(char *ifname, int *is_auto, int *idx, char *idx_type, int *stream);
 #endif
 
+extern int ParseIPv4OrIPv6 ( const char** ppszText, unsigned char* abyAddr, int* pnPort, int* pbIsIPv6 );
+
 #if defined(RTCONFIG_BCM_CLED)
 enum {
 	BCM_CLED_RED = 0,
@@ -4291,6 +4305,15 @@ extern char *server6_table[][2];
 #define SAFE_FREE(x)	if(x) {free(x); x=NULL;}
 #if defined(RTCONFIG_AMAS) && defined(RTCONFIG_AMAS_ADTBW)
 #define ACSD_SCORE_FILE	"/tmp/auto_chan_score.txt"
+#endif
+
+#ifdef RTCONFIG_TPVPN
+// tpvpn.c
+enum {
+	TPVPN_HMA = 0,
+	TPVPN_NORDVPN,
+};
+extern int is_tpvpn_configured(int provider, const char* region, const char* conntype, int unit);
 #endif
 
 #if defined(RTCONFIG_ACCOUNT_BINDING)

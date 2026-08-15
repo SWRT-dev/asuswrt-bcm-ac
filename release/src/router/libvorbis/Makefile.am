@@ -1,13 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-#AUTOMAKE_OPTIONS = 1.7 foreign dist-zip dist-bzip2
-AUTOMAKE_OPTIONS = foreign 1.11 dist-zip dist-xz
+AUTOMAKE_OPTIONS = 1.6 foreign dist-zip dist-bzip2
 
-SUBDIRS = m4 include vq lib test doc
-
-if BUILD_EXAMPLES 
-SUBDIRS += examples 
-endif 
+SUBDIRS = m4 include vq lib examples test doc
 
 m4datadir = $(datadir)/aclocal
 m4data_DATA = vorbis.m4

@@ -1233,7 +1233,6 @@ function pullLANIPList(obj){
 function hideport(flag){
 	document.getElementById("accessfromwan_port").style.display = (flag == 1) ? "" : "none";
 	if(!HTTPS_support){
-		document.getElementById("NSlookup_help_for_WAN_access").style.display = (flag == 1) ? "" : "none";
 		var orig_str = document.getElementById("access_port_title").innerHTML;
 		document.getElementById("access_port_title").innerHTML = orig_str.replace(/HTTPS/, "HTTP");
 		document.getElementById("http_port").style.display = (flag == 1) ? "" : "none";
@@ -2493,7 +2492,6 @@ function check_password_length(obj){
 						<span class="formfontdesc" id="WAN_access_hint" style="color:#FFCC00; display:none;"><#FirewallConfig_x_WanWebEnable_HTTPS_only#> 
 							<a id="faq" href="" target="_blank" style="margin-left: 5px; color:#FFCC00; text-decoration: underline;">FAQ</a>
 						</span>
-						<div class="formfontdesc" id="NSlookup_help_for_WAN_access" style="color:#FFCC00; display:none;"><#NSlookup_help#></div>
 					</td>
 				</tr>
 				<tr id="accessfromwan_port">
@@ -2570,3 +2568,4 @@ function check_password_length(obj){
 <div id="footer"></div>
 </body>
 </html>
+

@@ -5,13 +5,13 @@
  * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
  * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
  *                                                                  *
- * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2010             *
+ * THE OggVorbis SOURCE CODE IS (C) COPYRIGHT 1994-2009             *
  * by the Xiph.Org Foundation http://www.xiph.org/                  *
  *                                                                  *
  ********************************************************************
 
  function: channel mapping 0 implementation
- last mod: $Id: mapping0.c 19441 2015-01-21 01:17:41Z xiphmont $
+ last mod: $Id: mapping0.c 16227 2009-07-08 06:58:46Z xiphmont $
 
  ********************************************************************/
 
@@ -45,6 +45,16 @@ static void mapping0_free_info(vorbis_info_mapping *i){
   }
 }
 
+static int ilog(unsigned int v){
+  int ret=0;
+  if(v)--v;
+  while(v){
+    ret++;
+    v>>=1;
+  }
+  return(ret);
+}
+
 static void mapping0_pack(vorbis_info *vi,vorbis_info_mapping *vm,
                           oggpack_buffer *opb){
   int i;
@@ -68,8 +78,8 @@ static void mapping0_pack(vorbis_info *vi,vorbis_info_mapping *vm,
     oggpack_write(opb,info->coupling_steps-1,8);
 
     for(i=0;i<info->coupling_steps;i++){
-      oggpack_write(opb,info->coupling_mag[i],ov_ilog(vi->channels-1));
-      oggpack_write(opb,info->coupling_ang[i],ov_ilog(vi->channels-1));
+      oggpack_write(opb,info->coupling_mag[i],ilog(vi->channels));
+      oggpack_write(opb,info->coupling_ang[i],ilog(vi->channels));
     }
   }else
     oggpack_write(opb,0,1);
@@ -94,7 +104,6 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
   vorbis_info_mapping0 *info=_ogg_calloc(1,sizeof(*info));
   codec_setup_info     *ci=vi->codec_setup;
   memset(info,0,sizeof(*info));
-  if(vi->channels<=0)goto err_out;
 
   b=oggpack_read(opb,1);
   if(b<0)goto err_out;
@@ -110,11 +119,8 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
     info->coupling_steps=oggpack_read(opb,8)+1;
     if(info->coupling_steps<=0)goto err_out;
     for(i=0;i<info->coupling_steps;i++){
-      /* vi->channels > 0 is enforced in the caller */
-      int testM=info->coupling_mag[i]=
-        oggpack_read(opb,ov_ilog(vi->channels-1));
-      int testA=info->coupling_ang[i]=
-        oggpack_read(opb,ov_ilog(vi->channels-1));
+      int testM=info->coupling_mag[i]=oggpack_read(opb,ilog(vi->channels));
+      int testA=info->coupling_ang[i]=oggpack_read(opb,ilog(vi->channels));
 
       if(testM<0 ||
          testA<0 ||
@@ -240,7 +246,7 @@ static int mapping0_forward(vorbis_block *vb){
 
   int    *nonzero    = alloca(sizeof(*nonzero)*vi->channels);
   float  **gmdct     = _vorbis_block_alloc(vb,vi->channels*sizeof(*gmdct));
-  int    **iwork      = _vorbis_block_alloc(vb,vi->channels*sizeof(*iwork));
+  int    **ilogmaskch= _vorbis_block_alloc(vb,vi->channels*sizeof(*ilogmaskch));
   int ***floor_posts = _vorbis_block_alloc(vb,vi->channels*sizeof(*floor_posts));
 
   float global_ampmax=vbi->ampmax;
@@ -249,7 +255,8 @@ static int mapping0_forward(vorbis_block *vb){
 
   int modenumber=vb->W;
   vorbis_info_mapping0 *info=ci->map_param[modenumber];
-  vorbis_look_psy *psy_look=b->psy+blocktype+(vb->W?2:0);
+  vorbis_look_psy *psy_look=
+    b->psy+blocktype+(vb->W?2:0);
 
   vb->mode=modenumber;
 
@@ -260,7 +267,6 @@ static int mapping0_forward(vorbis_block *vb){
     float *pcm     =vb->pcm[i];
     float *logfft  =pcm;
 
-    iwork[i]=_vorbis_block_alloc(vb,n/2*sizeof(**iwork));
     gmdct[i]=_vorbis_block_alloc(vb,n/2*sizeof(**gmdct));
 
     scale_dB=todB(&scale) + .345; /* + .345 is a hack; the original
@@ -592,8 +598,39 @@ static int mapping0_forward(vorbis_block *vb){
   /* iterate over the many masking curve fits we've created */
 
   {
-    int **couple_bundle=alloca(sizeof(*couple_bundle)*vi->channels);
+    float **res_bundle=alloca(sizeof(*res_bundle)*vi->channels);
+    float **couple_bundle=alloca(sizeof(*couple_bundle)*vi->channels);
     int *zerobundle=alloca(sizeof(*zerobundle)*vi->channels);
+    int **sortindex=alloca(sizeof(*sortindex)*vi->channels);
+    float **mag_memo=NULL;
+    int **mag_sort=NULL;
+
+    if(info->coupling_steps){
+      mag_memo=_vp_quantize_couple_memo(vb,
+                                        &ci->psy_g_param,
+                                        psy_look,
+                                        info,
+                                        gmdct);
+
+      mag_sort=_vp_quantize_couple_sort(vb,
+                                        psy_look,
+                                        info,
+                                        mag_memo);
+
+      hf_reduction(&ci->psy_g_param,
+                   psy_look,
+                   info,
+                   mag_memo);
+    }
+
+    memset(sortindex,0,sizeof(*sortindex)*vi->channels);
+    if(psy_look->vi->normal_channel_p){
+      for(i=0;i<vi->channels;i++){
+        float *mdct    =gmdct[i];
+        sortindex[i]=alloca(sizeof(**sortindex)*n/2);
+        _vp_noise_normalize_sort(psy_look,mdct,sortindex[i]);
+      }
+    }
 
     for(k=(vorbis_bitrate_managed(vb)?0:PACKETBLOBS/2);
         k<=(vorbis_bitrate_managed(vb)?PACKETBLOBS-1:PACKETBLOBS/2);
@@ -614,7 +651,10 @@ static int mapping0_forward(vorbis_block *vb){
       /* encode floor, compute masking curve, sep out residue */
       for(i=0;i<vi->channels;i++){
         int submap=info->chmuxlist[i];
-        int *ilogmask=iwork[i];
+        float *mdct    =gmdct[i];
+        float *res     =vb->pcm[i];
+        int   *ilogmask=ilogmaskch[i]=
+          _vorbis_block_alloc(vb,n/2*sizeof(**gmdct));
 
         nonzero[i]=floor1_encode(opb,vb,b->flr[info->floorsubmap[submap]],
                                  floor_posts[i][k],
@@ -625,8 +665,28 @@ static int mapping0_forward(vorbis_block *vb){
           sprintf(buf,"maskI%c%d",i?'R':'L',k);
           float work[n/2];
           for(j=0;j<n/2;j++)
-            work[j]=FLOOR1_fromdB_LOOKUP[iwork[i][j]];
+            work[j]=FLOOR1_fromdB_LOOKUP[ilogmask[j]];
           _analysis_output(buf,seq,work,n/2,1,1,0);
+        }
+#endif
+        _vp_remove_floor(psy_look,
+                         mdct,
+                         ilogmask,
+                         res,
+                         ci->psy_g_param.sliding_lowpass[vb->W][k]);
+
+        _vp_noise_normalize(psy_look,res,res+n/2,sortindex[i]);
+
+
+#if 0
+        {
+          char buf[80];
+          float work[n/2];
+          for(j=0;j<n/2;j++)
+            work[j]=FLOOR1_fromdB_LOOKUP[ilogmask[j]]*(res+n/2)[j];
+          sprintf(buf,"resI%c%d",i?'R':'L',k);
+          _analysis_output(buf,seq,work,n/2,1,1,0);
+
         }
 #endif
       }
@@ -637,26 +697,18 @@ static int mapping0_forward(vorbis_block *vb){
       /* quantize/couple */
       /* incomplete implementation that assumes the tree is all depth
          one, or no tree at all */
-      _vp_couple_quantize_normalize(k,
-                                    &ci->psy_g_param,
-                                    psy_look,
-                                    info,
-                                    gmdct,
-                                    iwork,
-                                    nonzero,
-                                    ci->psy_g_param.sliding_lowpass[vb->W][k],
-                                    vi->channels);
-
-#if 0
-      for(i=0;i<vi->channels;i++){
-        char buf[80];
-        sprintf(buf,"res%c%d",i?'R':'L',k);
-        float work[n/2];
-        for(j=0;j<n/2;j++)
-          work[j]=iwork[i][j];
-        _analysis_output(buf,seq,work,n/2,1,0,0);
+      if(info->coupling_steps){
+        _vp_couple(k,
+                   &ci->psy_g_param,
+                   psy_look,
+                   info,
+                   vb->pcm,
+                   mag_memo,
+                   mag_sort,
+                   ilogmaskch,
+                   nonzero,
+                   ci->psy_g_param.sliding_lowpass[vb->W][k]);
       }
-#endif
 
       /* classify and encode by submap */
       for(i=0;i<info->submaps;i++){
@@ -668,21 +720,25 @@ static int mapping0_forward(vorbis_block *vb){
           if(info->chmuxlist[j]==i){
             zerobundle[ch_in_bundle]=0;
             if(nonzero[j])zerobundle[ch_in_bundle]=1;
-            couple_bundle[ch_in_bundle++]=iwork[j];
+            res_bundle[ch_in_bundle]=vb->pcm[j];
+            couple_bundle[ch_in_bundle++]=vb->pcm[j]+n/2;
           }
         }
 
         classifications=_residue_P[ci->residue_type[resnum]]->
           class(vb,b->residue[resnum],couple_bundle,zerobundle,ch_in_bundle);
 
+        /* couple_bundle is destructively overwritten by
+           the class function if some but not all of the channels are
+           marked as silence; build a fresh copy */
         ch_in_bundle=0;
         for(j=0;j<vi->channels;j++)
           if(info->chmuxlist[j]==i)
-            couple_bundle[ch_in_bundle++]=iwork[j];
+            couple_bundle[ch_in_bundle++]=vb->pcm[j]+n/2;
 
         _residue_P[ci->residue_type[resnum]]->
           forward(opb,vb,b->residue[resnum],
-                  couple_bundle,zerobundle,ch_in_bundle,classifications,i);
+                  couple_bundle,NULL,zerobundle,ch_in_bundle,classifications);
       }
 
       /* ok, done encoding.  Next protopacket. */

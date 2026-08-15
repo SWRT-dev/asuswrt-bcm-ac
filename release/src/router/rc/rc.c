@@ -1823,7 +1823,7 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_OPENVPN
 	{ "hmavpn",				hmavpn_main					},
 #endif
-#ifdef RTCONFIG_NORDVPN
+#if 0 //def RTCONFIG_WIREGUARD
 	{ "nordvpn",			nordvpn_main				},
 #endif
 #endif
