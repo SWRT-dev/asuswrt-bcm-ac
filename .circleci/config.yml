@@ -5,7 +5,7 @@ version: 2.1
 jobs:
   testbcm470x:
     docker:
-      - image: paldier/swrt-docker:latest
+      - image: paldier/swrt-docker-bcm:latest
         environment:
           PROJECT_DIR: "/home/docker/project"
           TERM: "xterm-256color"
@@ -23,7 +23,7 @@ jobs:
             make rt-ac5300
   testbcm4908:
     docker:
-      - image: paldier/swrt-docker:latest
+      - image: paldier/swrt-docker-bcm:latest
         environment:
           PROJECT_DIR: "/home/docker/project"
           TERM: "xterm-256color"
