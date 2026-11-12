@@ -631,6 +631,22 @@ wl_defaults(void)
 		nvram_pf_set(prefix, "bss_enabled", "0");
 	}
 #endif
+#ifdef RTCONFIG_BHCOST_OPT
+	if (nvram_get_int("re_mode") == 1)
+	{
+		unit = 0;
+		foreach (word, nvram_safe_get("wl_ifnames"), next) {
+			snprintf(prefix, sizeof(prefix), "amas_wlc%d_", unit);
+			if(nvram_get(strcat_r(prefix, "check_vsie", tmp)) == NULL)
+				nvram_pf_set_int(prefix, "check_vsie", 1);
+			if(nvram_get(strcat_r(prefix, "ss_count", tmp)) == NULL)
+				nvram_pf_set_int(prefix, "ss_count", 2);
+			if(nvram_get(strcat_r(prefix, "target_bssid", tmp)) == NULL)
+				nvram_pf_set(prefix, "target_bssid", "");
+			unit++;
+		}
+	}
+#endif
 
 	unit = 0;
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
@@ -861,7 +877,7 @@ wl_defaults(void)
 #elif defined(RTCONFIG_QCA)
 #elif defined(RTCONFIG_REALTEK)
 				nvram_set(strcat_r(prefix, "maxassoc", tmp), "31");
-#else
+#elif !defined(CONFIG_BCMWL5)
 				nvram_set(strcat_r(prefix, "maxassoc", tmp), "128");
 #endif
 				nvram_set(strcat_r(prefix, "mode", tmp), "ap");
@@ -2068,6 +2084,7 @@ misc_defaults(int restore_defaults)
 	nvram_unset("obd_allow_scan");
 	nvram_unset("obd_scan_state");
 	nvram_unset("acs_skip_init_acs");
+	nvram_unset("wlcscan");
 #endif
 #ifdef RTCONFIG_ADV_RAST
 	nvram_unset("diag_chk_cap");
@@ -2335,6 +2352,10 @@ restore_defaults(void)
 		if (restore_defaults || !nvram_get(t->name))
 			nvram_set(t->name, t->value);
 	}
+#ifdef RTCONFIG_TCODE
+	/* restore tcode-based defaults */
+	config_tcode(1);
+#endif
 
 #ifdef RTAX86U
 	if(restore_defaults){
@@ -2433,15 +2454,18 @@ restore_defaults(void)
 			sprintf(et_pktq_thresh, "3300");
 		}
 
+#ifdef CONFIG_BCMWL5
+		if (memsize > 200 * 1024)
+			nvram_set_int("log_size", 512);
+#endif
+
 		nvram_set("wl_txq_thresh", pktq_thresh);
 		nvram_set("et_txq_thresh", et_pktq_thresh);
 #if defined(__CONFIG_USBAP__)
 		nvram_set("wl_rpcq_rxthresh", pktq_thresh);
 #endif
 #ifdef RTCONFIG_TCODE
-		/* restore tcode-based defaults */
 		restore_defaults_wifi(1);
-		config_tcode(1);
 #endif
 
 #ifdef RTCONFIG_RP_NEWSSID_REV3
@@ -2500,6 +2524,11 @@ restore_defaults(void)
 
 #ifdef RTCONFIG_ISP_CUSTOMIZE
 	package_defaults(restore_defaults);
+#endif
+
+#if defined(RTCONFIG_HTTPS)
+	nvram_unset("httpds_reload_cert");
+	nvram_unset("httpds6_reload_cert");
 #endif
 
 #if defined(RTCONFIG_SOC_IPQ8074) || defined(RTCONFIG_SOC_IPQ60XX)
@@ -3669,7 +3698,7 @@ int init_nvram(void)
 
 	TRACE_PT("init_nvram for model(%d)\n", model);
 
-	int usb_usb3 = 0;
+	int usb_usb3 __attribute__((unused)) = 0;
 #ifdef RTCONFIG_USB
 
 #ifdef RTCONFIG_USB_XHCI
@@ -3687,6 +3716,9 @@ int init_nvram(void)
 		nvram_set_int("btn_radio_gpio", 0xff);
 		nvram_set_int("led_pwr_gpio", 0xff);
 		nvram_set_int("led_wps_gpio", 0xff);
+#if defined(R8000P)
+	nvram_set_int("switch_led_gpio", 0xff);
+#endif
 		nvram_set_int("pwr_usb_gpio", 0xff);
 		nvram_set_int("pwr_usb_gpio2", 0xff);
 		nvram_set_int("led_usb_gpio", 0xff);
@@ -17450,6 +17482,9 @@ int init_nvram(void)
 #ifdef RTCONFIG_OCNVC
 	add_rc_support("ocnvc");
 #endif
+#ifdef RTCONFIG_DSLITE
+	add_rc_support("dslite");
+#endif
 #endif
 #endif
 
@@ -18110,7 +18145,9 @@ NO_USB_CAP:
 #endif
 
 #ifdef RTCONFIG_AMAS
+#if !defined(SWRT_VER_MAJOR_B)
 	add_rc_support("amas");
+#endif
 	if (nvram_get_int("amas_bdl"))
 	add_rc_support("amas_bdl");
 #endif
@@ -18335,7 +18372,10 @@ int init_nvram2(void)
 #ifdef RTAC1200GP
 		snprintf(hostname, sizeof(hostname), "%s-%02X%02X", "RT-AC1200G", ea[4], ea[5]);
 #else
-		snprintf(hostname, sizeof(hostname), "%s-%02X%02X", get_productid(), ea[4], ea[5]);
+		if(is_swrt_mod())
+			snprintf(hostname, sizeof(hostname), "%s-%02X%02X", nvram_get("modelname"), ea[4], ea[5]);
+		else
+			snprintf(hostname, sizeof(hostname), "%s-%02X%02X", get_productid(), ea[4], ea[5]);
 #endif
 		if (!restore_defaults_g && !nvram_invmatch("computer_name", "")) {
 			/* migrate from computer_name on fw upgrade */
@@ -18482,11 +18522,6 @@ int init_nvram2(void)
 	}
 #endif /* AMAS */
 #endif /* CFGSYNC */
-#ifdef RTCONFIG_AMAS
-#ifdef RTCONFIG_VIF_ONBOARDING
-	nvram_unset("obvif_set");
-#endif
-#endif
 #if defined(RTCONFIG_WIFI_DRV_DISABLE) /* for IPQ40XX */
 	if (nvram_match("disableWifiDrv_fac", "1"))
 		nvram_set("lyra_disable_wifi_drv", "1");
@@ -18567,6 +18602,16 @@ int init_nvram2(void)
 	init_ahs_bhc_params();
 #endif /* RTCONFIG_AHS */
 #endif /* RTCONFIG_FRS_LIVE_UPDATE */
+
+#ifdef RTCONFIG_WEBDAV
+  // The enable_webdav_lock is enabled by default when upgrading or downgrading the version.
+  if(!nvram_match("extendno", nvram_safe_get("extendno_org"))){
+    nvram_set("enable_webdav_lock", "1");
+    nvram_set("webdav_lock_times", "3");
+    nvram_set("webdav_lock_interval", "2");
+  }
+#endif
+
 	return 0;
 }
 
@@ -19433,6 +19478,7 @@ static void sysinit(void)
 		"/tmp/etc/rc.d",
 #endif
 		"/tmp/var/tmp",
+		"/tmp/inadyn.cache",
 #ifdef RTCONFIG_WLMODULE_MT7663E_AP
 		"/tmp/lib",
 		"/tmp/lib/firmware",
@@ -19860,6 +19906,11 @@ def_boot_reinit:
 #ifdef GT10
 	gt10_nvram_convert();
 #endif
+#ifdef RTCONFIG_AMAS
+#ifdef RTCONFIG_VIF_ONBOARDING
+	nvram_unset("obvif_set");
+#endif
+#endif
 	init_nvram();  // for system indepent part after getting model
 
 #ifdef RTCONFIG_JFFS_NVRAM
@@ -20039,7 +20090,10 @@ def_boot_reinit:
 #endif
 
 #ifdef RTCONFIG_ASD
-	nvram_set("3rd-party", "merlin");
+	if(is_swrt_mod())
+		nvram_set("3rd-party", "swrt");
+	else
+		nvram_set("3rd-party", "merlin");
 #endif
 
 #if defined(RTCONFIG_BCMBSD_V2)
@@ -20359,6 +20413,9 @@ int init_main(int argc, char *argv[])
 #if !defined(RTCONFIG_TEST_BOARDDATA_FILE) && !defined(RTCONFIG_JFFS_NVRAM)
 		start_jffs2();
 #endif
+#if defined(RTCONFIG_HTTPS)
+		restore_cert();
+#endif
 #ifdef RTCONFIG_AMAS
 		create_amas_sys_folder();
 #endif
@@ -20554,6 +20611,7 @@ int init_main(int argc, char *argv[])
 				(state != SIGQUIT /* HALT */))
 #endif
 			stop_vlan();
+			stop_logger();
 
 #if defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)
 			_dprintf("sync during rebooting...\n");
@@ -20577,7 +20635,6 @@ int init_main(int argc, char *argv[])
 #endif
 				}
 #endif
-				stop_logger();
 #if defined(RTCONFIG_QCA) && defined(RTCONFIG_QCA8033)
 				stop_lan_port();
 				start_lan_port(5);
@@ -20728,6 +20785,7 @@ logmessage("ATE", "boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),
 #endif
 			start_services();
 #ifdef CONFIG_BCMWL5
+			slabdbg();
 			if (restore_defaults_g)
 			{
 				restore_defaults_g = 0;
@@ -20746,6 +20804,8 @@ logmessage("ATE", "boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),
 				lanaccess_wl();
 #endif
 			}
+
+			check_wlx_nband_type();
 #ifdef RTCONFIG_TR069
 			tr_switch_wan_line(WAN_UNIT_FIRST);
 #endif
@@ -20903,7 +20963,7 @@ _dprintf("%s %d turnning on power on ethernet here\n", __func__, __LINE__);
 			reset_ext_phy();
 #endif
 
-#if defined(RTCONFIG_BCM_7114) || (defined(HND_ROUTER) && !defined(RTCONFIG_HND_ROUTER_AX))
+#if defined(RTCONFIG_BCM_7114) || (defined(HND_ROUTER) && !defined(RTCONFIG_HND_ROUTER_AX) && !defined(R8000P))
 			if(!factory_debug()) {
 				check_4366_dummy();
 				sleep(1);
@@ -21301,7 +21361,7 @@ void set_onboarding_vif_security(void)
 
 	snprintf(prefix_obvif, sizeof(prefix_obvif), "wl%d.%d_", unit, obvif_subunit);
 
-	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "sae")) {
+	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "sae") || nvram_match(strcat_r(prefix, "closed", tmp), "1")) {
 		if (!nvram_get_int("obvif_set") &&
 			amas_gen_onboarding_vif_security(obvif_ssid, sizeof(obvif_ssid), obvif_psk, sizeof(obvif_psk)) == AMAS_RESULT_SUCCESS) {
 			nvram_set(strcat_r(prefix_obvif, "ssid", tmp), obvif_ssid);
@@ -21333,7 +21393,7 @@ int set_onboarding_vif_bss_enabled(int unit, int subunit)
 	snprintf(prefix_obvif, sizeof(prefix_obvif), "wl%d.%d_", unit, obvif_subunit);
 
 	if (nvram_get_int("re_mode") == 1 || is_router_mode() || access_point_mode()) {
-		if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "sae")) {
+		if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "sae") || nvram_match(strcat_r(prefix, "closed", tmp), "1")) {
 			nvram_set(strcat_r(prefix_obvif, "bss_enabled", tmp), "1");
 			ret = 1;
 		}

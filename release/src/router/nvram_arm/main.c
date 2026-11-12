@@ -232,7 +232,7 @@ static int _secure_conf(char* buf)
 
 	//name is token
 	const char *token1[] = {"wan_pppoe_passwd", "modem_pass", "modem_pincode",
-		"http_passwd", "wan0_pppoe_passwd", "wan1_pppoe_passwd", "dslx_pppoe_passwd", "ddns_passwd_x",
+		"http_passwd", "wan0_pppoe_passwd", "dslx_pppoe_passwd", "ddns_passwd_x",
 		"wl_wpa_psk",	"wlc_wpa_psk",  "wlc_wep_key",
 		"wl0_wpa_psk", "wl0.1_wpa_psk", "wl0.2_wpa_psk", "wl0.3_wpa_psk",
 		"wl1_wpa_psk", "wl1.1_wpa_psk", "wl1.2_wpa_psk", "wl1.3_wpa_psk",
@@ -348,7 +348,7 @@ static int _convert_data(const char *name, char *value, size_t value_len)
 
 	//name is token
 	const char *token1[] = {"wan_pppoe_passwd", "modem_pass", "modem_pincode",
-		"http_passwd", "wan0_pppoe_passwd", "wan1_pppoe_passwd", "dslx_pppoe_passwd", "ddns_passwd_x",
+		"http_passwd", "wan0_pppoe_passwd", "dslx_pppoe_passwd", "ddns_passwd_x",
 		"wl_wpa_psk",	"wlc_wpa_psk",  "wlc_wep_key",
 		"wl0_wpa_psk", "wl0.1_wpa_psk", "wl0.2_wpa_psk", "wl0.3_wpa_psk",
 		"wl1_wpa_psk", "wl1.1_wpa_psk", "wl1.2_wpa_psk", "wl1.3_wpa_psk",
@@ -389,24 +389,6 @@ static int _convert_data(const char *name, char *value, size_t value_len)
 	//name is token
 	//value is username@domain.tld
 	const char pppoe_username_token[] = "pppoe_username";
-
-#if defined(RTCONFIG_QCA)
-	const char *token3[] = {
-		"wlc0_wpa_psk", "wlc1_wpa_psk",
-#if defined(RTCONFIG_HAS_5G_2)
-		"wlc2_wpa_psk",
-#endif
-#if defined(RTCONFIG_DWB) 
-		"dwb_wlc0_wpa_psk", "dwb_wlc1_wpa_psk", 
-#if defined(RTCONFIG_HAS_5G_2)
-		"dwb_wlc2_wpa_psk",
-#endif
-#if defined(RTCONFIG_NO_TRY_DWB_PROFILE)
-		"wsbh_wpa_psk", "wsfh_wpa_psk",
-#endif
-#endif
-		NULL };
-#endif
 
 	if(!value)
 		return 0;
@@ -480,16 +462,6 @@ static int _convert_data(const char *name, char *value, size_t value_len)
 		snprintf(value, value_len, "%s>%s", DEFAULT_LOGIN_DATA, DEFAULT_LOGIN_DATA);
 		return 1;
 	}
-
-#if defined(RTCONFIG_QCA)
-	//check the first token group
-	for (i = 0; token3[i]; i++) {
-		if (strcmp(name, token3[i]) == 0) {
-			memset(value, PROTECT_CHAR, strlen(value));
-			return 1;
-		}
-	}
-#endif
 
 	return 0;
 }
@@ -676,7 +648,6 @@ int issyspara(char *p)
 	// skip checking for wl[]_, wan[], lan[]_
 	if ((strstr(p, "wl") && strncmp(p+3, "_failed", 7)) || strstr(p, "wan") || strstr(p, "lan")
 		|| strstr(p, "vpn_server") || strstr(p, "vpn_client")
-		|| !strncmp(p, "wgs", 3) || !strncmp(p, "wgc", 3)
 #ifdef RTCONFIG_DSL
 		|| !strncmp(p, "dsl", 3)
 #endif

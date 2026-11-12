@@ -785,6 +785,7 @@ void setup_conntrack(void)
 		f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", p, 0, 0);
 	}
 	else if (f_read_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", buf, sizeof(buf)) > 0) {
+		if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
 		if (atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
 #endif
@@ -1231,6 +1232,7 @@ const zoneinfo_t tz_list[] = {
         {"UTC4DST_2",	"America/Santiago"},	// (GMT-04:00) Santiago
         {"NST3.30DST",	"Canada/Newfoundland"},	// (GMT-03:30) Newfoundland
         {"EBST3",	"America/Araguaina"},	// (GMT-03:00) Brasilia //EBST3DST_1
+	{"UTC3DST",	"America/Saint-Pierre-et-Miquelon"},	// (GMT-03:00) Saint Pierre	//UTC2DST
 	{"UTC3",	"America/Araguaina"},	// (GMT-03:00) Buenos Aires, Georgetown
         {"UTC2_1",	"America/Godthab"},	// (GMT-03:00) Greenland	//EBST3DST_2
         {"UTC2",	"Atlantic/South_Georgia"},	// (GMT-02:00) South Georgia
@@ -1292,7 +1294,7 @@ const zoneinfo_t tz_list[] = {
         {"UTC-8_1",     "Asia/Irkutsk"},	// (GMT+08:00) Irkutsk
         {"UTC-9_1",     "Asia/Seoul"},		// (GMT+09:00) Seoul
         {"UTC-9_3",     "Asia/Yakutsk"},	// (GMT+09:00) Yakutsk
-        {"JST",         "Asia/Tokyo"},		// (GMT+09:00) Osaka, Sapporo, Tokyo
+        {"JST-9",       "Asia/Tokyo"},		// (GMT+09:00) Osaka, Sapporo, Tokyo
         {"CST-9.30",    "Australia/Darwin"},	// (GMT+09:30) Darwin
         {"UTC-9.30DST", "Australia/Adelaide"},	// (GMT+09:30) Adelaide
         {"UTC-10DST_1", "Australia/Canberra"},	// (GMT+10:00) Canberra, Melbourne, Sydney
@@ -1415,37 +1417,33 @@ void time_zone_x_mapping(void)
 	else if (nvram_match("time_zone", "UTC-6_2")){  /*Novosibirsk*/
 		nvram_set("time_zone", "UTC-7_3");
 	}
-
-	len = snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
-	/* replace . with : */
-	while ((ptr=strchr(tmpstr, '.'))!=NULL) *ptr = ':';
-	/* remove *_? */
-	while ((ptr=strchr(tmpstr, '_'))!=NULL){
-		*ptr = 0x0;
-		len = ptr-tmpstr;
+	else if (nvram_match("time_zone", "UTC2DST")){	/*Saint-Pierre-et-Miquelon*/
+		nvram_set("time_zone", "UTC3DST");
+	}
+	else if (nvram_match("time_zone", "JST")){	/* convert JST to JST-9 */
+		nvram_set("time_zone", "JST-9");
 	}
 
+
+	snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
+	/* replace . with : */
+	while ((ptr=strchr(tmpstr, '.'))!=NULL) *ptr = ':';
+	/* terminate string at first instance of '_', if there is one */
+	ptr = strchr(tmpstr, '_');
+	if(ptr) 
+        	*ptr = '\0';
+
 	/* check time_zone_dst for daylight saving */
-	if (nvram_get_int("time_zone_dst"))
-		len += sprintf(tmpstr + len, ",%s", nvram_safe_get("time_zone_dstoff"));
+	if (nvram_get_int("time_zone_dst")){
+		/* append time zone dst offset */
+		len = strnlen(tmpstr, sizeof(tmpstr));
+		snprintf(tmpstr + len, sizeof(tmpstr) - len, ",%s", nvram_safe_get("time_zone_dstoff"));
+	}
 #ifdef CONVERT_TZ_TO_GMT_DST
 	else	gettzoffset(tmpstr, tmpstr, sizeof(tmpstr));
 #endif
 
 	nvram_set("time_zone_x", tmpstr);
-
-	/* special mapping */
-	if (nvram_match("time_zone", "JST")) {
-		nvram_set("time_zone_x", "UTC-9");
-		snprintf (tmpstr, sizeof(tmpstr), "%s", "JST-9");
-	}
-		
-#if 0
-	else if (nvram_match("time_zone", "TST-10TDT"))
-		nvram_set("time_zone_x", "UCT-10");
-	else if (nvram_match("time_zone", "CST-9:30CDT"))
-		nvram_set("time_zone_x", "UCT-9:30");
-#endif
 
 	if ((fp = fopen("/etc/TZ", "w")) != NULL) {
 #ifdef RTCONFIG_BCM_7114
@@ -1473,7 +1471,7 @@ void
 setup_timezone(void)
 {
 #ifndef RC_BUILDTIME
-#define RC_BUILDTIME	1525496688	// May  5 05:04:48 GMT 2018
+#define RC_BUILDTIME	1704067200	// Jan  1 00:00:00 GMT 2024
 #endif
 	time_t now;
 	struct tm gm, local;

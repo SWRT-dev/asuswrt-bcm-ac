@@ -32,6 +32,10 @@
 #include <board.h>
 #endif
 
+#if defined(RAX200) || defined(R8000P)
+#define LEGACY_LED
+#endif
+
 typedef enum cmds_e {
         REGACCESS,
         PMDIOACCESS,
@@ -1115,7 +1119,7 @@ uint32_t set_gpio(uint32_t gpio, uint32_t value)
 		printf("\nopen ledpath %s failed !\n", ledpath);
 		return -1;
 	}
-#if defined(RTAX95Q) || defined(RTAXE95Q)
+#if (defined(RTAX95Q) && !defined(RAX70)) || defined(RTAXE95Q) || defined(MR60) || defined(MS60)
 	write(ledfd, active_low?(!value?"0":"255"):(!value?"255":"0"), active_low?(!value?1:3):(!value?3:1));
 #elif defined(RTCONFIG_HND_ROUTER_AX_6756) && !defined(BCM4912)
 	write(ledfd, active_low?(!value?"255":"0"):(!value?"255":"0"), active_low?(!value?3:1):(!value?3:1));
@@ -1920,6 +1924,10 @@ char *get_lan_mac_name(void)
 #endif
 
 	switch(get_model()) {
+#if defined(SBRAC1900P)
+		case MODEL_RTAC68U:
+			return "et2macaddr";
+#endif
 		case MODEL_RTAC87U:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC5300:
@@ -1943,6 +1951,10 @@ char *get_wan_mac_name(void)
 	}
 #endif
 	switch(get_model()) {
+#if defined(SBRAC1900P)
+		case MODEL_RTAC68U:
+			return "et2macaddr";
+#endif
 		case MODEL_RTAC87U:
 		case MODEL_RTAC88U:
 		case MODEL_RTAC5300:
@@ -2130,6 +2142,11 @@ int get_bonding_port_status(int port)
 	int ports[lan_ports+1];
 	/* 7 3 2 1 0	W0 L1 L2 L3 L4 */
 	ports[0]=7; ports[1]=3; ports[2]=2; ports[3]=1; ports[4]=0;
+#elif defined(RAX70)
+	int lan_ports=4;
+	int ports[lan_ports+1];
+	/* 7 3 2 1 0	W0 L1 L2 L3 L4 */
+	ports[0]=0; ports[1]=1; ports[2]=2; ports[3]=3; ports[4]=4;
 #elif defined(RTAX95Q) || defined(RTAXE95Q)
 	int lan_ports=3;
 	int ports[lan_ports+1];
@@ -2209,6 +2226,14 @@ int get_bonding_port_status(int port)
 	int ports[lan_ports+1];
 	/* 1 0    W0 L1 */
 	ports[0]=1; ports[1]=0;
+#elif defined(MS60)
+	int lan_ports=0;
+	int ports[1];
+	ports[0] = 0;
+#elif defined(MR60)
+	int lan_ports=1;
+	int ports[2];
+	ports[0] = 0; ports[1] = 1;
 #elif defined(RTAX56U)
 	int lan_ports=4;
 	int ports[lan_ports+1];
@@ -2385,7 +2410,7 @@ int wl_get_band(char* wlif)
 int wl_get_ifname_unit(char *wlif)
 {
         int unit = 0;
-        char nv_wlif[16], *wlx_ifname[16], word[64], *next;
+        char nv_wlif[16], wlx_ifname[16], word[64], *next;
         char wl_ifnames[32] = { 0 };
 
         strlcpy(wl_ifnames, nvram_safe_get("wl_ifnames"), sizeof(wl_ifnames));

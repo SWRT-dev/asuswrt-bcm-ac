@@ -347,6 +347,63 @@ void sync_control_channel(int unit, int channel, int bw, int nctrlsb)
 
 #endif
 
+static int _wl_get_chanspec(char* ifname, chanspec_t* chanspec)
+{
+	union ioval_u {
+		char buf[WLC_IOCTL_MAXLEN];
+		uint32_t val;
+	} u;
+
+	strlcpy(u.buf, "chanspec", sizeof(u.buf));
+	if(wl_ioctl(ifname, WLC_GET_VAR, u.buf, sizeof(u.buf)) < 0)
+	{
+		return (-1);
+	}
+
+	*chanspec = (chanspec_t)dtoh32(u.val);
+
+	return (0);
+}
+
+void get_control_channel(int unit, int *channel, int *bw, int *nctrlsb)
+{
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+	chanspec_t chanspec = 0;
+
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	if (_wl_get_chanspec(name, &chanspec) < 0) {
+		//dbg("get chanspec failed on %s\n", name);
+		return;
+	}
+	
+	if (wf_chspec_valid(chanspec)) {
+		*channel = wf_chspec_ctlchan(chanspec);
+		if (CHSPEC_IS20(chanspec))
+			*bw = 20;
+		else if (CHSPEC_IS40(chanspec)) {
+			*bw = 40;
+			if (CHSPEC_SB_UPPER(chanspec))
+				*nctrlsb = 1;
+		}
+		else if (CHSPEC_IS80(chanspec))
+			*bw = 80;
+#if defined(RTCONFIG_HND_ROUTER_AX) || defined(RTCONFIG_BW160M)
+		else if (CHSPEC_IS160(chanspec))
+			*bw = 160;
+#endif
+#if defined(RTCONFIG_BW320M)
+		else if (CHSPEC_IS320(chanspec)) {
+			*bw = 320;
+			if (CHSPEC_IS320_2(chanspec))
+				*nctrlsb = 1;
+		}
+#endif
+	}
+}
+
 static int is_hex(char c)
 {
 	return (((c >= '0') && (c <= '9')) ||
@@ -798,7 +855,7 @@ get_uplinkports_linkrate(char *ifname)
 	case MODEL_RTAX58U_V2:
 	case MODEL_RTAX3000N:
 	case MODEL_BR63:
-#if defined(RTAX1800) || (defined(BR63) && defined(NEW_SWITCH_ORDER))
+#if defined(RTAX1800) || defined(BR63) && defined(NEW_SWITCH_ORDER)
 		/* WAN L4 L3 L2 L1 */
 		ports[0]=0; ports[1]=1; ports[2]=2; ports[3]=3; ports[4]=4;
 
@@ -1356,7 +1413,7 @@ get_uplinkports_linkrate(char *ifname)
 	case MODEL_RTAX58U_V2:
 	case MODEL_RTAX3000N:
 	case MODEL_BR63:
-#if defined(RTAX1800) || (defined(BR63) && defined(NEW_SWITCH_ORDER))
+#if defined(RTAX1800) || defined(BR63) && defined(NEW_SWITCH_ORDER)
 		/* WAN L4 L3 L2 L1 */
 		ports[0]=0; ports[1]=1; ports[2]=2; ports[3]=3; ports[4]=4;
 
@@ -1494,12 +1551,12 @@ get_uplinkports_linkrate(char *ifname)
 	}
 
 	for( i=0; i<lan_ports+1; ++i) {
-		if(strcmp(pif[i], ifname) == 0)	
+		if(strcmp(pif[i], ifname) == 0)
 			return lrate[i];
 	}
 #if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 	for( i=0; i<MAX_RTL_PORTS; ++i) {
-		if(strcmp(ex_pif[i], ifname) == 0)	
+		if(strcmp(ex_pif[i], ifname) == 0)
 			return exrate[i];
 	}
 #endif
@@ -1774,6 +1831,7 @@ int wl_cap(int unit, char *cap_check)
 	char *next = NULL;
 
 	wl_ifname(unit, 0, ifname);
+
 	if (!wl_iovar_get(ifname, "cap", (void *)caps, sizeof(caps))) {
 		foreach(cap, caps, next) {
 			if (!strcmp(cap, cap_check))
@@ -2011,7 +2069,7 @@ phy_port_mapping get_phy_port_mapping(void)
 		.port[3] = { .phy_port_id = 1, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
 		.port[4] = { .phy_port_id = 0, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" }
 #elif defined(GTAC5300)
-		.count = 11,
+		.count = 9,
 		.port[0] = { .phy_port_id = 7, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 1000, .ifname = "eth0" },
 		.port[1] = { .phy_port_id = 1, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
 		.port[2] = { .phy_port_id = 0, .label_name = "L2", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
@@ -2198,7 +2256,7 @@ phy_port_mapping get_phy_port_mapping(void)
 		.port[2] = { .phy_port_id = 2, .label_name = "L2", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
 		.port[3] = { .phy_port_id = 1, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
 		.port[4] = { .phy_port_id = 0, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth0" }
-#elif defined(RTAX1800) || (defined(BR63) && defined(NEW_SWITCH_ORDER))
+#elif defined(RTAX1800) || defined(BR63) && defined(NEW_SWITCH_ORDER)
 #ifdef BR63
 		.count = 7,
 #else
@@ -2215,7 +2273,7 @@ phy_port_mapping get_phy_port_mapping(void)
 #else
 		.port[4] = { .phy_port_id = 4, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" }
 #endif
-#elif defined(RTAX55) || defined(RTAX3000N) || (defined(BR63) && !defined(NEW_SWITCH_ORDER))
+#elif defined(RTAX55) || defined(RTAX3000N) || defined(BR63) && !defined(NEW_SWITCH_ORDER)
 #ifdef BR63
 		.count = 7,
 #else

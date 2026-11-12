@@ -119,6 +119,10 @@
 #include "swrt.h"
 #endif
 
+#ifdef RTCONFIG_BCMWL6
+extern int restore_defaults_g;
+#endif
+
 #define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
 #define RESET_WAIT		2		/* seconds */
 #define RESET_WAIT_COUNT	RESET_WAIT * 10 /* 10 times a second */
@@ -127,6 +131,7 @@
 #define NORMAL_PERIOD		1		/* second */
 #define URGENT_PERIOD		100 * 1000	/* microsecond */
 #define RUSHURGENT_PERIOD	50 * 1000	/* microsecond */
+#define DAY_PERIOD		2 * 60 * 24	/* 1 day (in 30 sec periods) */
 
 #define WPS_TIMEOUT_COUNT	121 * 20
 #ifdef RTCONFIG_WPS_LED
@@ -2780,88 +2785,6 @@ static void handle_eject_usb_button(void)
 static inline void handle_eject_usb_button(void) { }
 #endif	/* RTCONFIG_EJUSB_BTN && RTCONFIG_BLINK_LED */
 
-#if defined(RMAC2100)
-void led_on_off(void)
-{
-	if (nvram_match("led_on_off", "1")) {
-		led_control(LED_POWER, LED_ON);
-		led_control(LED_WAN, LED_ON);
-		led_control(LED_ALL, LED_ON);
-	}else{
-		led_control(LED_POWER, LED_OFF);
-		led_control(LED_WAN, LED_OFF);
-		led_control(LED_ALL, LED_OFF);
-	}
-}
-#elif defined(R6800)
-struct i2cled_lanwan_s {
-	int lan1status;
-	int lan2status;
-	int lan3status;
-	int lan4status;
-	int wanstatus;
-};
-struct i2cled_lanwan_s i2cled_lanwan_list[] = {{0}};
-void i2c_led_check(void)
-{
-	int mode = 0, speed = 0;
-	int i;
-
-	for(i = 0; i < 5; i++){
-		swrt_esw_port_status(i, &mode, &speed);
-		switch(i){
-			case 4:
-				if(mode != i2cled_lanwan_list->wanstatus){
-					i2cled_lanwan_list->wanstatus = mode;
-					if(mode)
-						i2cled_control(I2CLED_WAN_WHITE, 1);
-					else
-						i2cled_control(I2CLED_WAN_WHITE, 0);
-				}
-				break;
-			case 3:
-				if(mode != i2cled_lanwan_list->lan4status){
-					i2cled_lanwan_list->lan4status = mode;
-					if(mode)
-						i2cled_control(I2CLED_LAN4_WHITE, 1);
-					else
-						i2cled_control(I2CLED_LAN4_WHITE, 0);
-				}
-				break;
-			case 2:
-				if(mode != i2cled_lanwan_list->lan3status){
-					i2cled_lanwan_list->lan3status = mode;
-					if(mode)
-						i2cled_control(I2CLED_LAN3_WHITE, 1);
-					else
-						i2cled_control(I2CLED_LAN3_WHITE, 0);
-				}
-				break;
-			case 1:
-				if(mode != i2cled_lanwan_list->lan2status){
-					i2cled_lanwan_list->lan2status = mode;
-					if(mode)
-						i2cled_control(I2CLED_LAN2_WHITE, 1);
-					else
-						i2cled_control(I2CLED_LAN2_WHITE, 0);
-				}
-				break;
-			case 0:
-				if(mode != i2cled_lanwan_list->lan1status){
-					i2cled_lanwan_list->lan1status = mode;
-					if(mode)
-						i2cled_control(I2CLED_LAN1_WHITE, 1);
-					else
-						i2cled_control(I2CLED_LAN1_WHITE, 0);
-				}
-				break;
-			default:
-				break;
-		}
-	}
-}
-#endif
-
 #if defined(RTCONFIG_TURBO_BTN) && defined(RTCONFIG_RGBLED)
 static inline void toggle_aura_rgb_mode(int led_onoff)
 {
@@ -3033,11 +2956,11 @@ static inline void __handle_led_onoff_button(int led_onoff)
 #endif
 #if defined(GTAX11000_PRO)
 		// TBD, 2.5G LED
-		notify_rc("restart_ledg");
+		notify_rc_and_wait_2min("restart_ledg");
 #endif
 #if defined(GTAXE16000)
 		// TBD, 10G LED
-		notify_rc("restart_ledg");
+		notify_rc_and_wait_2min("restart_ledg");
 #endif
 #ifdef RTCONFIG_LOGO_LED
 		led_control(LED_LOGO, LED_ON);
@@ -7032,7 +6955,6 @@ void regular_ddns_check(void)
 	}
 	
 	//_dprintf("WAN IP change!\n");
-	nvram_set("ddns_update_by_wdog", "1");
 	if (wan_unit != last_unit) {
 #ifndef RTCONFIG_INADYN
 		unlink("/tmp/ddns.cache");
@@ -7101,7 +7023,7 @@ void ddns_check(void)
 	}
 
 	if (nvram_match("ddns_regular_check", "1")&& !nvram_match("ddns_server_x", "WWW.ASUS.COM")) {
-		int period = nvram_get_int("ddns_regular_period");
+		int period = nvram_get_int("ddns_regular_period"); //minute(s)
 		if (period < 30) period = 60;
 		if (ddns_check_count >= (period*2)) {
 			regular_ddns_check();
@@ -7112,7 +7034,7 @@ void ddns_check(void)
 	}
 
 	if (wan_unit == last_unit && nvram_match("ddns_updated", "1")) { //already updated success
-#ifdef RTCONFIG_IPV6
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_INADYN)
 		/* not enable IPv6 or IPv6 already updated success */
 		if (!ipv6_enabled() || nvram_match("ddns_ipv6_update", "0") || (ipv6_enabled() && nvram_match("ddns_ipv6_update", "1") && nvram_match("ddns_ipv6_updated", "1"))) {
 			//logmessage("watchdog", "IPv4/IPv6 already updated success, exit DDNS Retry.\n");
@@ -7123,8 +7045,9 @@ void ddns_check(void)
 #endif
 	}
 
-	if (wan_unit == last_unit) {
+	if (wan_unit == last_unit) { /* DDNS has already been run, ddns_last_wan_unit has been set. */
 		if ( nvram_match("ddns_server_x", "WWW.ASUS.COM")) {
+			/* Only Time-out, connect_fail, -1 (in asusddns) or not auth_fail (not in asusddns) */
 			if ( !( !strcmp(nvram_safe_get("ddns_return_code_chk"),"Time-out") ||
 				!strcmp(nvram_safe_get("ddns_return_code_chk"),"connect_fail") ||
 				strstr(nvram_safe_get("ddns_return_code_chk"), "-1") ) )
@@ -7147,6 +7070,7 @@ void ddns_check(void)
 	ddns_check_retry--;
 	/* Stop retry and show the return code to UI */
 	if (ddns_check_retry <= 0) {
+		/* If in "ddns_query" then continue to next round, otherwise start ddns. */
 		if (nvram_match("ddns_return_code", "ddns_query")) {
 			nvram_set("ddns_return_code", nvram_safe_get("ddns_return_code_chk"));
 			ddns_recover_min = ((30 + rand_seed_by_time() % 30)*2);
@@ -7163,7 +7087,6 @@ void ddns_check(void)
 	}
 	nvram_set_int("ddns_check_retry", ddns_check_retry);
 
-	nvram_set("ddns_update_by_wdog", "1");
 	if (wan_unit != last_unit) {
 #ifndef RTCONFIG_INADYN
 		unlink("/tmp/ddns.cache");
@@ -7206,8 +7129,8 @@ void httpd_check()
 #if defined(RTL_WTDOG)
 		stop_rtl_watchdog();
 #endif
-		logmessage("watchdog", "restart httpd");
-		stop_httpd();
+		logmessage("watchdog", "start httpd");
+		//stop_httpd();
 		nvram_set("last_httpd_handle_request", nvram_safe_get("httpd_handle_request"));
 		nvram_set("last_httpd_handle_request_fromapp", nvram_safe_get("httpd_handle_request_fromapp"));
 		nvram_commit();
@@ -7766,6 +7689,8 @@ void qtn_module_check(void)
 			logmessage("QTN", "QTN connection lost[%s][%s]", src_ip, dst_ip);
 			system("reboot &");
 		}
+	} else {
+		failed = 0;
 	}
 	waiting = 0;
 
@@ -8099,7 +8024,9 @@ static void auto_firmware_check()
 	localtime_r(&now, &local);
 
 #ifdef RTCONFIG_AUTO_FW_UPGRADE
-	update_enable = nvram_get_int("webs_update_enable");
+	if(get_ASUS_privacy_policy()){
+		update_enable = nvram_get_int("webs_update_enable");
+	}
 	strlcpy(update_time_tmp, nvram_safe_get("webs_update_time"), sizeof(update_time_tmp));
 	if(sscanf(update_time_tmp, "%d:%d", &update_time_hr, &update_time_min) != 2){
 		update_time_hr = (2 + rand_hr);
@@ -8128,7 +8055,7 @@ static void auto_firmware_check()
 		if (periodic_check)
 			asus_ctrl_sku_update();
 #endif
-#ifdef RTCONFIG_ASD
+#if defined(RTCONFIG_ASD) && !defined(RTCONFIG_ASD_2_1)
 		//notify asd to download version file
 		if (pids("asd") && (bootup_check || (periodic_check && period_retry == 0)))
 		{
@@ -8779,6 +8706,7 @@ void onboarding_check()
 {
 	static int bh_selected = 0;
 	static int onboarding_count = 0;
+	int lock = 0;
 
 	if (!nvram_match("start_service_ready", "1"))
 		return;
@@ -8830,7 +8758,12 @@ void onboarding_check()
 #endif
 		}
 
-		notify_rc("resetdefault");
+		lock = file_lock("onboarding");
+		if (strlen(nvram_safe_get("cfg_group")) == 0) {
+			stop_cfgsync();
+			notify_rc("resetdefault");
+		}
+		file_unlock(lock);
 	}
 }
 #endif
@@ -8860,7 +8793,7 @@ void cfgsync_check()
   		if (nvram_match("x_Setting", "1") && !pids("cfg_client") && !pids("cfg_server"))
 		{
 			_dprintf("start cfgsync\n");
-			notify_rc("start_cfgsync");
+			notify_rc_and_wait_2min("start_cfgsync");
 		}
 		return;
 	}
@@ -8892,7 +8825,7 @@ void cfgsync_check()
 	)))
 	{
 		_dprintf("start cfgsync\n");
-		notify_rc("start_cfgsync");
+		notify_rc_and_wait_2min("start_cfgsync");
 	}
 #endif	/* RTCONFIG_SW_HW_AUTH */
 }
@@ -9158,7 +9091,7 @@ void wlcnt_chk()
 			close(fd);
 		}
 	}
-	if(watch_prd++ % wlshoot_period) {
+	if(watch_prd++ % wlshoot_period == 0) {
 		if(val - pre_val > wlshoot) {
 			printf("\nWL go insanity! calm down it\n");
 #ifndef RTCONFIG_AHS
@@ -9175,13 +9108,9 @@ void wlcnt_chk()
 					logmessage("watchdog", "reinit of unit%d:%d", unit, val_all[unit] - pre_all[unit]);
 			}
 
-			pre_val = val;
-			for(unit = 0; unit < WL_NR_BANDS; ++unit) {
-				pre_all[unit] = val_all[unit];
-			}
 #endif
 		}
-	} else {
+
 		pre_val = val;
 		for(unit = 0; unit < WL_NR_BANDS; ++unit) {
 			pre_all[unit] = val_all[unit];
@@ -9969,6 +9898,53 @@ void record_current_sys_uptime(void)
 	cnt %= record_period;
 }
 
+/*******************************************************************
+* NAME: feedback_check
+* AUTHOR: Renjie Lee
+* CREATE DATE: 2023/12/27
+* DESCRIPTION: Check 'fb_state', if it is '0', it means that the feedback was failed for some reasons at last time.
+*     We need to call 'sendfeedback' to resend the feedback.
+* INPUT:  None
+* OUTPUT: None
+* RETURN: None
+* NOTE: Watchdog calls this function for every 30 seconds.
+*     We skip the first 3 calls and execute the 4th call. So the function will work for every 120 seconds.
+*
+*******************************************************************/
+#ifdef RTCONFIG_FRS_FEEDBACK
+void feedback_check(void)
+{
+	static int check = -1;
+	int skip_times = 4;
+
+	check++;
+	check %= skip_times;
+	if(check != skip_times - 1)
+	{
+		return;
+	}
+
+	if(!nvram_get_int("ntp_ready"))
+	{
+		return;
+	}
+
+	if(nvram_match("fb_state", "0"))
+	{
+		char *cmd[] = {"sendfeedback", NULL};
+		int pid;
+
+		if(!pids("sendfeedback"))
+		{
+			logmessage("watchdog", "[%s] Resend the last feedback..\n", __FUNCTION__);
+			_dprintf("[%s] Resend the last feedback..\n", __FUNCTION__);
+			nvram_set("fb_resend", "1");
+			_eval(cmd, NULL, 0, &pid);
+		}
+	}
+}
+#endif /* RTCONFIG_FRS_FEEDBACK */
+
 /* wathchdog is runned in NORMAL_PERIOD, 1 seconds
  * check in each NORMAL_PERIOD
  *	1. button
@@ -9980,6 +9956,8 @@ void record_current_sys_uptime(void)
 
 void watchdog(int sig)
 {
+	int period;
+
 #ifdef RTL_WTDOG
 	watchdog_func();
 #endif
@@ -10192,12 +10170,23 @@ void watchdog(int sig)
 			system("top -b -n 1 | head | logger -t top");
 	}
 #if !defined(RTCONFIG_BCM_MFG) && (defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(DSL_AX82U))
-	if (!pids("ledg")) {
-		ledg_count = (ledg_count + 1) % 4 ;
+	if (nvram_get_int("x_Setting") && !pids("ledg")) {
+		ledg_count = (ledg_count + 1) % 2 ;
 		if (!ledg_count) {
-			notify_rc("restart_ledg");
+			notify_rc_and_wait_2min("restart_ledg");
 		}
 	}
+#endif
+#ifdef RTCONFIG_BCMWL6
+	if (!restore_defaults_g && strlen(nvram_safe_get("acs_ifnames")) && nvram_get_int("wlready") &&
+		!mediabridge_mode() &&
+#ifdef RTCONFIG_HND_ROUTER_AX
+		!pids("acsd2")
+#else
+		!pids("acsd")
+#endif
+	)
+		notify_rc_and_wait_1min("restart_acsd");
 #endif
 #if defined(RTAX3000N) || defined(RPAX58)
 	parse_ptf();
@@ -10270,7 +10259,19 @@ wdp:
 	bk_center_main();
 #endif
 #endif
-	ddns_check();
+
+	if (nvram_match("ddns_enable_x", "1")) {
+		/* Force a DDNS update every "x" days - default is 21 days */
+		period = nvram_get_int("ddns_refresh_x");
+		if ((period) && (++ddns_update_timer >= (DAY_PERIOD * period))) {
+			ddns_update_timer = 0;
+			logmessage("watchdog", "Forced DDNS update (after %d days)", period);
+			notify_rc("restart_ddns");
+		} else {
+			ddns_check();
+		}
+	}
+
 	networkmap_check();
 	httpd_check();
 #if defined(RTCONFIG_SMARTDNS)
@@ -10348,7 +10349,9 @@ wdp:
 	amas_ctl_check();
 #endif
 #ifdef RTCONFIG_CFGSYNC
+#if !defined(SWRT_VER_MAJOR_B)
 	cfgsync_check();
+#endif
 #endif
 #ifdef RTCONFIG_TUNNEL
 	mastiff_check();
@@ -10391,8 +10394,14 @@ wdp:
 			system("sh /tmp/mnt/sda1/auto_test.sh");
 		}
 #endif
+#ifdef RTCONFIG_FRS_FEEDBACK
+	feedback_check();
+#endif /* RTCONFIG_FRS_FEEDBACK */
 	if(check_auth_code)
 		check_auth_code();
+#if defined(RAX200)
+	fan_watchdog();
+#endif
 }
 
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))

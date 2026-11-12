@@ -85,6 +85,23 @@ double wl_get_txpwr_target_max(char *name);
 double get_wifi_maxpower(int target_unit);
 #endif
 
+int getPid_fromFile(char *file_name)
+{
+	FILE *fp;
+	char *pidfile = file_name;
+	int result = -1;
+
+	fp= fopen(pidfile, "r");
+	if (!fp) {
+	    dbg("can not open:%s\n", file_name);
+	    return -1;
+	}
+	fscanf(fp,"%d",&result);
+	fclose(fp);
+
+	return result;
+}
+
 // led_str_ctrl
 enum led_id get_led_id(const char *led_str)
 {
@@ -813,6 +830,33 @@ static int rctest_main(int argc, char *argv[])
 		fflush(stdout);
 	}
 #endif
+#if defined(RTCONFIG_AMAS) && defined(RTCONFIG_BCMWL6)
+	else if (strcmp(argv[1], "chk_acsc")==0) {
+        	int ret = 0;
+
+        	ret = chk_acscli2_cmds("acs_restart");
+        	_dprintf("%s, acscli2_can_do_restart:%d\n", __func__, ret);
+	}
+	else if (strcmp(argv[1], "acsc")==0) {
+		char _acs_restart_ifnames[128];
+        	char word[32]={0}, *next = NULL, cmd[128];
+
+		if(argv[2])
+			strlcpy(_acs_restart_ifnames, argv[2], sizeof(_acs_restart_ifnames));
+		else
+			strlcpy(_acs_restart_ifnames, nvram_safe_get("wl_ifnames"), sizeof(_acs_restart_ifnames));
+
+        	if(nvram_match("acscli2_acs_restart", "1") && !nvram_match("force_restart_acsd2", "1")) {
+                	foreach (word, _acs_restart_ifnames, next) {
+                        	snprintf(cmd, sizeof(cmd), "acs_cli2 -i %s acs_restart", word);
+                        	avbl_reset_exclvalid(word);
+                        	_dprintf("%s, do %s\n", __func__, cmd);
+                        	system(cmd);
+                        	sleep(1);
+                	}
+		}
+	}
+#endif
 	else if (strcmp(argv[1], "nvramhex")==0) {
 		int i;
 		char *nv;
@@ -1159,7 +1203,7 @@ static int rctest_main(int argc, char *argv[])
 			printf("%d\n", get_gpio2(atoi(argv[2])));
 		}
 #endif
-#ifndef HND_ROUTER
+#if !defined(HND_ROUTER) || defined(R8000P)
 		else if (strcmp(argv[1], "gpiod") == 0) {
 			if (argc>=4) gpio_dir(atoi(argv[2]), atoi(argv[3]));
 		}
@@ -2030,6 +2074,7 @@ static const applets_t applets[] = {
 	{ "auto46det", 			auto46det_main			},
 	{ "v6plusd", 			v6plusd_main			},
 	{ "ocnvcd", 			ocnvcd_main			},
+	{ "dslited", 			dslited_main			},
 #endif
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB) || defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N) || defined(BR63)
 	{ "rtkswitch",			config_rtkswitch		},
@@ -2074,6 +2119,9 @@ static const applets_t applets[] = {
 #else
 	{ "firmware_check_update",	firmware_check_update_main	},
 #endif
+#endif
+#ifdef RTCONFIG_FRS_FEEDBACK
+	{ "sendfeedback",	start_sendfeedback },
 #endif
 #ifdef RTAC68U
 	{ "firmware_enc_crc",		firmware_enc_crc_main		},
@@ -3169,7 +3217,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #ifdef RTCONFIG_BCMARM
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(F9K1118)
 	/* mtd-erase2 [device] */
 	else if (!strcmp(base, "mtd-erase2")) {
 		if (argv[1] && ((!strcmp(argv[1], "boot")) ||

@@ -1,4 +1,4 @@
-﻿/* Plugin */
+/* Plugin */
 if (!Object.keys) {
   Object.keys = (function() {
     'use strict';
@@ -303,7 +303,9 @@ function genClientList(){
 				if(thisClient.amesh_isReClient != undefined && thisClient.amesh_papMac != undefined) {
 					clientList[thisClientMacAddr].amesh_isReClient = (thisClient.amesh_isReClient == "1") ? true : false;
 					clientList[thisClientMacAddr].amesh_papMac = thisClient.amesh_papMac;
-
+					if(clientList[thisClientMacAddr].amesh_papMac == ""){
+						clientList[thisClientMacAddr].amesh_papMac = '<% get_lan_hwaddr(); %>';
+					}
 					if(clientList[thisClientMacAddr].isOnline) {
 						if(AiMeshTotalClientNum[thisClient.amesh_papMac] == undefined)
 							AiMeshTotalClientNum[thisClient.amesh_papMac] = 1;
@@ -338,7 +340,9 @@ function genClientList(){
 				var thisClientType = (typeof thisClient.type == "undefined") ? "0" : thisClient.type;
 				var thisClientDefaultType = (typeof thisClient.defaultType == "undefined") ? thisClientType : thisClient.defaultType;
 				var thisClientName = (typeof thisClient.name == "undefined") ? thisClientMacAddr : (thisClient.name.trim() == "") ? thisClientMacAddr : thisClient.name.trim();
+				thisClientName = htmlEnDeCode.htmlEncode(thisClientName);
 				var thisClientNickName = (typeof thisClient.nickName == "undefined") ? "" : (thisClient.nickName.trim() == "") ? "" : thisClient.nickName.trim();
+				thisClientNickName = htmlEnDeCode.htmlEncode(thisClientNickName);
 				var thisClientReNode = (typeof thisClient.amesh_isRe == "undefined") ? false : ((thisClient.amesh_isRe == "1") ? true : false);
 
 				clientList.push(thisClientMacAddr);
@@ -389,30 +393,56 @@ genClientList();
 function getUploadIcon(clientMac) {
 	var result = "NoIcon";
 	$.ajax({
-		url: '/ajax_uploadicon.asp?clientmac=' + clientMac,
+		url: '/appGet.cgi?hook=get_upload_icon()&clientmac=' + clientMac,
+		dataType: 'json',
 		async: false,
-		dataType: 'script',
-		error: function(xhr){
-			setTimeout("getUploadIcon('" + clientMac + "');", 1000);
-		},
 		success: function(response){
-			result = htmlEnDeCode.htmlEncode(upload_icon);
+			var base64_image = htmlEnDeCode.htmlEncode(response.get_upload_icon);
+			result = (isImageBase64(base64_image)) ? base64_image : "NoIcon";
 		}
 	});
-	return result
+	return result;
+
+	function isImageBase64(str){
+		var str_tmp = str.slice();
+		if(str_tmp.substring(0,11) == "data:image/"){
+			var str_tmp_arr = str_tmp.substring(11).split(";");
+			if(str_tmp_arr.length != 2){
+				return false;
+			}
+			var mimeTypeRegExp = /(jpg|jpeg|gif|png|bmp|ico)/;
+			var mimeType_str = str_tmp_arr[0];
+			if(mimeType_str.length > 5){
+				return false;
+			}
+			var match_data = mimeType_str.match(mimeTypeRegExp);
+			if(!Boolean(match_data)){
+				return false;
+			}
+			var base64_str = str_tmp_arr[1];
+			if(base64_str != undefined && (base64_str.substring(0,7) == "base64,")){
+				var img_str = base64_str.substring(7);//filter base64,
+				var len = img_str.length;
+				if(!len || len % 4 != 0 || /[^A-Z0-9+\/=]/i.test(img_str)){
+					return false;
+				}
+				var firstPaddingChar = img_str.indexOf('=');
+				return (firstPaddingChar === -1 || firstPaddingChar === len - 1 || (firstPaddingChar === len - 2 && img_str[len - 1] === '='));
+			}
+		}
+		return false;
+	}
 }
 
 function getUploadIconCount() {
 	var count = 0;
 	$.ajax({
-		url: '/ajax_uploadicon.asp',
+		url: '/appGet.cgi?hook=get_upload_icon_count_list()',
+		dataType: 'json',
 		async: false,
-		dataType: 'script',
-		error: function(xhr){
-			setTimeout("getUploadIconCount();", 1000);
-		},
 		success: function(response){
-			count = upload_icon_count;
+			count = parseInt(response.get_upload_icon_count_list.upload_icon_count);
+			if(isNaN(count)) count = 0;
 		}
 	});
 	return count
@@ -421,14 +451,11 @@ function getUploadIconCount() {
 function getUploadIconList() {
 	var list = "";
 	$.ajax({
-		url: '/ajax_uploadicon.asp',
+		url: '/appGet.cgi?hook=get_upload_icon_count_list()',
+		dataType: 'json',
 		async: false,
-		dataType: 'script',
-		error: function(xhr){
-			setTimeout("getUploadIconList();", 1000);
-		},
 		success: function(response){
-			list = upload_icon_list;
+			list = response.get_upload_icon_count_list.upload_icon_list;
 		}
 	});
 	return list
@@ -1899,6 +1926,12 @@ var sorter = {
 			b_num = (b[sorter.indexFlag] == "") ? 0 : b[sorter.indexFlag];
 			return parseInt(a_num) - parseInt(b_num);
 		}
+		else if(sorter.indexFlag == 8) { // Time string in (h)hh:mm:ss format
+			var a_num = 0, b_num = 0;
+			a_num = a[sorter.indexFlag].replace(/:/g, "");
+			b_num = b[sorter.indexFlag].replace(/:/g, "");
+			return parseInt(a_num) - parseInt(b_num);
+		}
 		else if(sorter.indexFlag == 8){//Access time
 			var a_num = 0, b_num = 0;
 			a_num = sorter.convert_time_to_num(a[sorter.indexFlag]);
@@ -1920,6 +1953,12 @@ var sorter = {
 			var a_num = 0, b_num = 0;
 			a_num = (a[sorter.indexFlag] == "") ? 0 : a[sorter.indexFlag];
 			b_num = (b[sorter.indexFlag] == "") ? 0 : b[sorter.indexFlag];
+			return parseInt(b_num) - parseInt(a_num);
+		}
+		else if(sorter.indexFlag == 8) { // Time string in (h)hh:mm:ss format
+			var a_num = 0, b_num = 0;
+			a_num = a[sorter.indexFlag].replace(/:/g, "");
+			b_num = b[sorter.indexFlag].replace(/:/g, "");
 			return parseInt(b_num) - parseInt(a_num);
 		}
 		else if(sorter.indexFlag == 8){//Access time
@@ -2036,7 +2075,7 @@ for(var index in isWL_map){
 	if(index == "0"){
 		sorter["wired_index"] = 3;
 		sorter["wired_display"] = true;
-		sorter["ssortingMethod_wired"] = "increase";
+		sorter["sortingMethod_wired"] = "increase";
 	}
 	else{
 		wl_list["wl" + index + ""] = new Array();
@@ -2106,7 +2145,6 @@ function pop_clientlist_listview() {
 	var divObj = document.createElement("div");
 	divObj.setAttribute("id","clientlist_viewlist_content");
 	divObj.className = "clientlist_viewlist";
-	divObj.setAttribute("onselectstart","return false");
 	document.body.appendChild(divObj);
 	fadeIn(document.getElementById("clientlist_viewlist_content"));
 	cal_panel_block_clientList("clientlist_viewlist_content", 0.045);
@@ -2157,8 +2195,8 @@ function exportClientListLog() {
 		for(var i = 0; i < array.length; i += 1) {
 			tempArray = [];
 			tempArray[0] = (array[i][0] == 1) ? "Allow Internet access" : "Block Internet access";
-			tempArray[1] = array[i][1].replace(",", "");
-			tempArray[2] = array[i][2];
+            tempArray[1] = `"${array[i][1].replace(",", "").replace(/[=@]/g, " ")}"`;
+            tempArray[2] = `"${array[i][2].replace(/[=@]/g, " ")}"`;
 			tempArray[3] = array[i][3];
 			tempArray[4] = ipStateExport[clientList[array[i][4]].ipMethod];
 			tempArray[5] = array[i][4];
@@ -3700,3 +3738,4 @@ var custom_icon_list_api = {
 		}
 	}
 }
+

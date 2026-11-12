@@ -859,7 +859,7 @@ var validator = {
 			}
 			return false;
 		}
-	},
+ 	},
 
 	isPortRange: function(o,event){
 		var keyPressed = event.keyCode ? event.keyCode : event.which;
@@ -1814,7 +1814,7 @@ var validator = {
 	},
 
 	rangeFloat: function(o, _min, _max, def){
-        if(isNaN(o.value) || o.value <= _min || o.value > _max) {
+        if(isNaN(o.value) || o.value < _min || o.value > _max) {
             alert('<#JS_validrange#> ' + _min + ' <#JS_validrange_to#> ' + _max + '.');
 			o.value = def;
 			o.focus();
@@ -2353,13 +2353,29 @@ var validator = {
 		}
 	},
 
-	domainName_flag: function(_value) {
-		//domin name
-		var domainNameFormat = /^((?:(?:(?:\w[\.\-\+]?)*)\w)+)((?:(?:(?:\w[\.\-\+]?){0,62})\w)+)\.(\w{2,6})$/; 
-		if(domainNameFormat.test(_value))
+	safeName: function(obj, flag){
+		if (obj.value.length == 0) return true;
+
+		var re = new RegExp(/^[a-zA-Z0-9:\-_. ]+$/gi);
+		if(re.test(obj.value)){
 			return true;
-		else
+		}else{
+			if (flag != "noalert"){
+				alert("Only letters, numbers, spaces, underscores, periods and dashes are accepted.");
+				obj.focus();
+				obj.select();
+			}
 			return false;
+		}
+	},
+
+        domainName_flag: function(_value) {
+                //domin name
+                var domainNameFormat = /^((?:(?:(?:\w[\.\-\+]?)*)\w)+)((?:(?:(?:\w[\.\-\+]?){0,62})\w)+)\.(\w{2,6})$/; 
+                if(domainNameFormat.test(_value))
+                        return true;
+                else
+                        return false;
 	},
 
 	dwb_check_wl_setting: function(_jsonPara) {
@@ -2391,5 +2407,5 @@ var validator = {
 			}
 		}
 		return status;
-	}
+        }
 };

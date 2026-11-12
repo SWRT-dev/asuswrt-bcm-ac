@@ -36,6 +36,7 @@ release/src/router/shared/nvpriv.c
 release/src/router/shared/spwenc.c
 release/src/router/shared/sysdeps/*/private.c
 release/src/router/shared/tcode.c
+release/src/router/shared/tcode.h
 release/src/router/wlconf*/*.c
 release/src/router/u2ec/*.c
 release/src/router/u2ec/*.h

@@ -620,6 +620,7 @@ static int wsd_send_soap_msg(int fd, struct endpoint *ep,
 	char msg_id[UUIDLEN], *soap_relates, *msg;
 
 	uuid_random(msg_id, sizeof msg_id);
+
 	if (relates) {
 		if (asprintf(&soap_relates,
 			"<wsa:RelatesTo>%s</wsa:RelatesTo>", relates) <= 0) {
@@ -660,6 +661,7 @@ static int wsd_send_soap_msg(int fd, struct endpoint *ep,
 		}
 	}
 	free(msg);
+
 	return rv;
 #undef __FUNCTION__
 }
@@ -811,7 +813,11 @@ static int send_http_resp_header(int fd, struct endpoint *ep,
 {
 	const char resp_hdr_fmt[] =
 		"HTTP/1.1 %s\r\n"
+#ifdef ASUSWRT
+		"Server: ASUSWRT WSD Server\r\n"
+#else
 		"Server: NETGEAR WSD Server\r\n"
+#endif
 		"Date: %s\r\n"
 		"Connection: close\r\n"
 		"Content-Type: application/soap+xml\r\n"
@@ -1097,6 +1103,7 @@ static int wsd_recv_action(int (*f)(int fd,
 			const struct wsd_req_info *info)
 {
 	_saddr_t ci;
+
 	if (connected_if(sa, &ci)) {
 		ep->errstr = "wsd_recv_action: connected_if";
 		ep->_errno = errno;
@@ -1125,6 +1132,7 @@ int wsd_recv(struct endpoint *ep)
 	ssize_t len;
 
 	memset(&sa, 0, slen);
+
 	if (ep->type == SOCK_STREAM) {
 		struct timeval to = { .tv_sec = 1, .tv_usec = 0};
 

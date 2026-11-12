@@ -21,7 +21,6 @@
 <script language="JavaScript" type="text/javascript" src="validator.js"></script>
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="switcherplugin/jquery.iphone-switch.js"></script>
-<script type="text/javascript" src="js/fire.js"></script>
 <style>
 #ClientList_Block_PC{
 	border:1px outset #FFF;
@@ -472,7 +471,7 @@ function addRule(){
 		change_add_btn(0);
 		return false;
 	}
-	else if(check_macaddr(document.form.clientmac_x_0, check_hwaddr_flag(document.form.clientmac_x_0)) == true){
+	else if(check_macaddr(document.form.clientmac_x_0, check_hwaddr_flag(document.form.clientmac_x_0,'inner')) == true){
 		Object.keys(wtfast_rulelist_array).forEach(function(key){
 			if(wtfast_rulelist_array[key][1].toUpperCase() == mac){
 				alert("<#JS_duplicate#>");
@@ -781,6 +780,7 @@ function show_login_page(show){
 		document.getElementById("WTFast_login_div").style.display = "";
 		document.getElementById("wtf_username").disabled = false;
 		document.getElementById("wtf_passwd").disabled = false;
+/*
 		if(isChrome){
 			showFire();
 			document.getElementById("fire_pic").style.display = "none";
@@ -792,11 +792,14 @@ function show_login_page(show){
 			}
 			document.getElementById("fire_pic").style.display = "";
 		}
+*/
 	}
 	else{
 		document.getElementById("WTFast_login_div").style.display = "none";
+/*
 		if(isChrome)
 			stopFire();
+*/
 	}
 }
 
@@ -823,7 +826,7 @@ function checkLoginStatus(){
 		update_server_list_visibilities($("server_1_list"));
 		create_server_list("");
 		create_game_list("");
-		stopFire();
+//		stopFire();
 	}
 	else{
 		if(typeof(wtfast_status.Error) != "undefined"){
@@ -1083,10 +1086,10 @@ function clean_macerr(){
 			</tr>
 		</table>
 		<div style="color:#ffffff; font-size:12px; text-align:center;"><#Manual_Setting_notice#> <#GB_management_note1#></div>
-		<div>
+		<!-- div>
 			<canvas id="fire" style="width:760px;height:430px; display:block;position:absolute; top:491px; z-index:-1;"></canvas>
 			<img id="fire_pic" style="position: absolute; top: 499px; z-index: -1; margin-left: 3px;display:none;" src="images/fire.jpg">
-		</div>
+		</div -->
 		<div style="color:#949393; font-size:12px; text-align:right; margin-top: 146px; margin-right: 20px;">Ver. 1.0.0.4_16.0105</div>
 		</div><!--WTFast_login_div-->
 

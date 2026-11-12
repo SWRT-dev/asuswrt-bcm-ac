@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"> 
 <html xmlns:v>
 <head>
@@ -99,7 +99,7 @@ var wans_mode_orig = '<% nvram_get("wans_mode"); %>';
 var wans_standby_orig = '<% nvram_get("wans_standby"); %>';
 var min_detect_interval = 2;
 var min_fo_detect_count = 5;
-var dns_probe_timeout_threshold = (httpApi.nvramGet(["dns_probe_timeout"], true).dns_probe_timeout > 0)? parseInt(httpApi.nvramGet(["dns_probe_timeout"], true).dns_probe_timeout)+1 : 1;
+var dns_probe_timeout_threshold = (httpApi.nvramGet(["dns_probe_timeout"], true).dns_probe_timeout > 0)? parseInt(httpApi.nvramGet(["dns_probe_timeout"], true).dns_probe_timeout)+2 : 3;
 var qos_enable_orig = '<% nvram_get("qos_enable"); %>';
 var qos_type_orig = '<% nvram_get("qos_type"); %>';
 
@@ -139,11 +139,11 @@ function initial(){
 		}
 	}
 
-	if(!isEmpty(eth_wan_list)){
+	if(!isEmpty(eth_wan_list) && wans_caps.indexOf("wan") >= 0){
 		var wans_caps_array = wans_caps.split(" ");
-		var index = 0;
+		var index = wans_caps_array.indexOf("wan");
 
-		wans_caps_array.splice(wans_caps_array.indexOf("wan"), 1);
+		wans_caps_array.splice(index, 1);
 		Object.keys(eth_wan_list).forEach(function(eth_wan){
 				wans_caps_array.splice(index, 0, eth_wan);
 				index++;
@@ -303,9 +303,31 @@ function is_special_lan(wans_lanport_v){
 	return special_lan;
 }
 
+function get_default_wan(){
+	var default_wan = "wan";
+
+	if(!isEmpty(eth_wan_list)){
+		$.each(eth_wan_list, function(key) {
+			var wan_obj = eth_wan_list[key];
+
+			if(wan_obj.hasOwnProperty("extra_settings")){
+				var extra_settings = wan_obj.extra_settings;
+				if(extra_settings.hasOwnProperty("wans_extwan")){
+					if(extra_settings["wans_extwan"] == "0"){
+						default_wan = key;
+						return false;
+					}
+				}
+			}
+		});
+	}
+
+	return default_wan;
+}
+
 function form_show(v, change_primary_wan){
-	if(change_primary_wan == 1)
-		var wan_value = "";
+	if(change_primary_wan != undefined)
+		var wan_value = change_primary_wan;
 	else
 		var wan_value = get_ethwan_setting();
 
@@ -503,17 +525,22 @@ function applyRule(){
 				var cur_wan_ifname_x = httpApi.nvramGet(["wan_ifname_x"], true).wan_ifname_x;
 				var primary_wan_ifname = "";
 				var second_wan_ifname = "";
+				var primary_extwan = "";
+				var second_extwan = "";
+
 				if(primary_obj.hasOwnProperty("extra_settings")){
 					var extra_settings = primary_obj.extra_settings;
 					primary_wan_ifname = extra_settings.hasOwnProperty("wan_ifname_x")? extra_settings.wan_ifname_x : "";
+					primary_extwan = extra_settings.hasOwnProperty("wans_extwan")? extra_settings.wans_extwan : "";
 				}
 				if(secondary_obj.hasOwnProperty("extra_settings")){
 					var extra_settings = secondary_obj.extra_settings;
 					second_wan_ifname = extra_settings.hasOwnProperty("wan_ifname_x")? extra_settings.wan_ifname_x : "";
+					second_extwan = extra_settings.hasOwnProperty("wans_extwan")? extra_settings.wans_extwan : "";
 				}
 
 				if( (cur_wan_ifname_x != "" && primary_wan_ifname == cur_wan_ifname_x) ||
-					(cur_wan_ifname_x == "" && document.form.wans_primary.value == "wan") ){
+					(cur_wan_ifname_x == "" && primary_extwan == "0") ){
 					primary_val = "wan";
 					secondary_val = "lan";
 					if(secondary_obj.hasOwnProperty("wans_lanport"))
@@ -522,7 +549,7 @@ function applyRule(){
 						document.form.wans_lanport.value = second_wan_ifname.substr(3, 1);
 				}
 				else if((cur_wan_ifname_x != "" && second_wan_ifname == cur_wan_ifname_x) ||
-						(cur_wan_ifname_x == "" && document.form.wans_second.value == "wan")){
+						(cur_wan_ifname_x == "" && second_extwan == "0")){
 					secondary_val = "wan";
 					primary_val = "lan";
 					if(primary_obj.hasOwnProperty("wans_lanport"))
@@ -594,7 +621,7 @@ function applyRule(){
 			document.form.wans_dualwan.value = primary_val +" "+ secondary_val;
 		}
 
-		if(!dsl_support && based_modelid != "BRT-AC828" && (document.form.wans_dualwan.value == "usb lan" || document.form.wans_dualwan.value == "lan usb") && based_modelid != "GT-AX11000" && productid != "RT-AX86U" && based_modelid != "GT-AXE11000" && based_modelid != "RT-AX86U_PRO"){
+		if(!dsl_support && based_modelid != "BRT-AC828" && (document.form.wans_dualwan.value == "usb lan" || document.form.wans_dualwan.value == "lan usb") && based_modelid != "GT-AX11000" && productid != "RT-AX86U" && based_modelid != "GT-AXE11000" && based_modelid != "RT-AX86U_PRO" && based_modelid != "RT-AXE7800"){
 			alert("WAN port should be selected in Dual WAN.");
 			document.form.wans_primary.focus();
 			return;
@@ -1652,15 +1679,15 @@ function remain_origins(){
 															form_show(wans_flag);
 														},
 														function() {
-															var change_primary_wan = 0;
 															if(wans_caps_primary.indexOf("wan") >= 0 && wans_dualwan_array[0] == "lan"){
 																var cur_parimary_wan = wans_dualwan_array[0].toUpperCase() + " Port " + wans_lanport_orig;
 																var special_lan = is_special_lan(document.form.wans_lanport.value);
+																var default_wan = get_default_wan();
 
 																if(special_lan != "")
 																	cur_parimary_wan = eth_wan_list[special_lan].wan_name;
 
-																var confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \""+ eth_wan_list["wan"].wan_name + "\", are you sure to do it?"; //untranslated
+																var confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \""+ eth_wan_list[default_wan].wan_name + "\", are you sure to do it?"; //untranslated
 
 																if(!confirm(confirm_str)){
 																	curState = "1";
@@ -1669,7 +1696,6 @@ function remain_origins(){
 																}
 																else{
 																	wans_dualwan_array[0] = "wan";
-																	change_primary_wan = 1;
 																}
 															}
 															curState = "0";
@@ -1678,7 +1704,7 @@ function remain_origins(){
 															document.form.wans_dualwan.value = wans_dualwan_array.join(" ");
 															document.form.wans_mode.value = "fo";
 															addWANOption(document.form.wans_primary, wans_caps_primary.split(" "));
-															form_show(wans_flag, change_primary_wan);
+															form_show(wans_flag, default_wan);
 															if(wan_bonding_support){
 																document.form.bond_wan.disabled = false;
 																document.form.bond_wan.value = orig_bond_wan;
@@ -1881,3 +1907,4 @@ function remain_origins(){
 <div id="footer"></div>
 </body>
 </html>
+

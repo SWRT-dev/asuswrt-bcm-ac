@@ -84,9 +84,9 @@ static void ntp_service()
 #ifdef RTCONFIG_UUPLUGIN
 		if(nvram_get_int("uu_enable"))
 #if defined(RTCONFIG_SWRT_UU)
-		exec_uu_swrt();
+			exec_uu_swrt();
 #else
-		exec_uu();
+			exec_uu();
 #endif
 #endif
 	}
@@ -175,6 +175,7 @@ int ntp_main(int argc, char *argv[])
 	pid_t pid__ntpdate;
 	char *args_ntpdate[] = { "ntpdate", "2.pool.ntp.org", NULL };
 #endif
+	int ret;
 
 	if (nvram_get_int("no_ntp"))
 		return 0;
@@ -237,20 +238,25 @@ int ntp_main(int argc, char *argv[])
 
 			nvram_set("ntp_server_tried", server);
 			if (nvram_match("ntp_ready", "0") || nvram_match("ntp_debug", "1") ||
-				!strstr(nvram_safe_get("time_zone_x"), "DST"))
+				!strstr(nvram_safe_get("time_zone_x"), "DST")) {
 				logmessage("ntp", "start NTP update");
+			}
 
 		if (is_router_mode()) {	// try simultaneously
 #if defined(RTCONFIG_IPV6) && (defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(XD6_V2))
 			if (!strncmp(nvram_safe_get("territory_code"), "CH", 2) &&
 				ipv6_enabled() &&
-				nvram_match(ipv6_nvname("ipv6_only"), "1"))
-				_eval(args_ntpdate, NULL, 0, &pid__ntpdate);
-			else
+				nvram_match(ipv6_nvname("ipv6_only"), "1")) {
+				ret = doSystem("nslookup %s &> /dev/null", args_ntpdate[1]);
+				if (ret == 0)
+					_eval(args_ntpdate, NULL, 0, &pid__ntpdate);
+			} else
 #endif
 			if(strcmp(server, DEFAULT_NTP_SERVER)) //customer setting
 			{
-				_eval(args, NULL, 0, &pid);
+				ret = doSystem("nslookup %s &> /dev/null", server);
+				if (ret == 0)
+					_eval(args, NULL, 0, &pid);
 
 				strlcpy(server, DEFAULT_NTP_SERVER, sizeof(server));
 			}
@@ -260,14 +266,18 @@ int ntp_main(int argc, char *argv[])
 				while(server_list[server_idx])
 				{
 					strlcpy(server, server_list[server_idx], sizeof(server));
-					_eval(args, NULL, 0, &pid);
+					ret = doSystem("nslookup %s &> /dev/null", server_list[server_idx]);
+					if (ret == 0)
+						_eval(args, NULL, 0, &pid);
 					server_idx++;
 				}
 
 				strlcpy(server, nvram_safe_get("ntp_server0"), sizeof(server));
 			}
 		} else {
-			_eval(args, NULL, 0, &pid);
+			ret = doSystem("nslookup %s &> /dev/null", server);
+			if (ret == 0)
+				_eval(args, NULL, 0, &pid);
 
 			if (strlen(nvram_safe_get("ntp_server0")))
 			{
@@ -285,6 +295,11 @@ int ntp_main(int argc, char *argv[])
 			args[2] = server;
 		}
 			sleep(SECONDS_TO_WAIT);
+			/* Restart DDNS when reconnected */
+			if(nvram_get_int("ntp_ready") == 1) {
+				stop_ddns();
+				start_ddns(NULL);
+			}
 			set_alarm();
 		}
 

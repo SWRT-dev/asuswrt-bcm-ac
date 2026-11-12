@@ -18,6 +18,11 @@ function replaceAll(txt, replace, with_this) {
    return txt.replace(new RegExp(replace, 'g'),with_this);
 }
 
+/* String replace &#39; with ' for dict */
+function stringSafeGet(str){
+    return str.replace(new RegExp("&#39;", 'g'), "'");
+}
+
 /* Internet Explorer lacks this array method */
 if (!('indexOf' in Array.prototype)) {
 	Array.prototype.indexOf = function(find, i) {
@@ -515,7 +520,7 @@ var cloudsync_support = isSupport("cloudsync");
 var nocloudsync_support = isSupport("nocloudsync");
 var aicloudipk_support = isSupport("aicloudipk");
 var yadns_hideqis = isSupport("yadns_hideqis");
-var yadns_support = yadns_hideqis || isSupport("yadns");
+var yadns_support = false;	//yadns_hideqis || isSupport("yadns");
 var dnspriv_support = isSupport("dnspriv");
 var manualstb_support = isSupport("manual_stb"); 
 var wps_multiband_support = isSupport("wps_multiband");
@@ -526,6 +531,7 @@ var IPv6_Passthrough_support = isSupport("ipv6pt");
 var IPv6_Only_support = isSupport("v6only");
 var Softwire46_support = isSupport("s46");
 var ocnvc_support = isSupport("ocnvc");
+var dslite_support = isSupport("dslite");
 var ParentalCtrl2_support = isSupport("PARENTAL2");
 var pptpd_support = isSupport("pptpd"); 
 var openvpnd_support = isSupport("openvpnd"); 
@@ -571,6 +577,7 @@ var ipsec_srv_support = isSupport("ipsec_srv");
 var ipsec_cli_support = isSupport("ipsec_cli");
 var traffic_analyzer_support = isSupport("traffic_analyzer");
 var traffic_limiter_support = isSupport("traffic_limiter");
+var dns_dpi_support = isSupport("dns_dpi");
 var force_upgrade_support = isSupport("fupgrade");
 var odm_support = isSupport("odm");
 var adBlock_support = isSupport("adBlock");
@@ -764,11 +771,13 @@ if(based_modelid != "BRT-AC828"){
 }
 
 //notification value
-var notice_pw_is_default = '<% check_pw(); %>';
-if(notice_pw_is_default == 1 && window.location.pathname.toUpperCase().search("QIS_") < 0)	//force to change http_passwd / http_username & except QIS settings
+if(navigator.userAgent.search("asusrouter") == -1){
+	var notice_pw_is_default = '<% check_pw(); %>';
+	if(notice_pw_is_default == 1 && window.location.pathname.toUpperCase().search("QIS_") < 0) //force to change http_passwd / http_username & except QIS settings
 		location.href = 'Main_Password.asp?nextPage=' + window.location.pathname.substring(1 ,window.location.pathname.length);
-else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2 && window.location.pathname.toUpperCase().search("QIS_") < 0)
-	location.href = '/QIS_wizard.htm?flag=wireless';
+	else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2 && window.location.pathname.toUpperCase().search("QIS_") < 0)
+		location.href = '/QIS_wizard.htm?flag=wireless';
+}
 
 var allUsbStatus = "";
 var allUsbStatusTmp = "";
@@ -2683,6 +2692,21 @@ function free_options(selectObj){
 	}
 }
 
+function getRadioValue(obj) {
+	for (var i=0; i<obj.length; i++) {
+		if (obj[i].checked)
+			return obj[i].value;
+	}
+	return 0;
+}
+
+function setRadioValue(obj,val) {
+	for (var i=0; i<obj.length; i++) {
+		if (obj[i].value==val)
+			obj[i].checked = true;
+	}
+}
+
 function blocking(obj_id, show){
 	var state = show?'block':'none';
 	
@@ -2770,7 +2794,7 @@ function hadPlugged(deviceType){
 var AUTOLOGOUT_MAX_MINUTE = parseInt('<% nvram_get("http_autologout"); %>') * 20;
 var error_num = 5;
 function updateStatus(){
-	if(stopFlag == 1) return false;
+	if(stopFlag == 1 || navigator.userAgent.search("asusrouter") != -1) return false;
 	if(AUTOLOGOUT_MAX_MINUTE == 1) location = "Logout.asp"; // 0:disable auto logout, 1:trigger auto logout. 
 
 	require(['/require/modules/makeRequest.js'], function(makeRequest){
@@ -3408,24 +3432,24 @@ function refreshStatus(xhr){
 				}
 		}	
 		else if(wl_info.band5g_support || wl_info.band6g_support){
-				if(wlan0_radio_flag == "0" && wlan1_radio_flag == "0"){
-						document.getElementById("wifi_hw_sw_status").className = "wifihwswstatusoff";
-						document.getElementById("wifi_hw_sw_status").onclick = function(){}
-				}
-				else{
-						document.getElementById("wifi_hw_sw_status").className = "wifihwswstatuson";
-						document.getElementById("wifi_hw_sw_status").onclick = function(){}
-				}
+			if(wlan0_radio_flag == "0" && wlan1_radio_flag == "0"){
+					document.getElementById("wifi_hw_sw_status").className = "wifihwswstatusoff";
+					document.getElementById("wifi_hw_sw_status").onclick = function(){}
+			}
+			else{
+					document.getElementById("wifi_hw_sw_status").className = "wifihwswstatuson";
+					document.getElementById("wifi_hw_sw_status").onclick = function(){}
+			}
 		}
 		else{
 				if(wl_info.wlan0_radio_flag == "0"){
-						document.getElementById("wifi_hw_sw_status").className = "wifihwswstatusoff";
-						document.getElementById("wifi_hw_sw_status").onclick = function(){}
-				}
-				else{
-						document.getElementById("wifi_hw_sw_status").className = "wifihwswstatuson";
-						document.getElementById("wifi_hw_sw_status").onclick = function(){}
-				}
+					document.getElementById("wifi_hw_sw_status").className = "wifihwswstatusoff";
+					document.getElementById("wifi_hw_sw_status").onclick = function(){}
+			}
+			else{
+					document.getElementById("wifi_hw_sw_status").className = "wifihwswstatuson";
+					document.getElementById("wifi_hw_sw_status").onclick = function(){}
+			}
 		}
 		document.getElementById("wifi_hw_sw_status").onmouseover = function(){overHint(8);}
 		document.getElementById("wifi_hw_sw_status").onmouseout = function(){nd();}		
@@ -4524,5 +4548,80 @@ function Get_Component_PWD_Strength_Meter(id){
 	var $strength_text = $("<div>").addClass("strength_text").appendTo($pwd_strength_container).attr("id", "score"+postfix);
 	var $strength_color = $("<div>").addClass("strength_color").appendTo($pwd_strength_container).attr("id", "scorebar"+postfix);
 	return $pwd_strength_container;
+}
+
+function plainPasswordSwitch(obj, event){
+	(event === 'focus') ? (obj.type = 'text') : (obj.type = 'password');						
+}
+
+function checkPolicy() {
+
+    const applyRule = () => {
+        httpApi.privateEula.set("1", function(){
+            httpApi.securityUpdate.set(1);
+            httpApi.nvramSet({
+                "webs_update_enable": 1,
+                "action_mode": "apply",
+                "rc_service": "saveNvram"
+            },()=>{},false);
+        })
+    }
+
+    if (policy_status.EULA == "0") {
+        const policyModal = new PolicyUpdateModalComponent();
+        policyModal.show();
+    } else if (policy_status.EULA == 1 && ((policy_status.PP == 1 && policy_status.PP_time != "") || (policy_status.PP == 0 && policy_status.PP_time == ""))) {
+        const policyModal = new PolicyModalComponent({
+            policy: 'PP',
+            agreeCallback: applyRule,
+            submit_reload: 1
+        });
+        policyModal.show();
+    } else if (policy_status.TM == 1 && policy_status.TM_time == '') {
+        const policyModal = new PolicyModalComponent({
+            policy: "TM"
+        });
+        policyModal.show();
+    }
+}
+if (
+    !(window.appInterface || // from Android app
+        (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.appInterface) // for iOS app
+    )
+) {
+	setTimeout(() => {
+		if (typeof httpApi === 'undefined') {
+			const httpApi_script = document.createElement('script');
+			httpApi_script.src = '/js/httpApi.js';
+			document.head.appendChild(httpApi_script);
+			httpApi_script.onload = () => {
+				if (re_mode != 1) {
+					if (typeof policy_status === 'undefined') {
+						const policy_script = document.createElement('script');
+						policy_script.src = '/js/asus_policy.js';
+						document.head.appendChild(policy_script);
+						policy_script.onload = () => {
+							checkPolicy();
+						}
+					} else {
+						checkPolicy();
+					}
+				}
+			}
+		} else {
+			if (re_mode != 1) {
+				if (typeof policy_status === 'undefined') {
+					const policy_script = document.createElement('script');
+                    policy_script.src = '/js/asus_policy.js';
+                    document.head.appendChild(policy_script);
+                    policy_script.onload = () => {
+                        checkPolicy();
+                    }
+                } else {
+                    checkPolicy();
+                }
+            }
+        }
+    }, 1500);
 }
 

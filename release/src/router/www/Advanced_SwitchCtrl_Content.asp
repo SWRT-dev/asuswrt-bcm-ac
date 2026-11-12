@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -16,6 +16,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/httpApi.js"></script>
 <style>
@@ -107,12 +108,10 @@ function initial(){
 			document.form.sfpp_hwnat_type.disabled = false;
 			document.form.sfpp_max_speed.disabled = false;
 			document.form.sfpp_force_on.disabled = false;
-			document.getElementById("aqr_hwnat_type_tr").style.display = "";
-			document.getElementById("aqr_link_speed_tr").style.display = "";
-			document.getElementById("aqr_ipg_tr").style.display = "";
-			document.getElementById("sfpp_hwnat_type_tr").style.display = "";
-			document.getElementById("sfpp_max_speed_tr").style.display = "";
-			document.getElementById("sfpp_force_on_tr").style.display = "";
+			document.getElementById("aqr_sfpp_table").style.display = "";
+			if (sw_mode != "1") {
+				document.getElementById("sfpp_ipaddr_tr").style.display = "none";
+			}
 	}
 	if(qca_support){
 		var nataccel = '<% nvram_get("qca_sfe"); %>';
@@ -412,9 +411,37 @@ function check_bonding_policy(obj){
 													<input type="radio" name="gro_disable_force" value="1" <% nvram_match("gro_disable_force", "1", "checked"); %>><#checkbox_No#>
 												</td>
 											</tr>
+											<tr id="lacp_tr" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);"><#NAT_lacp#></a></th>
+												<td>
+													<select name="lacp_enabled" class="input_option"  onchange="check_bonding_policy(this);" disabled>
+														<option class="content_input_fd" value="0" <% nvram_match("lacp_enabled", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
+														<option class="content_input_fd" value="1" <% nvram_match("lacp_enabled", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
+													</select>
+													<div id="lacp_desc" style="display:none"><span id="lacp_note"><#NAT_lacp_note#></span><div>
+												</td>
+											</tr>
+											<tr id="lacp_policy_tr" style="display:none">
+												<th><#SwitchCtrl_BondingPolicy#></th>
+												<td>
+													<select name="bonding_policy" class="input_option" disabled>
+														<option value="0"><#CTL_Default#></option>
+														<option value="1"><#SwitchCtrl_BondingPolicy_src#></option>
+														<option value="2"><#SwitchCtrl_BondingPolicy_dest#></option>
+													</select>
+												</td>
+											</tr>
+										</table>
 
-											<tr id="aqr_hwnat_type_tr" style="display:none">
-												<th>10G base-T port acceleration type</th><!--untranslated-->
+										<table id="aqr_sfpp_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="display:none">
+											<!-- 10G base-T -->
+											<thead>
+												<tr id="aqr_title_field">
+													<td id="aqr_title" colspan="2">10G base-T port</td>
+												</tr>
+											</thead>
+											<tr id="aqr_hwnat_type_tr">
+												<th>Acceleration type</th><!--untranslated-->
 												<td>
 													<select name="aqr_hwnat_type" class="input_option" disabled>
 														<option value="0" <% nvram_match("aqr_hwnat_type", "0","selected"); %>><#Auto#></option>
@@ -424,8 +451,8 @@ function check_bonding_policy(obj){
 												</td>
 											</tr>
 
-											<tr id="aqr_link_speed_tr" style="display:none">
-												<th>10G base-T port link speed</th><!--untranslated-->
+											<tr id="aqr_link_speed_tr">
+												<th>Link speed</th><!--untranslated-->
 												<td>
 													<select name="aqr_link_speed" class="input_option" disabled>
 														<option value="0" <% nvram_match("aqr_link_speed", "0","selected"); %>><#Auto#></option>
@@ -437,8 +464,8 @@ function check_bonding_policy(obj){
 												</td>
 											</tr>
 
-											<tr id="aqr_ipg_tr" style="display:none">
-												<th>10G base-T interpacket gap</th><!--untranslated-->
+											<tr id="aqr_ipg_tr">
+												<th>Interpacket gap</th><!--untranslated-->
 												<td>
 													<select name="aqr_ipg" class="input_option" disabled>
 														<option value="96" <% nvram_match("aqr_ipg", "96","selected"); %>><#CTL_Default#></option>
@@ -447,8 +474,14 @@ function check_bonding_policy(obj){
 												</td>
 											</tr>
 
-											<tr id="sfpp_hwnat_type_tr" style="display:none">
-												<th>SFP+ port acceleration type</th><!--untranslated-->
+											<!-- 10G SFP+ -->
+											<thead>
+												<tr id="sfpp_title_field">
+													<td id="sfpp_title" colspan="2">10G SFP+ port</td>
+												</tr>
+											</thead>
+											<tr id="sfpp_hwnat_type_tr">
+												<th>Acceleration type</th><!--untranslated-->
 												<td>
 													<select name="sfpp_hwnat_type" class="input_option" disabled>
 														<option value="0" <% nvram_match("sfpp_hwnat_type", "0","selected"); %>><#Auto#></option>
@@ -458,8 +491,8 @@ function check_bonding_policy(obj){
 												</td>
 											</tr>
 
-											<tr id="sfpp_max_speed_tr" style="display:none">
-												<th>SFP+ port maximum link speed</th><!--untranslated-->
+											<tr id="sfpp_max_speed_tr">
+												<th>Link speed</th><!--untranslated-->
 												<td>
 													<select name="sfpp_max_speed" class="input_option" disabled>
 														<option value="0" <% nvram_match("sfpp_max_speed", "0","selected"); %>><#Auto#></option>
@@ -469,32 +502,18 @@ function check_bonding_policy(obj){
 												</td>
 											</tr>
 
-											<tr id="sfpp_force_on_tr" style="display:none">
-												<th>SFP+ port TX clock</th><!--untranslated-->
+											<tr id="sfpp_force_on_tr">
+												<th>TX clock</th><!--untranslated-->
 												<td>
 													<input type="radio" name="sfpp_force_on" value="0" <% nvram_match("sfpp_force_on", "0", "checked"); %>><#Auto#>
 													<input type="radio" name="sfpp_force_on" value="1" <% nvram_match("sfpp_force_on", "1", "checked"); %>>ON<!--untranslated-->
 												</td>
 											</tr>
 
-											<tr id="lacp_tr" style="display:none;">
-		      									<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);"><#NAT_lacp#></a></th>
+											<tr id="sfpp_ipaddr_tr">
+												<th><a class="hintstyle" href="javascript:void(0);" onClick="overlib('IP address of GPON module, e.g., 192.168.1.1 for ZTE ZXHN F5716G. You can access telnet or web server of GPON module if it exist via LAN/WLAN devices by configuring this setting. SFP+ port must be primary WAN or secondary WAN.');" onmouseout="nd();">GPON module's IP address</th><!--untranslated-->
 												<td>
-													<select name="lacp_enabled" class="input_option"  onchange="check_bonding_policy(this);" disabled>
-														<option class="content_input_fd" value="0" <% nvram_match("lacp_enabled", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
-														<option class="content_input_fd" value="1" <% nvram_match("lacp_enabled", "1","selected"); %>><#WLANConfig11b_WirelessCtrl_button1name#></option>
-													</select>
-													<div id="lacp_desc" style="display:none"><span id="lacp_note"><#NAT_lacp_note#></span><div>
-												</td>
-											</tr> 
-											<tr id="lacp_policy_tr" style="display:none">
-												<th><#SwitchCtrl_BondingPolicy#></th>
-												<td>
-													<select name="bonding_policy" class="input_option" disabled>
-														<option value="0"><#CTL_Default#></option>
-														<option value="1"><#SwitchCtrl_BondingPolicy_src#></option>
-														<option value="2"><#SwitchCtrl_BondingPolicy_dest#></option>
-													</select>
+													<input type="text" id="sfpp_module_ipaddr" name="sfpp_module_ipaddr" value="<% nvram_get("sfpp_module_ipaddr"); %>" tabindex="3" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" class="input_15_table" autocorrect="off" autocapitalize="off">
 												</td>
 											</tr>
 										</table>
@@ -517,3 +536,4 @@ function check_bonding_policy(obj){
 <div id="footer"></div>
 </body>
 </html>
+

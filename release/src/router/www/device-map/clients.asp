@@ -43,6 +43,7 @@ p{
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/tmmenu.js"></script>
 <script>
 if(parent.location.pathname.search("index") === -1) top.location.href = "../"+'<% networkmap_page(); %>';
 
@@ -65,6 +66,8 @@ var pagesVar = {
 		document.getElementById("select_wlclient_band").style.display = "none";
 	}
 }
+
+var mapscanning = 0;
 
 var clientMacUploadIcon = new Array();
 
@@ -255,7 +258,7 @@ function drawClientList(tab){
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '\');event.cancelBubble=true;return overlib(\'';
 		clientHtmlTd += retOverLibStr(clientObj);
-		clientHtmlTd += '\');" onmouseout="nd();">';
+		clientHtmlTd += '\', HAUTO, VAUTO);" onmouseout="nd();">';
 		clientHtmlTd += clientObj.mac;
 		clientHtmlTd += '</td></tr></table></div>';
 
@@ -330,7 +333,7 @@ function drawClientList(tab){
 		document.getElementById("searchingBar").placeholder = 'Search';
 	}
 	else{
-		document.getElementById("searchingBar").placeholder = '[' + wl_nband_title[tab.split("wireless")[1]] + '](' + totalClientNum.wireless_ifnames[tab.split("wireless")[1]] + ')';
+		document.getElementById("searchingBar").placeholder = '[' + wl_nband_title[tab.split("wireless")[1]-1] + '](' + totalClientNum.wireless_ifnames[tab.split("wireless")[1]-1] + ')';
 	}
 
 	if(pagesVar.curTab != tab){
@@ -391,30 +394,17 @@ function retOverLibStr(client){
 	return overlibStr;
 }
 
-function oui_query_full_vendor(mac){
-	if(clientList[mac].vendor != "") {
-		setTimeout(function(){
-			var overlibStrTmp = retOverLibStr(clientList[mac]);
-			overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
-			overlibStrTmp += clientList[mac].vendor;
-			return overlib(overlibStrTmp);
-		}, 1);
-	}
-	else {
-		if('<% nvram_get("x_Setting"); %>' == '1' && wanConnectStatus && clientList[mac].internetState) {
-			var queryStr = mac.replace(/\:/g, "").splice(6,6,"");
-			var overlibStrTmp = retOverLibStr(clientList[mac]);
-			$.getJSON("https://nw-dlcdnet.asus.com/plugin/js/ouiDB.json", function(data){
-				if(data != "" && data[queryStr] != undefined){
-					if(overlib.isOut) return nd();
-					var vendor_name = data[queryStr].trim();
-					overlibStrTmp += "<p><span>.....................................</span></p><p style='margin-top:5px'><#Manufacturer#> :</p>";
-					overlibStrTmp += vendor_name;
-					return overlib(overlibStrTmp);
-				}
-			});
-		}
-	}
+function ajaxCallJsonp(target){    
+    var data = $j.getJSON(target, {format: "json"});
+
+    data.success(function(msg){
+    	parent.retObj = msg;
+		parent.db("Success!");
+    });
+
+    data.error(function(msg){
+		parent.db("Error on fetch data!")
+    });
 }
 
 function popupCustomTable(mac){

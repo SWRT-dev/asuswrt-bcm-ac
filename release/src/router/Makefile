@@ -726,6 +726,7 @@ obj-$(RTCONFIG_QTN) += libqcsapi_client
 obj-$(RTCONFIG_QTN) += qtnimage
 obj-$(RTCONFIG_QSR10G) += libqcsapi_client_10g
 obj-$(RTCONFIG_DMALLOC) += dmalloc
+obj-$(RTCONFIG_VALGRIND) += valgrind
 
 obj-$(RTCONFIG_BCMARM) += ctf_arm
 obj-$(RTAC53U) += ctf_5358
@@ -972,7 +973,13 @@ obj-$(RTCONFIG_AHS) += curl
 obj-$(RTCONFIG_AHS) += json-c
 obj-$(RTCONFIG_AHS) += ahs
 
-obj-$(RTCONFIG_ASD) += asd
+ifeq ($(RTCONFIG_ASD_2_1),y)
+obj-y += asd2.1
+obj-y += onig-6.9.9
+obj-y += jq-1.7.1
+else ifeq ($(RTCONFIG_ASD),y)
+obj-y += asd
+endif
 
 obj-$(RTCONFIG_OPENVPN) += openssl
 obj-$(RTCONFIG_OPENVPN) += libvpn
@@ -989,7 +996,10 @@ obj-y += k3screenctrl
 obj-y += sw-auth-lite
 endif
 ifeq ($(RTCONFIG_SOFTCENTER),y)
-obj-y += skipdbv2 libev-4.33 softcenter libiconv-1.14
+obj-y += skipdbv2 libev-4.33 softcenter libiconv-1.14 onig-6.9.9 jq-1.7.1
+ifeq ($(HND_ROUTER),y)
+obj-y += lua
+endif
 #obj-y += httpdb mbedtls-2.6.0
 obj-y += ipset-7.6 libmnl-1.0.4 libnfnetlink-1.0.1
 endif
@@ -1428,6 +1438,7 @@ LZO_VER :=
 endif
 obj-$(RTCONFIG_LZO) += lzo$(LZO_VER)
 obj-$(RTCONFIG_OPENVPN) += lz4
+obj-$(RTCONFIG_OPENVPN) += libcap-ng
 obj-$(RTCONFIG_OPENVPN) += openpam
 obj-$(RTCONFIG_OPENVPN) += easy-rsa
 obj-$(RTCONFIG_OPENVPN) += openssl openvpn
@@ -1560,6 +1571,7 @@ endif
 obj-$(RTCONFIG_TCPDUMP) += openssl-1.0
 obj-$(RTCONFIG_TCPDUMP) += libpcap
 obj-$(RTCONFIG_TCPDUMP) += tcpdump-4.4.0
+obj-$(RTCONFIG_TCPREPLAY) += libpcap-1.9.1 tcpreplay
 obj-$(RTCONFIG_DUMP4000) += libpcap
 obj-$(RTCONFIG_DUMP4000) += tcpdump-4.4.0
 obj-$(RTCONFIG_TRACEROUTE) += traceroute-2.1.0
@@ -2705,54 +2717,53 @@ roldconf: config/conf
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
 endif
-ifeq ($(RTCONFIG_DHDAP),y)
-ifeq ($(RTCONFIG_BCM7),y)
-ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
-ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2011.09),)
-	# build 43602 src and to match its path
-	sudo mkdir /projects/hnd/tools/linux -p
-	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2011.09
-	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2011.09 /projects/hnd/tools/linux/hndtools-armeabi-2011.09
-endif
-endif
-else ifeq ($(RTCONFIG_BCM_7114),y) # hnd models use same dongle toolchain as 7114
-ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2013.11),)
-	# build pciefd
-	sudo mkdir /projects/hnd/tools/linux/bin -p
-	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2013.11
-	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/hnd/tools/linux/hndtools-armeabi-2013.11
-	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/hnd/tools/linux/bin/fwtag.ini
-endif
-else ifeq ($(HND_ROUTER_AX),y)
-ifeq ($(wildcard /projects/bca/tools/linux/hndtools-armeabi-2013.11),)
-        # build pciefd
-	sudo mkdir /projects/bca/tools/linux/bin -p
-	sudo rm -rf /projects/bca/tools/linux/hndtools-armeabi-2013.11
-	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/bca/tools/linux/hndtools-armeabi-2013.11
-	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/bca/tools/linux/bin/fwtag.ini
-endif
-endif
-endif
-ifeq ($(HND_ROUTER),y)
-ifeq ($(wildcard /opt/toolchains),)
-	sudo mkdir /opt/toolchains -p
-endif
-ifeq ($(HND_ROUTER_AX),y)
-ifeq ($(wildcard /opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1),)
-	sudo ln -sf $(SRCBASE)/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1 /opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1
-endif
-ifeq ($(wildcard /opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1),)
-	sudo ln -sf $(SRCBASE)/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1 /opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1
-endif
-else
-ifeq ($(wildcard /opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25),)
-	sudo ln -sf $(SRCBASE)/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25
-endif
-ifeq ($(wildcard /opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25),)
-	sudo ln -sf $(SRCBASE)/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25
-endif
-endif
-endif
+#ifeq ($(RTCONFIG_DHDAP),y)
+#ifeq ($(RTCONFIG_BCM7),y)
+#ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
+#ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2011.09),)
+#	# build 43602 src and to match its path
+#	sudo mkdir /projects/hnd/tools/linux -p
+#	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+#	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2011.09 /projects/hnd/tools/linux/hndtools-armeabi-2011.09
+#endif
+#endif
+#else ifeq ($(RTCONFIG_BCM_7114),y) # hnd models use same dongle toolchain as 7114
+#ifeq ($(wildcard /projects/hnd/tools/linux/hndtools-armeabi-2013.11),)
+#	# build pciefd
+#	sudo mkdir /projects/hnd/tools/linux/bin -p
+#	sudo rm -rf /projects/hnd/tools/linux/hndtools-armeabi-2013.11
+#	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/hnd/tools/linux/hndtools-armeabi-2013.11
+#	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/hnd/tools/linux/bin/fwtag.ini
+#endif
+#else ifeq ($(HND_ROUTER_AX),y)
+#ifeq ($(wildcard /projects/bca/tools/linux/hndtools-armeabi-2013.11),)
+#        # build pciefd
+#	sudo mkdir /projects/bca/tools/linux/bin -p
+#	sudo rm -rf /projects/bca/tools/linux/hndtools-armeabi-2013.11
+#	sudo ln -sf $(SRCBASE)/toolchains/hndtools-armeabi-2013.11 /projects/bca/tools/linux/hndtools-armeabi-2013.11
+#	sudo ln -sf $(SRCBASE)/toolchains/fwtag.ini /projects/bca/tools/linux/bin/fwtag.ini
+#endif
+#endif
+#endif
+#ifeq ($(HND_ROUTER),y)
+#ifeq ($(wildcard /opt/toolchains),)
+#	sudo mkdir /opt/toolchains -p
+#endif
+#ifeq ($(HND_ROUTER_AX),y)
+#ifeq ($(wildcard /opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1),)
+#	sudo ln -sf $(SRCBASE)/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1 /opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1
+#endif
+#ifeq ($(wildcard /opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1),)
+#	sudo ln -sf $(SRCBASE)/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1 /opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1
+#endif
+#else
+#ifeq ($(wildcard /opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25),)
+#	sudo ln -sf $(SRCBASE)/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25
+#endif
+#ifeq ($(wildcard /opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25),)
+#	sudo ln -sf $(SRCBASE)/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25 /opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25
+#endif
+#endif
 
 kconf:
 	$(MAKE) -C $(LINUXDIR) config
@@ -3090,22 +3101,35 @@ ifeq ($(HND_ROUTER),y)
 	mkdir -p $(BCM_FSBUILD_DIR)/public/include/openssl
 	cp -u $(OPENSSL)/include/openssl/* $(BCM_FSBUILD_DIR)/public/include/openssl
 endif
-	install -D -m 0500 httpd/gencert.sh $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/gencert.sh
+	install -D -m 0700 httpd/gencert.sh $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/gencert.sh
+ifeq ($(RTCONFIG_ECC256),y)
+	sed -i -e "s,^ECC256=0,ECC256=1," $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/gencert.sh
+endif
+	sed -i -e "s,^[ 	]*#[^!]*$$,," $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/gencert.sh
+	sed -i '/^$$/d' $(INSTALLDIR)$(INSTALLSUBDIR)/usr/sbin/gencert.sh
 endif
 
 openssl-stage:
 	@$(MAKE) $(OPENSSL)-stage
 
+ifeq ($(BRCM_CHIP),4908)
+export PRIORITY_CHACHA =
+else ifeq ($(BRCM_CHIP),4912)
+export PRIORITY_CHACHA =
+else
+export PRIORITY_CHACHA = -DOPENSSL_PREFER_CHACHA_OVER_GCM
+endif
 openssl-1.1/Makefile:
 	cd openssl-1.1 && \
 	./Configure $(HOSTCONFIG) --prefix=/usr --openssldir=/etc --cross-compile-prefix=' ' \
 	$(if $(filter y,$(RTCONFIG_SFP) $(RTCONFIG_4M_SFP) $(RTCONFIG_8M_SFP)),-Os,-O2) \
 	$(if $(RTCONFIG_DEBUG),-g) \
 	-ffunction-sections -fdata-sections -Wl,--gc-sections \
-	shared $(OPENSSL_CIPHERS) no-async --api=1.0.0 \
+	shared $(OPENSSL_CIPHERS) no-err no-async --api=1.0.0 \
 	    no-aria no-sm2 no-sm3 no-sm4 no-tests \
+	--with-rand-seed=devrandom \
 	    $(if $(filter y,$(RTCONFIG_WTFAST)),-DRTCONFIG_WTFAST,) \
-	    $(if $(filter y,$(HND_ROUTER)),,-DOPENSSL_PREFER_CHACHA_OVER_GCM)
+	$(PRIORITY_CHACHA)
 	@$(MAKE) -C openssl-1.1 depend
 	@$(MAKE) -C openssl-1.1 clean
 	@touch $@
@@ -3558,7 +3582,7 @@ iptables-1.4.21: iptables-1.4.21/Makefile
 	@$(SEP)
 	$(MAKE) -C $@ KERNEL_DIR=$(LINUXDIR) COPT_FLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
 
-iptables-1.4.21-install: iptables-1.4.21
+iptables-1.4.21-install:
 	install -D iptables-1.4.21/iptables/.libs/xtables-multi $(INSTALLDIR)/iptables-1.4.21/usr/sbin/xtables-multi
 	cd $(INSTALLDIR)/iptables-1.4.21/usr/sbin && \
 		ln -sf xtables-multi iptables-restore && \
@@ -3683,11 +3707,11 @@ else
 		CFLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
 endif
 
-iptables-1.4.x: iptables-1.4.x/Makefile
+iptables-1.4.x: iptables-1.4.x/Makefile libnfnetlink-1.0.1
 	@$(SEP)
 	$(MAKE) -C $@ KERNEL_DIR=$(LINUX_INC_DIR) COPT_FLAGS="-Os $(EXTRACFLAGS) -U CONFIG_NVRAM_SIZE"
 
-iptables-1.4.x-install: iptables-1.4.x
+iptables-1.4.x-install:
 	install -D iptables-1.4.x/iptables/.libs/xtables-multi $(INSTALLDIR)/iptables-1.4.x/usr/sbin/xtables-multi
 	cd $(INSTALLDIR)/iptables-1.4.x/usr/sbin && \
 		ln -sf xtables-multi iptables-restore && \
@@ -3909,6 +3933,11 @@ ftp_dep=
 endif
 vsftpd: nvram$(BCMEX)$(EX7) shared $(if $(BCM_502L07P2),ethctl_lib) libdisk $(ftp_dep)
 	@$(SEP)
+ifeq ($(RTCONFIG_FTP_SSL),y)
+	-cp vsftpd/builddefs-ssl.h vsftpd/builddefs.h
+else
+	-cp vsftpd/builddefs-nossl.h vsftpd/builddefs.h
+endif
 	$(MAKE) -C vsftpd
 
 vsftpd-install:
@@ -3924,7 +3953,7 @@ else
 endif
 	$(MAKE) -C $@
 
-vsftpd-3.x-install: vsftpd-3.x
+vsftpd-3.x-install:
 	install -D vsftpd-3.x/vsftpd $(INSTALLDIR)/vsftpd-3.x/usr/sbin/vsftpd
 	$(STRIP) -s $(INSTALLDIR)/vsftpd-3.x/usr/sbin/vsftpd
 
@@ -4829,7 +4858,7 @@ libev-4.33: libev-4.33/stamp-h1
 libev-4.33-install: libev-4.33
 	@$(SEP)
 	install -D libev-4.33/.libs/libev.so.4.0.0 $(INSTALLDIR)/$</usr/lib/libev.so.4.0.0
-	$(STRIP) $(INSTALLDIR)/$</usr/lib/libev.so.4.0.0
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/$</usr/lib/libev.so.4.0.0)
 	cd $(INSTALLDIR)/$</usr/lib && ln -sf libev.so.4.0.0 libev.so.4
 
 libev-4.33-clean:
@@ -4969,9 +4998,9 @@ lldpd-0.9.8-install: lldpd-0.9.8
 	install -D lldpd-0.9.8/src/client/.libs/lldpcli $(INSTALLDIR)/lldpd-0.9.8/usr/sbin/lldpcli
 	install -D lldpd-0.9.8/src/daemon/lldpd $(INSTALLDIR)/lldpd-0.9.8/usr/sbin/lldpd
 	install -D lldpd-0.9.8/src/lib/.libs/liblldpctl.so.4.8.0 $(INSTALLDIR)/lldpd-0.9.8/usr/lib/liblldpctl.so.4.8.0
-	$(STRIP) $(INSTALLDIR)/lldpd-0.9.8/usr/sbin/lldpcli
-	$(STRIP) $(INSTALLDIR)/lldpd-0.9.8/usr/sbin/lldpd
-	$(STRIP) $(INSTALLDIR)/lldpd-0.9.8/usr/lib/liblldpctl.so.4.8.0
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/lldpd-0.9.8/usr/sbin/lldpcli)
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/lldpd-0.9.8/usr/sbin/lldpd)
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/lldpd-0.9.8/usr/lib/liblldpctl.so.4.8.0)
 	cd $(INSTALLDIR)/lldpd-0.9.8/usr/lib && ln -sf liblldpctl.so.4.8.0 liblldpctl.so && ln -sf liblldpctl.so.4.8.0 liblldpctl.so.4
 
 lldpd-0.9.8-clean:
@@ -5258,7 +5287,7 @@ endif
 
 sqlite/stamp-h1:
 	cd sqlite && autoreconf -i -f && \
-	CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections -fPIC" \
+	CC=$(CC) CFLAGS="$(if $(RTCONFIG_DEBUG),-g -Wall,-Os) $(EXTRACFLAGS) -ffunction-sections -fdata-sections -fPIC" \
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -lpthread -ldl" \
 		$(CONFIGURE) --prefix=/usr --enable-shared --enable-static \
 		--disable-readline --disable-dynamic-extensions --enable-threadsafe \
@@ -5275,10 +5304,10 @@ sqlite-clean:
 sqlite-install: sqlite
 	@$(SEP)
 	install -D sqlite/.libs/libsqlite3.so.0.8.6 $(INSTALLDIR)/sqlite/usr/lib/libsqlite3.so.0.8.6
-	$(STRIP) $(INSTALLDIR)/sqlite/usr/lib/libsqlite3.so.0.8.6
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/sqlite/usr/lib/libsqlite3.so.0.8.6)
 	cd $(INSTALLDIR)/sqlite/usr/lib && ln -sf libsqlite3.so.0.8.6 libsqlite3.so.0 && ln -sf libsqlite3.so.0.8.6 libsqlite3.so
 	install -D sqlite/sqlite3 $(INSTALLDIR)/sqlite/usr/sbin/sqlite3
-	$(STRIP) $(INSTALLDIR)/sqlite/usr/sbin/sqlite3
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/sqlite/usr/sbin/sqlite3)
 
 # sqlite encrpted version
 sqlCipher/stamp-h1:
@@ -5534,10 +5563,52 @@ ifneq ($(MEDIA_SERVER_STATIC),y)
 	$(STRIP) $(INSTALLDIR)/libvorbis/usr/lib/libvorbis.so.0
 endif
 
-minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis
-	@$(SEP)
-	@cd minidlna && ./genosver.sh
-	$(MAKE) -C minidlna CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1) $(if $(RTCONFIG_MEDIASERVER_LIMIT),MS_LIMIT=1) minidlna
+minidlna-clean:
+	cd minidlna; make clean
+
+minidlna/configure:
+	if [ ! -f $@ ] ; then \
+		cd minidlna; autoreconf -fi; \
+	fi
+
+minidlna-configure: minidlna/configure shared/version.h
+	if [ ! -f minidlna/Makefile ] ; then \
+		cd minidlna; \
+		$(CONFIGURE) \
+		--with-log-path=/tmp/minidlna \
+		--with-db-path=/tmp/minidlna \
+		--with-os-name=asuswrt \
+		--with-os-version=$(shell cat shared/version.h | grep RT_SERIALNO | cut -d'"' -f 2) \
+		--with-os-url=http://www.asus.com/ \
+		--enable-tivo --disable-nls \
+		ac_cv_header_stddef_h=no ac_cv_header_stdlib_h=no \
+		$(if $(MSIPK),ac_cv_func_inotify_init=no ac_cv_header_sys_inotify_h=no) \
+		$(if $(MSIPK),$(if $(filter i686,$(PLATFORM)),EXTRACFLAGS="-DLINUX26 -DCONFIG_BCMWL5 -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -DLINUX_KERNEL_VERSION=132630 -DMS_IPK -DMS_I686",EXTRACFLAGS="-DLINUX26 -DCONFIG_BCMWL5 -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32 -DLINUX_KERNEL_VERSION=132630 -DMS_IPK"),) \
+		CFLAGS="-Wall -g -Os -D_GNU_SOURCE $(EXTRACFLAGS) \
+		-D_FILE_OFFSET_BITS=64 -ffunction-sections -fdata-sections \
+		-I$(TOP)/flac/include -I$(TOP)/sqlite -I$(TOP)/jpeg \
+		-I$(TOP)/libexif -I$(TOP)/libid3tag -I$(TOP)/libogg/include \
+		-I$(TOP)/libvorbis/include \
+		$(if $(MSIPK),-I$(TOP)/ffmpeg-0.5/libavutil -I$(TOP)/ffmpeg-0.5/libavcodec -I$(TOP)/ffmpeg-0.5/libavformat -I$(TOP)/ffmpeg-0.5/libswscale -I$(TOP)/ffmpeg-0.5,-I$(TOP)/ffmpeg) \
+		$(if $(RTCONFIG_BCMARM),-I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T,) \
+		$(if $(MSIPK),,-I$(TOP)/shared $(if $(RTAC68U),-I$(SRCBASE)/include) $(if $(RTN65U),-DRTN56U) $(if $(RTAC66U),-DRTN66U) $(if $(RTCONFIG_MEDIASERVER_LIMIT),-DMS_LIMIT) $(if $(RPAC68U),-DRPAC68U) $(if $(HND_ROUTER_BE_4916),-fcommon))" \
+		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections \
+		$(if $(MEDIA_SERVER_STATIC),-static,) \
+		-L$(TOP)/zlib -L$(TOP)/sqlite/.libs \
+		$(if $(MEDIA_SERVER_STATIC),-L$(TOP)/jpeg/.libs,-L$(TOP)/jpeg) \
+		-L$(TOP)/libvorbis/lib/.libs -L$(TOP)/libogg/src/.libs \
+		-L$(TOP)/libexif/libexif/.libs -L$(TOP)/flac/src/libFLAC/.libs \
+		$(if $(MEDIA_SERVER_STATIC),-L$(TOP)/APP-IPK/MediaServer-ipk/asusffmpeg_1.0.0.5/opt/lib,-L$(TOP)/ffmpeg/libavutil -L$(TOP)/ffmpeg/libavcodec -L$(TOP)/ffmpeg/libavformat -L$(TOP)/libid3tag/.libs) \
+		$(if $(or $(DSL_AC68U),$(RTAC88U),$(RTAC3100),$(RTAC68U),$(RTAX82U),$(GTAX6000),$(RTAX82U_V2),$(RTAC5300)),-L$(TOP_PLATFORM)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared,) $(EXTRALDFLAGS)" \
+		LDLIBS="$(if $(MSIPK),-lpthread -lm -lvorbis -logg -lsqlite3 -lexif -ljpeg -lFLAC -lid3tag_ms -lz $(TOP)/libid3tag/.libs/libid3tag_ms.so $(TOP)/APP-IPK/MediaServer-ipk/asusffmpeg_1.0.0.5/opt/lib/libavformat_asus.so $(TOP)/APP-IPK/MediaServer-ipk/asusffmpeg_1.0.0.5/opt/lib/libavcodec_asus.so $(TOP)/APP-IPK/MediaServer-ipk/asusffmpeg_1.0.0.5/opt/lib/libavutil_asus.so $(if $(filter i686,$(PLATFORM)),-lrt),)$(if $(MEDIA_SERVER_STATIC),-lpthread -ldl -lm $(TOP)/libvorbis/lib/.libs/libvorbis.a $(TOP)/libogg/src/.libs/libogg.a $(TOP)/sqlite/.libs/libsqlite3.a $(TOP)/libexif/libexif/.libs/libexif.a $(TOP)/jpeg/libjpeg.a $(TOP)/flac/src/libFLAC/.libs/libFLAC.a $(TOP)/libid3tag/.libs/libid3tag.a $(TOP)/zlib/libz.a $(TOP)/ffmpeg/libavformat/libavformat.a $(TOP)/ffmpeg/libavcodec/libavcodec.a $(TOP)/ffmpeg/libavutil/libavutil.a,-lpthread -ldl -lm -lvorbis -logg -lsqlite3 -lexif -ljpeg -lFLAC -lid3tag -lz -lavformat -lavcodec -lavutil)"; \
+	fi
+
+minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis minidlna-configure
+	cd minidlna; make
+
+minidlna-install: minidlna
+	install -D minidlna/minidlnad $(INSTALLDIR)/minidlna/usr/sbin/minidlna
+	$(STRIP) $(INSTALLDIR)/minidlna/usr/sbin/minidlna
 
 libgdbm/stamp-h1:
 	cd libgdbm && \
@@ -6122,7 +6193,7 @@ EBK_INC=$(TOP)/kernel_header/include
 endif
 
 ebtables: kernel_header dummy
-	$(MAKE) -C ebtables $(if $(filter 4908 4912,$(BRCM_CHIP)),CC=$(CROSS_COMPILE_64)gcc LD=$(CROSS_COMPILE_64)ld CURRENT_ARCH=aarch64,CC=$(CC) LD=$(LD)) \
+	$(MAKE) -C ebtables $(PARALLEL_BUILD) $(if $(filter 4908 4912,$(BRCM_CHIP)),CC=$(CROSS_COMPILE_64)gcc LD=$(CROSS_COMPILE_64)ld CURRENT_ARCH=aarch64,CC=$(CC) LD=$(LD)) \
 	CFLAGS="-Os -Wall -Wunused $(if $(RTCONFIG_HND_ROUTER),-DHND_ROUTER,) $(if $(RTCONFIG_HND_ROUTER_AX_6756),-DHND_ROUTER_AX_6756,)" \
 	BINDIR="/usr/sbin" LIBDIR="/usr/lib/ebtables" KERNEL_INCLUDES=$(EBK_INC) $(if $(RTCONFIG_IPV6),DO_IPV6=1,) $(if $(OLD_QCA),USE_ARPNAT=1,)
 
@@ -6192,7 +6263,8 @@ libcap-ng/configure:
 	CFLAGS="-O3 -Wall $(EXTRACFLAGS)" $(CONFIGURE) --enable-shared \
 		--prefix=/usr \
 		--bindir=/usr/sbin \
-		--libdir=/usr/lib
+		--libdir=/usr/lib \
+		ac_cv_prog_swig_found=no --without-python --without-python3
 	touch $@
 
 libcap-ng: libcap-ng/configure
@@ -6249,35 +6321,35 @@ easy-rsa-install:
 	mkdir -p $(TARGETDIR)/rom/$(EX_ROM)/easy-rsa
 	install easy-rsa/2.0/* $(TARGETDIR)/rom/$(EX_ROM)/easy-rsa
 
-openvpn/dh2048.pem:
-	openssl dhparam -dsaparam -out $@ 2048
-
-openvpn: shared $(if $(BCM_502L07P2),ethctl_lib) openssl lzo$(LZO_VER) openpam zlib openvpn/dh2048.pem openvpn/Makefile
-	$(MAKE) $(PARALLEL_BUILD) -C $@
+openvpn: shared $(if $(BCM_502L07P2),ethctl_lib) openssl lzo$(LZO_VER) libcap-ng openpam zlib openvpn/Makefile
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 openvpn/Makefile:
 	( cd openvpn ; ./autogen.sh ; \
 		OPENSSL_CFLAGS="-I$(TOP)/openssl/include" \
-		OPENSSL_LIBS="-L$(TOP)/openssl/ -lssl -lcrypto" \
+		OPENSSL_LIBS="-L$(TOP)/openssl/ -lcrypto -lssl" \
 		LIBPAM_CFLAGS="-I$(TOP)/openpam/include" \
 		LIBPAM_LIBS="-L$(TOP)/openpam/lib/libpam/.libs -lpam" \
 		LZO_CFLAGS="-I$(TOP)/lzo$(LZO_VER)/include" \
 		LZO_LIBS="-L$(TOP)/lzo$(LZO_VER)/src/.libs -llzo2" \
 		LZ4_CFLAGS="-I$(TOP)/lz4/lib" \
 		LZ4_LIBS="-L$(TOP)/lz4/lib -llz4" \
-		CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -std=gnu99 \
-			-DASUSWRT" \
+		LIBCAPNG_CFLAGS="-I$(TOP)/libcap-ng/src" \
+		LIBCAPNG_LIBS="-L$(TOP)/libcap-ng/src/.libs -lcap-ng" \
+		CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -std=gnu99 \
+			-DASUSWRT -I$(TOP)/libcap-ng/src" \
 		LDFLAGS="$(EXTRALDFLAGS) -ffunction-sections -fdata-sections \
 			-Wl,--gc-sections \
 			-lpthread -ldl \
 			-L$(TOP)/zlib -lz" \
-		IPROUTE="/usr/sbin/ip" IFCONFIG="/sbin/ifconfig" ROUTE="/sbin/route" \
+		IPROUTE="/usr/sbin/ip" \
 		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 			--disable-debug --enable-management --disable-small \
-			--disable-selinux --disable-socks --enable-password-save \
+			--disable-selinux --disable-dco \
 			--enable-plugin-auth-pam \
 			ac_cv_lib_resolv_gethostbyname=no \
-	)
+			--enable-iproute2 \
+        )
 
 openvpn-clean:
 	[ ! -f openvpn/Makefile ] || $(MAKE) -C openvpn clean
@@ -6290,7 +6362,7 @@ openvpn-install:
 		chmod 0500 $(INSTALLDIR)/openvpn/usr/sbin/openvpn ; \
 		install -D openvpn/src/plugins/auth-pam/.libs/openvpn-plugin-auth-pam.so $(INSTALLDIR)/openvpn/usr/lib/openvpn-plugin-auth-pam.so ; \
 		$(STRIP) -s $(INSTALLDIR)/openvpn/usr/lib/openvpn-plugin-auth-pam.so ; \
-		install -D openvpn/dh2048.pem $(INSTALLDIR)/openvpn/rom/dh2048.pem ; \
+#		install -D openvpn/dh2048.pem $(INSTALLDIR)/openvpn/rom/dh2048.pem ; \
 	fi
 
 sdparm-1.02: sdparm-1.02/Makefile
@@ -6520,7 +6592,7 @@ libxml2/stamp-h1:
 libxml2: libxml2/stamp-h1
 	$(MAKE) $(PARALLEL_BUILD) -C libxml2 all && $(MAKE) $@-stage
 
-libxml2-install: libxml2
+libxml2-install:
 	@$(SEP)
 	install -D libxml2/.libs/libxml2.so.2 $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2
 	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/libxml2/usr/lib/libxml2.so.2)
@@ -6539,7 +6611,7 @@ libiconv-1.14/stamp-h1:
 libiconv-1.14:libiconv-1.14/stamp-h1
 	@$(MAKE) $(PARALLEL_BUILD) -C $@ CFLAGS="$(CFLAGS) $(if $(filter y,$(HND_ROUTER)),-DHND_ROUTER,)" && $(MAKE) $@-stage
 
-libiconv-1.14-install: libiconv-1.14
+libiconv-1.14-install:
 	@$(SEP)
 	install -D libiconv-1.14/lib/.libs/libiconv.so.2.5.1 $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
 	$(STRIP) $(INSTALLDIR)/libiconv-1.14/usr/lib/libiconv.so.2.5.1
@@ -6557,7 +6629,7 @@ libiconv-1.14-clean:
 smartsync_api:
 	$(MAKE) -C smartsync_api all
 
-smartsync_api-install: smartsync_api
+smartsync_api-install:
 	@$(SEP)
 	install -D smartsync_api/libsmartsync_api.so $(INSTALLDIR)/smartsync_api/usr/lib/libsmartsync_api.so
 	$(STRIP) $(INSTALLDIR)/smartsync_api/usr/lib/libsmartsync_api.so
@@ -6571,7 +6643,7 @@ ftpclient/stamp-h1:
 
 ftpclient:ftpclient/stamp-h1 libiconv-1.14
 
-ftpclient-install: ftpclient
+ftpclient-install:
 	@$(SEP)
 	install -D ftpclient/ftpclient $(INSTALLDIR)/ftpclient/usr/sbin/ftpclient
 	$(STRIP) $(INSTALLDIR)/ftpclient/usr/sbin/ftpclient
@@ -6595,7 +6667,7 @@ sambaclient/stamp-h1:
 sambaclient: sambaclient/stamp-h1
 	@$(MAKE) -C sambaclient
 
-sambaclient-install: sambaclient
+sambaclient-install:
 	@$(SEP)
 	install -D sambaclient/sambaclient $(INSTALLDIR)/sambaclient/usr/sbin/sambaclient
 	$(STRIP) $(INSTALLDIR)/sambaclient/usr/sbin/sambaclient
@@ -6620,7 +6692,7 @@ usbclient/stamp-h1:
 usbclient: usbclient/stamp-h1
 	@$(MAKE) -C usbclient
 
-usbclient-install: usbclient
+usbclient-install:
 	@$(SEP)
 	install -D usbclient/usbclient $(INSTALLDIR)/usbclient/usr/sbin/usbclient
 	$(STRIP) $(INSTALLDIR)/usbclient/usr/sbin/usbclient
@@ -6657,9 +6729,10 @@ strongswan/Makefile: strongswan/configure
 	--with-strongswan-conf=/etc/strongswan.conf \
 	--with-user=admin \
 	$(if $(filter $(BRCM_CHIP),4912),--enable-kernel-pfkey,) \
-	CFLAGS="-O0 -Wall -Wno-format -Wno-format-security -Wno-pointer-sign -I$(STAGEDIR)/usr/include $(EXTRACFLAGS) \
-		$(if $(filter y,$(HND_ROUTER)),$(if $(filter 4908,$(BRCM_CHIP)),-DHND_ROUTER,),)" \
-	LDFLAGS="-L$(STAGEDIR)/usr/lib $(EXTRALDFLAGS)" \
+	CFLAGS="-O0 -Wall -Wno-format -Wno-format-security -Wno-pointer-sign \
+		-I$(TOP)/openssl/include -I$(STAGEDIR)/usr/include $(EXTRACFLAGS) \
+		$(if $(RTCONFIG_HND_ROUTER),-DHND_ROUTER,)" \
+	LDFLAGS="-L$(TOP)/openssl -L$(STAGEDIR)/usr/lib $(EXTRALDFLAGS)" \
 	LIBS="-lssl -lcrypto -lpthread -ldl -lm"
 
 strongswan: openssl strongswan/Makefile
@@ -6711,7 +6784,7 @@ neon/Makefile neon/config.h:
 neon: libxml2 openssl neon/Makefile neon/config.h
 	$(MAKE) -C neon && $(MAKE) $@-stage
 
-neon-install: neon
+neon-install:
 	@$(SEP)
 	install -D neon/src/.libs/libneon.so.27.3.2 $(INSTALLDIR)/neon/usr/lib/libneon.so.27.3.2
 	$(STRIP) $(INSTALLDIR)/neon/usr/lib/libneon.so.27.3.2
@@ -6871,7 +6944,7 @@ asuswebstorage/stamp-h1:
 asuswebstorage: asuswebstorage/stamp-h1
 	@$(MAKE) -C asuswebstorage
 
-asuswebstorage-install: asuswebstorage
+asuswebstorage-install:
 	@$(SEP)
 	install -D asuswebstorage/asuswebstorage $(INSTALLDIR)/asuswebstorage/usr/sbin/asuswebstorage
 	$(STRIP) $(INSTALLDIR)/asuswebstorage/usr/sbin/asuswebstorage
@@ -6887,7 +6960,7 @@ google_client/stamp-h1:
 google_client: google_client/stamp-h1
 	@$(MAKE) -C google_client
 
-google_client-install: google_client
+google_client-install:
 	@$(SEP)
 	install -D google_client/google_client $(INSTALLDIR)/google_client/usr/sbin/google_client
 	$(STRIP) $(INSTALLDIR)/google_client/usr/sbin/google_client
@@ -6903,7 +6976,7 @@ dropbox_client/stamp-h1:
 dropbox_client: dropbox_client/stamp-h1
 	@$(MAKE) -C dropbox_client
 
-dropbox_client-install: dropbox_client
+dropbox_client-install:
 	@$(SEP)
 	install -D dropbox_client/dropbox_client $(INSTALLDIR)/dropbox_client/usr/sbin/dropbox_client
 	$(STRIP) $(INSTALLDIR)/dropbox_client/usr/sbin/dropbox_client
@@ -6954,7 +7027,7 @@ libgpg-error-1.10: libgpg-error-1.10/stamp-h1
 	@$(SEP)
 	$(MAKE) -C libgpg-error-1.10
 
-libgpg-error-1.10-install: libgpg-error-1.10
+libgpg-error-1.10-install:
 	install -D libgpg-error-1.10/src/.libs/libgpg-error.so.0.8.0 $(INSTALLDIR)/libgpg-error-1.10/usr/lib/libgpg-error.so.0.8.0
 	$(STRIP) $(INSTALLDIR)/libgpg-error-1.10/usr/lib/libgpg-error.so.0.8.0
 	cd $(INSTALLDIR)/libgpg-error-1.10/usr/lib && ln -sf libgpg-error.so.0.8.0 libgpg-error.so.0
@@ -6974,7 +7047,7 @@ libgcrypt-1.5.1: libgcrypt-1.5.1/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C libgcrypt-1.5.1
 
-libgcrypt-1.5.1-install: libgcrypt-1.5.1
+libgcrypt-1.5.1-install:
 	install -D libgcrypt-1.5.1/src/.libs/libgcrypt.so.11.8.0 $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib/libgcrypt.so.11.8.0
 	$(STRIP) $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib/libgcrypt.so.11.8.0
 	cd $(INSTALLDIR)/libgcrypt-1.5.1/usr/lib && ln -sf libgcrypt.so.11.8.0 libgcrypt.so.11
@@ -7017,7 +7090,7 @@ db-4.8.30: db-4.8.30/build_unix/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C db-4.8.30/build_unix $(PARALLEL_BUILD)
 
-db-4.8.30-install: db-4.8.30
+db-4.8.30-install:
 	install -D db-4.8.30/build_unix/.libs/libdb-4.8.so $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
 	$(STRIP) $(INSTALLDIR)/db-4.8.30/usr/lib/libdb-4.8.so
 	cd $(INSTALLDIR)/db-4.8.30/usr/lib && ln -sf libdb-4.8.so libdb.so
@@ -7112,7 +7185,7 @@ expat-2.0.1: expat-2.0.1/stamp-h1
 	@$(MAKE) -C expat-2.0.1 $(PARALLEL_BUILD) && $(MAKE) $@-stage
 	sed 's|/usr/lib|$(STAGEDIR)/usr/lib|g' -i $(STAGEDIR)/usr/lib/libexpat.la
 
-expat-2.0.1-install: expat-2.0.1
+expat-2.0.1-install:
 	install -D expat-2.0.1/.libs/libexpat.so.1.5.2 $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
 	$(STRIP) $(INSTALLDIR)/expat-2.0.1/usr/lib/libexpat.so.1.5.2
 	cd $(INSTALLDIR)/expat-2.0.1/usr/lib && ln -sf libexpat.so.1.5.2 libexpat.so.1
@@ -8124,7 +8197,54 @@ asd-install:
 asd-clean:
 	$(MAKE) -C asd clean
 
+asd2.1: shared $(if $(BCM_502L07P2),ethctl_lib) nvram$(BCMEX)$(EX7) curl openssl libasc
+	$(MAKE) -C $@
 
+asd2.1-install:
+	install -D asd2.1/asd $(INSTALLDIR)/asd2.1/usr/bin/asd
+	install -D asd2.1/libasd.so $(INSTALLDIR)/asd2.1/usr/lib/libasd.so
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/asd2.1/usr/bin/asd)
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/asd2.1/usr/lib/libasd.so)
+
+asd2.1-clean:
+	$(MAKE) -C asd2.1 clean
+
+onig-6.9.9:
+	cd onig-6.9.9 && \
+	autoreconf -i -f && \
+	./configure  --host=arm-linux LD=$(CROSS_COMPILE)ld --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib && \
+	make
+
+onig-6.9.9-install:
+	install -D onig-6.9.9/src/.libs/libonig.so.5.4.0 $(INSTALLDIR)/usr/lib/libonig.so.5.4.0
+	$(STRIP) $(INSTALLDIR)/usr/lib/libonig.so.5.4.0
+	cd $(INSTALLDIR)/usr/lib && \
+		ln -sf libonig.so.5.4.0 libonig.so.5 && \
+		ln -sf libonig.so.5.4.0 libonig.so.4 && \
+		ln -sf libonig.so.5.4.0 libonig.so
+
+onig-6.9.9-clean:
+	cd onig-6.9.9 && \
+	make distclean
+
+jq-1.7.1:
+	cd jq-1.7.1 && \
+	autoreconf -i &&\
+	./configure --host=arm-linux --with-oniguruma=$(SRCBASE)/router/onig-6.9.9/src LD=$(CROSS_COMPILE)ld --prefix=/usr && \
+	make
+
+jq-1.7.1-install:
+	install -D  jq-1.7.1/.libs/libjq.so.1.0.4 $(INSTALLDIR)/jq-1.7.1/usr/lib/libjq.so.1.0.4
+	install -D  jq-1.7.1/jq $(INSTALLDIR)/jq-1.7.1/usr/bin/jq
+	$(STRIP) $(INSTALLDIR)/jq-1.7.1/usr/lib/libjq.so.1.0.4
+	$(STRIP) $(INSTALLDIR)/jq-1.7.1/usr/bin/jq
+	cd $(INSTALLDIR)/jq-1.7.1/usr/lib/ && \
+		ln -sf libjq.so.1.0.4 libjq.so.1 && \
+		ln -sf libjq.so.1.0.4 libjq.so
+
+jq-1.7.1-clean:
+	cd jq-1.7.1 && \
+	make distclean
 #
 # tunnel related
 #
@@ -8149,13 +8269,13 @@ asusnatnl-install:
 
 mastiff: shared $(if $(BCM_502L07P2),ethctl_lib) nvram${BCMEX}$(EX7) wb
 	cd aaews && \
-	CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+	CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wall $(EXTRACFLAGS)" \
 	$(MAKE) mastiff
 
 mastiff-install:
 	install -d $(INSTALLDIR)/wb/usr/lib/
 	install -D aaews/mastiff $(INSTALLDIR)/wb/usr/sbin/mastiff
-	$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/mastiff
+	$(if $(RTCONFIG_DEBUG),,$(STRIP) -s $(INSTALLDIR)/wb/usr/sbin/mastiff)
 
 mastiff-clean:
 	cd aaews && make clean
@@ -8179,7 +8299,7 @@ lantiq_cmd-clean:
 #wb: shared $(if $(BCM_502L07P2),ethctl_lib) nvram curl openssl libxml2 asusnatnl
 aaews: wb
 	cd aaews && \
-	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+	CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wall $(EXTRACFLAGS)" \
 	make router
 #make static-lib && \
 
@@ -8263,7 +8383,7 @@ endif
 json-c: json-c/stamp-h1
 	$(MAKE) -C $@ && $(MAKE) $@-stage
 
-json-c-install: json-c
+json-c-install:
 	install -D json-c/.libs/libjson-c.so.2.0.2 $(INSTALLDIR)/json-c/usr/lib/libjson-c.so.2.0.2
 	$(if $(RTCONFIG_DEBUG),,$(STRIP) $(INSTALLDIR)/json-c/usr/lib/libjson-c.so.2.0.2)
 	cd $(INSTALLDIR)/json-c/usr/lib && \
@@ -8292,7 +8412,7 @@ endif
 phddns: phddns/stamp-h1
 	$(MAKE) -C phddns
 
-phddns-install: phddns
+phddns-install:
 	install -D phddns/src/phddns $(INSTALLDIR)/phddns/usr/sbin/phddns
 	$(STRIP) $(INSTALLDIR)/phddns/usr/sbin/phddns
 

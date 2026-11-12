@@ -12,6 +12,7 @@
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="css/confirm_block.css">
+<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <style>
 .FormTable{
  	margin-top:10px;	
@@ -76,13 +77,12 @@
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
 </style>
-
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/confirm_block.js"></script>
 <script language="JavaScript" type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
@@ -1504,3 +1504,4 @@ function check_AiMesh_fw_version(_fw) {
 </form>
 </body>
 </html>
+

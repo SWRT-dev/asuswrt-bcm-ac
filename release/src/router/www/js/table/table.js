@@ -47,7 +47,7 @@ var tableStruct = {
 	{
 		title : Necessary, title text
 		width : Optional, defalut is average
-		sort : Optional, sort type, value is str/num, the default define at tableSorter
+		sort : Optional, sort type, value is str/num/ip/ipport, the default define at tableSorter
 		defaultSort : Optional, default sort index, this attribure is only, if not define will find fist define sort item
 	}
 	ex: 
@@ -197,6 +197,7 @@ tableApi.genTableAPI(tableStruct);
 
 document.write('<script type="text/javascript" src="/js/table/tableValidator.js"></script>');
 var tableSorter = {
+	"UserSorted" : false,
 	"sortFlag" : false,
 	"indexFlag" : 0, // defalut sort index is 0
 	"sortingType" : "str", // defalut sort type is str
@@ -209,14 +210,54 @@ var tableSorter = {
 		return parseInt(b[tableSorter.indexFlag]) - parseInt(a[tableSorter.indexFlag]);
 	},
 	"str_increase" : function(a, b) {
-		if(a[tableSorter.indexFlag].toString().toUpperCase() == b[tableSorter.indexFlag].toString().toUpperCase()) return 0;
-		else if(a[tableSorter.indexFlag].toString().toUpperCase() > b[tableSorter.indexFlag].toString().toUpperCase()) return 1;
+		var aa = a[tableSorter.indexFlag].toString().toUpperCase();
+		var bb = b[tableSorter.indexFlag].toString().toUpperCase();
+
+		if(aa == bb) return 0;
+		else if(aa > bb) return 1;
 		else return -1;
 	},
 	"str_decrease" : function(a, b) {
-		if(a[tableSorter.indexFlag].toString().toUpperCase() == b[tableSorter.indexFlag].toString().toUpperCase()) return 0;
-		else if(a[tableSorter.indexFlag].toString().toUpperCase() > b[tableSorter.indexFlag].toString().toUpperCase()) return -1;
+		var aa = a[tableSorter.indexFlag].toString().toUpperCase();
+		var bb = b[tableSorter.indexFlag].toString().toUpperCase();
+
+		if(aa == bb) return 0;
+		else if(aa > bb) return -1;
 		else return 1;
+	},
+	"ip_increase" : function(a, b) {
+		var aa = full_IPv6(a[tableSorter.indexFlag].toString());
+		var bb = full_IPv6(b[tableSorter.indexFlag].toString());
+
+		if (aa == bb) return 0;
+		else if (aa > bb) return 1;
+		else return -1;
+	},
+	"ip_decrease" : function(a, b) {
+		var aa = full_IPv6(a[tableSorter.indexFlag].toString());
+		var bb = full_IPv6(b[tableSorter.indexFlag].toString());
+
+		if (aa == bb) return 0;
+		else if (aa > bb) return -1;
+		else return 1;
+	},
+	"ipport_increase" : function(a, b) {
+		var aa = a[tableSorter.indexFlag].split(":")[0].split(".");
+		var bb = b[tableSorter.indexFlag].split(":")[0].split(".");
+
+		var resulta = aa[0]*0x1000000 + aa[1]*0x10000 + aa[2]*0x100 + aa[3]*1;
+		var resultb = bb[0]*0x1000000 + bb[1]*0x10000 + bb[2]*0x100 + bb[3]*1;
+
+		return parseInt(resulta) - parseInt(resultb);
+	},
+	"ipport_decrease" : function(a, b) {
+		var aa = a[tableSorter.indexFlag].split(":")[0].split(".");
+		var bb = b[tableSorter.indexFlag].split(":")[0].split(".");
+
+		var resulta = aa[0]*0x1000000 + aa[1]*0x10000 + aa[2]*0x100 + aa[3]*1;
+		var resultb = bb[0]*0x1000000 + bb[1]*0x10000 + bb[2]*0x100 + bb[3]*1;
+
+		return parseInt(resultb) - parseInt(resulta);
 	},
 	"drawBorder" : function(_clickIndex) {
 		var clickSortingMethod = tableSorter.sortingMethod;
@@ -243,6 +284,7 @@ var tableSorter = {
 		tableSorter.sortData(tableSorter.indexFlag, tableSorter.sortingType, "tableApi._jsonObj.data");
 		tableApi.genTable(tableApi._jsonObj);
 		tableSorter.drawBorder(tableSorter.indexFlag);
+		tableSorter.UserSorted = true;
 	}
 }
 var tableApi = {
@@ -309,13 +351,14 @@ var tableApi = {
 							tableSorter.sortFlag = true;
 						}
 						
-						if(headItemTmp[opt].hasOwnProperty("defaultSort")) {
+						if(headItemTmp[opt].hasOwnProperty("defaultSort") && (tableSorter.UserSorted == false)) {
 							//if define defaultSort, update value
 							tableSorter.sortingMethod = headItemTmp[opt]["defaultSort"];
 							tableSorter.sortingType = headItemTmp[opt]["sort"];
 							tableSorter.indexFlag = opt;
 							break;
 						}
+
 					}
 				}
 			}
@@ -671,7 +714,7 @@ var tableApi = {
 		var $newPullArrowHtml = $("<div>");
 		$newPullArrowHtml.addClass("pullDownbg");
 		$newPullArrowHtml.click(
-			function() {
+			function(event) {
 				event.stopPropagation();
 				if($(this).closest(".editFrame").siblings('.table_clientlist_dropdown').length) {
 					if($(this).closest(".editFrame").siblings('.table_clientlist_dropdown').css("display") == "none") {
@@ -710,7 +753,7 @@ var tableApi = {
 		var genClientItem = function(_clientObj, _state) {
 			var $clientHtml = $('<div>');
 			$clientHtml.click(
-				function(){
+				function(event){
 					event.stopPropagation();
 					$(this).closest(".table_clientlist_dropdown").siblings(".editFrame").children(".setMac").val(_clientObj.mac);
 					$(this).closest(".table_clientlist_dropdown").css("display", "none");
@@ -742,7 +785,7 @@ var tableApi = {
 				$offlineDel.addClass("offlineClientDel");
 				$offlineDel.appendTo($clientHtml);
 				 $offlineDel.click(
-				 	function() {
+				 	function(event) {
 				 		event.stopPropagation();
 				 		if($("#remove_nmpclientlist_form").length) {
 				 			$("#remove_nmpclientlist_form").remove();
@@ -787,7 +830,7 @@ var tableApi = {
 		$offlineExpandHtml.appendTo($newItemFrameHtml);
 		$offlineExpandHtml.html("<#Offline_client_show#>");
 		$offlineExpandHtml.click(
-			function() {
+			function(event) {
 				event.stopPropagation();
 				var display_state = $(this).siblings(".clientList_offline").css("display");
 				if(display_state == "none") {
@@ -1104,7 +1147,7 @@ var tableApi = {
 					case "text" :
 					case "select" :
 						$("tr[row_tr_idx='" + i + "']").find($("td[row_td_idx='" + j + "']")).click(
-							function() {
+							function(event) {
 								if($(".row_tr").children().find(".hint").length != 0) {
 									return false;
 								}
@@ -1299,7 +1342,7 @@ var tableApi = {
 			var $editHtml = $('<input/>');
 			$editHtml.addClass("remove_btn");
 			$editHtml.click(
-				function() {
+				function(event) {
 					event.stopPropagation();
 					var delRawIdx = $(this).closest("*[row_tr_idx]").attr( "row_tr_idx" );
 					var delRawArray = tableApi._attr.data.slice(delRawIdx, (delRawIdx + 1))[0];
@@ -1432,4 +1475,38 @@ var tableApi = {
 	}
 }
 
+
+function full_IPv6(ip_string) {
+	// Embed IPv4 into IPv6 format
+	var ipv4 = ip_string.split(".");
+	if (ipv4.length == 4) {
+		for (var i = 0;i < 4;i++) {
+			var byte = parseInt(ipv4[i],10);
+			ipv4[i] = ("0" + byte.toString(16)).substr(-2);
+		}
+		ip_string = "::" + ipv4[0] + ipv4[1] + ':' + ipv4[2] + ipv4[3];
+	}
+
+	// take care of leading and trailing ::
+	ip_string = ip_string.replace(/^:|:$/g, '');
+
+	var ipv6 = ip_string.split(':');
+	for (var i = 0; i < ipv6.length; i ++) {
+		var hex = ipv6[i];
+		if (hex != "") {
+			// normalize leading zeros
+			ipv6[i] = ("0000" + hex).substr(-4);
+		}
+		else {
+			// normalize grouped zeros ::
+			hex = [];
+			for (var j = ipv6.length; j <= 8; j ++) {
+				hex.push('0000');
+			}
+			ipv6[i] = hex.join(':');
+		}
+	}
+
+	return ipv6.join(':');
+}
 

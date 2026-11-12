@@ -4902,6 +4902,12 @@ void init_syspara(void)
 		nvram_set("wps_device_pin", wps_gen_pin(devPwd, sizeof(devPwd)) ? devPwd : "12345670");
 	} else
 		nvram_set("wps_device_pin", value);
+#ifdef RTCONFIG_AMAS
+	int ret = 0;
+
+	ret = chk_acscli2_cmds("acs_restart");
+	_dprintf("%s, acscli2_can_do_restart:%d\n", __func__, ret);
+#endif
 }
 
 #ifdef RTCONFIG_BCMARM
@@ -5213,9 +5219,6 @@ void init_others(void)
 #if defined(RTCONFIG_BCM_MFG) && (defined(RTAX55) || defined(RTAX1800) || defined(TUFAX5400))
 	update_cfe_ax55();
 #endif
-#if defined(TUFAX3000) || defined(RTAX58U)
-    enable_4t4r();
-#endif
 	swrt_patch_nvram();
 
 #if defined(DSL_AX82U)
@@ -5412,12 +5415,36 @@ void init_others(void)
 #endif // ASUS_TWEAK
 
 #if defined(RTAC68U) && !defined(RTAC68A) && !defined(RT4GAC68U)
+#if defined(EA6700)
+	update_cfe_ea6700();
+#elif defined(DIR868L)
+	update_cfe_dir868l();
+#elif defined(R6300V2)
+	update_cfe_r6300v2();
+#elif defined(SBRAC1900P)
+	ac1900p_patch_cfe();
+#elif defined(F9K1118)
+#else
 	update_cfe();
 	update_cfe_tm1900();
 #endif
+#endif
 #ifdef RTAC3200
+#if defined(SBRAC3200P)
+	ac3200p_patch_cfe();
+#else
 	update_cfe_ac3200();
 	update_cfe_ac3200_128k();
+#endif
+#endif
+#if defined(K3)
+	k3_nvram_patch();
+#elif defined(XWR3100)
+	xwr3100_nvram_patch();
+#elif defined(R8500)
+	r8500_nvram_patch();
+#elif defined(SWRT_VER_MAJOR_X) && (defined(RTAC86U) || defined(RTAC88U) || defined(RTAC5300))
+	swrt_patch_nvram();
 #endif
 #ifdef RTAC68U
 	ac68u_cofs();
@@ -11165,6 +11192,31 @@ int reset_exclbase(int ifnum)
 	return 0;
 }
 
+int reset_exclvalid()
+{
+	int i, ifnum=0, acs_valid=0;
+	char exchans[32], exchans_valid[32], wl_tmp[32];
+	char word[256], *next;
+
+	if(nvram_get_int("re_mode") == 1)
+		return 1;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next)
+		ifnum++;
+
+	for(i=0; i<ifnum; ++i) {
+		sprintf(wl_tmp, "wl%d_chanspec", i);
+		acs_valid = nvram_match(wl_tmp, "0")?1:0;
+		if(!acs_valid)
+			continue;
+
+		sprintf(exchans, "wl%d_acs_excl_chans", i);
+		sprintf(exchans_valid, "wl%d_acs_excl_chans_valid", i);
+		nvram_set(exchans_valid, nvram_safe_get(exchans));
+		_dprintf("\nset exclchans valid[%d]:[%s]=[%s]\n", i, exchans_valid, nvram_safe_get(exchans_valid));
+	}
+}
+
 void dump_acs_excl_chans(char *desc)
 {
 	int i, ifnum=0;
@@ -11384,13 +11436,10 @@ void set_acs_ifnames()
 		snprintf(list, sizeof(list), strlen(list_5g_unii4_chans) ? "%s,%s" : "%s", list_ch165, list_5g_unii4_chans);
 #ifdef RTCONFIG_AMAS
 		/* exclude band4 bw160 chanspecs once fronthaul ap provides */
-#if !defined(GTAC5300)
-		//list_5g_band4_bw160_chans include all 40/80/160 and 165+, it should include 165/80 and 165/160 and 165+, it's a bug on gt-ac5300.
 		if (excl_band4_bw160) {
 			strlcat(list, ",", sizeof(list));
 			strlcat(list, list_5g_band4_bw160_chans, sizeof(list));
 		}
-#endif
 #endif
 	}
 

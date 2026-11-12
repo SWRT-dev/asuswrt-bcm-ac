@@ -39,6 +39,7 @@
 #endif
 
 #define ASUSDDNS_IP_SERVER	"ns1.asuscomm.com"
+#define ASUSDDNS_IP_SERVER_CN	"ns1.asuscomm.cn"
 //#define ASUSDDNS_IP_SERVER	"52.250.15.7"
 #define ASUSDDNS_CHECKIP_URL	"/myip.php"
 
@@ -516,25 +517,16 @@ static int response_register(http_trans_t *trans, ddns_info_t *info, ddns_alias_
 	return RC_DDNS_RSP_NOTOK;
 }
 
-#ifdef RTCONFIG_ACCOUNT_BINDING
-static char ddns_server[64] = {0};
-#endif
 PLUGIN_INIT(plugin_init)
 {
-#ifdef RTCONFIG_ACCOUNT_BINDING
-	if (is_account_bound() && nvram_match("ddns_replace_status", "1") &&
-		((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com"))))){
-		snprintf(ddns_server, sizeof(ddns_server), "%s", nvram_safe_get("aae_ddnsinfo"));
-		if(strlen(ddns_server) > 0) {
-			asus_update.checkip_name = ddns_server;
-			asus_update.server_name = ddns_server;
-			asus_register.checkip_name = ddns_server;
-			asus_register.server_name = ddns_server;
-			asus_unregister.checkip_name = ddns_server;
-			asus_unregister.server_name = ddns_server;
-		}
-	} else
-#endif
+	if (nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
+		asus_update.checkip_name = ASUSDDNS_IP_SERVER_CN;
+		asus_update.server_name = ASUSDDNS_IP_SERVER_CN;
+		asus_register.checkip_name = ASUSDDNS_IP_SERVER_CN;
+		asus_register.server_name = ASUSDDNS_IP_SERVER_CN;
+		asus_unregister.checkip_name = ASUSDDNS_IP_SERVER_CN;
+		asus_unregister.server_name = ASUSDDNS_IP_SERVER_CN;
+	}
 	plugin_register(&asus_update);
 	plugin_register(&asus_register);
 	plugin_register(&asus_unregister);
@@ -542,20 +534,14 @@ PLUGIN_INIT(plugin_init)
 
 PLUGIN_EXIT(plugin_exit)
 {
-#ifdef RTCONFIG_ACCOUNT_BINDING
-	if (is_account_bound() && nvram_match("ddns_replace_status", "1") &&
-		((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com"))))) {
-		snprintf(ddns_server, sizeof(ddns_server), "%s", nvram_safe_get("aae_ddnsinfo"));
-		if(strlen(ddns_server) > 0) {
-			asus_update.checkip_name = ddns_server;
-			asus_update.server_name = ddns_server;
-			asus_register.checkip_name = ddns_server;
-			asus_register.server_name = ddns_server;
-			asus_unregister.checkip_name = ddns_server;
-			asus_unregister.server_name = ddns_server;
-		}
-	} else
-#endif
+	if (nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
+		asus_update.checkip_name = ASUSDDNS_IP_SERVER_CN;
+		asus_update.server_name = ASUSDDNS_IP_SERVER_CN;
+		asus_register.checkip_name = ASUSDDNS_IP_SERVER_CN;
+		asus_register.server_name = ASUSDDNS_IP_SERVER_CN;
+		asus_unregister.checkip_name = ASUSDDNS_IP_SERVER_CN;
+		asus_unregister.server_name = ASUSDDNS_IP_SERVER_CN;
+	}
 	plugin_unregister(&asus_update);
 	plugin_unregister(&asus_register);
 	plugin_unregister(&asus_unregister);

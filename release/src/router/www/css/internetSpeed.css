@@ -1684,3 +1684,14 @@ body{
 		width: 1024px;
 	}
 }
+.input_option{
+       height:25px;
+       background-color:#576D73;
+       border-top-width:1px;
+       border-bottom-width:1px;
+       border-color:#888;
+       color:#FFFFFF;
+       font-family: Lucida Console;
+       font-size:13px;
+       margin-bottom:8px;
+}

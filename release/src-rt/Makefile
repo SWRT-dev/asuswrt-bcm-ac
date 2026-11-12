@@ -74,7 +74,33 @@ endif
 -include .config
 # declare the init var here. Don't include router's arch related var here due to it will break the multi-arch rules
 ifeq ($(HND_ROUTER),y)
+ifeq ($(MAKECMDGOALS),swrt-rax70)
+export BUILD_NAME ?= RT-AX95Q
+else ifeq ($(MAKECMDGOALS),swrt-ty6201bcm)
+export BUILD_NAME ?= RT-AX56U
+else ifeq ($(MAKECMDGOALS),swrt-ty6201rtk)
+export BUILD_NAME ?= RT-AX55
+else ifeq ($(MAKECMDGOALS),swrt-ty6202)
+export BUILD_NAME ?= RT-AX56U
+else ifeq ($(MAKECMDGOALS),swrt-mr60)
+export BUILD_NAME ?= RT-AX56U
+else ifeq ($(MAKECMDGOALS),swrt-ms60)
+export BUILD_NAME ?= RT-AX56U
+else ifeq ($(MAKECMDGOALS),swrt-tyax5400)
+export BUILD_NAME ?= TUF-AX5400
+else ifeq ($(MAKECMDGOALS),swrt-rgma2820a)
+export BUILD_NAME ?= RT-AX55
+else ifeq ($(MAKECMDGOALS),swrt-rgma2820b)
+export BUILD_NAME ?= RT-AX56U
+else ifeq ($(MAKECMDGOALS),swrt-rac2v1s)
+export BUILD_NAME ?= RT-AC86U
+else ifeq ($(MAKECMDGOALS),swrt-rax200)
+export BUILD_NAME ?= GT-AX11000
+else ifeq ($(MAKECMDGOALS),swrt-r8000p)
+export BUILD_NAME ?= GT-AC5300
+else
 export BUILD_NAME ?= $(shell echo $(MAKECMDGOALS) | tr a-z A-Z)
+endif
 export BUILD_NAME_SEC ?= $(BUILD_NAME)_sec
 export HND_SRC := $(shell pwd | sed 's/\(.*src-rt-.*hnd.*\).*/\1/')
 export BCM_WLIMPL
@@ -628,6 +654,14 @@ wl_sysdep:
 		elif [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684b0/rtecdc.bin ]; then \
 			cp -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684b0/rtecdc.bin $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/43684b0/. ; \
 		fi; \
+		if [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684c0/rtecdc.bin ]; then \
+			mkdir -p $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/43684c0/ ; \
+			cp -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684c0/rtecdc.bin $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/43684c0/. ; \
+		fi; \
+		if [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/6715b0/rtecdc.bin ]; then \
+			mkdir -p $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/6715b0/ ; \
+			cp -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/6715b0/rtecdc.bin $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/6715b0/. ; \
+		fi; \
 	else \
 		if [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/default/6715b0/rtecdc.bin ]; then \
 			mkdir -p $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/6715b0/ ; \
@@ -1116,7 +1150,7 @@ endif
 	
 	#@asustools/mkimage -A mips -O linux -d $(RSDKDIR)/image/fw.bin image/$(IMGNAME).trx
 endif
-	md5sum image/$(IMGNAME).trx > image/$(IMGNAME).md5
+	#md5sum image/$(IMGNAME).trx > image/$(IMGNAME).md5
 
 ifeq ($(DSL_REMOTE),y)
 	$(call dsl_genbintrx_epilog)
@@ -1165,7 +1199,7 @@ ifneq (,$(wildcard $(SRC_ROOT)/../../buildtools/private.pem))
 endif
 endif
 endif
-	ln -sf $(IMGNAME).trx image/$(BUILD_NAME).trx
+#	ln -sf $(IMGNAME).trx image/$(BUILD_NAME).trx
 ifeq ($(ARM),y)
 	ln -sf $(LINUXDIR)/vmlinux image/vmlinux
 	ln -sf $(LINUXDIR)/vmlinux.o image/vmlinux.o
@@ -1637,6 +1671,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_TCPDUMP/d" $(1); \
 		echo "RTCONFIG_TCPDUMP=y" >>$(1); \
 	fi;
+	if [ "$(TCPREPLAY)" = "y" ]; then \
+		sed -i "/RTCONFIG_TCPREPLAY/d" $(1); \
+		echo "RTCONFIG_TCPREPLAY=y" >>$(1); \
+	fi;
 	if [ "$(DUMP4000)" = "y" ]; then \
 		sed -i "/RTCONFIG_DUMP4000/d" $(1); \
 		echo "RTCONFIG_DUMP4000=y" >>$(1); \
@@ -1929,10 +1967,14 @@ define RouterOptions
 		echo "RTCONFIG_LIBASC=y" >>$(1); \
 	fi;
 	if [ "$(ASD)" = "y" ]; then \
-		sed -i "/RTCONFIG_ASD/d" $(1); \
+		sed -i "/RTCONFIG_ASD\>/d" $(1); \
 		echo "RTCONFIG_ASD=y" >>$(1); \
 		sed -i "/RTCONFIG_LIBASC/d" $(1); \
 		echo "RTCONFIG_LIBASC=y" >>$(1); \
+	fi;
+	if [ "$(ASD21)" = "y" ]; then \
+		sed -i "/RTCONFIG_ASD_2_1/d" $(1); \
+		echo "RTCONFIG_ASD_2_1=y" >>$(1); \
 	fi;
 	if [ "$(RSYSLOGD)" = "y" ]; then \
 		sed -i "/RTCONFIG_RSYSLOGD/d" $(1); \
@@ -2306,6 +2348,10 @@ define RouterOptions
 			if [ "$(OCNVC)" = "y" ]; then \
 				sed -i "/RTCONFIG_OCNVC/d" $(1); \
 				echo "RTCONFIG_OCNVC=y" >>$(1); \
+			fi; \
+			if [ "$(DSLITE)" = "y" ]; then \
+				sed -i "/RTCONFIG_DSLITE/d" $(1); \
+				echo "RTCONFIG_DSLITE=y" >>$(1); \
 			fi; \
 		fi; \
 	fi;
@@ -2842,11 +2888,12 @@ define RouterOptions
 	if [ "$(DHDAP)" = "y" ]; then \
 		sed -i "/RTCONFIG_DHDAP/d" $(1); \
 		echo "RTCONFIG_DHDAP=y" >>$(1); \
-		if [ "$(BW160M)" = "y" ]; then \
-			echo "RTCONFIG_BW160M=y" >>$(1); \
-		else \
-			echo "# RTCONFIG_BW160M is not set" >>$(1); \
-		fi; \
+	fi;
+	sed -i "/RTCONFIG_BW160M/d" $(1); \
+	if [ "$(BW160M)" = "y" ]; then \
+		echo "RTCONFIG_BW160M=y" >>$(1); \
+	else \
+		echo "# RTCONFIG_BW160M is not set" >>$(1); \
 	fi;
 	if [ "$(DPSTA)" = "y" ]; then \
 		sed -i "/RTCONFIG_DPSTA/d" $(1); \
@@ -3084,6 +3131,12 @@ define RouterOptions
 	if [ "$(WTFAST)" = "y" ]; then \
 		sed -i "/RTCONFIG_WTFAST/d" $(1); \
 		echo "RTCONFIG_WTFAST=y" >>$(1); \
+	fi;
+	sed -i "/RTCONFIG_WTFAST_V2/d" $(1); \
+	if [ "$(WTFAST_V2)" = "y" ]; then \
+		echo "RTCONFIG_WTFAST_V2=y" >>$(1); \
+	else \
+		echo "# RTCONFIG_WTFAST_V2 is not set" >>$(1); \
 	fi;
 	if [ "$(IFTTT)" = "y" ]; then \
 		sed -i "/RTCONFIG_IFTTT/d" $(1); \
@@ -5811,9 +5864,12 @@ endif
 else ifneq (,$(wildcard bootloaders/build/configs/options_$(BRCM_CHIP)_nand.conf.$(BUILD_NAME)))
 	cp bootloaders/build/configs/options_$(BRCM_CHIP)_nand.conf.$(BUILD_NAME) bootloaders/build/configs/options_$(BRCM_CHIP)_nand.conf
 endif
-
+else
+ifeq ($(F9K1118),y)
+	@cp $(LINUXDIR)/config_base_F9K1118.6a $(LINUXDIR)/config_$(lowercase_B)
 else
 	@cp $(LINUXDIR)/config_base.6a $(LINUXDIR)/config_$(lowercase_B)
+endif
 endif
 else
 	@if [ "$(RALINK)" = "y" ]; then \

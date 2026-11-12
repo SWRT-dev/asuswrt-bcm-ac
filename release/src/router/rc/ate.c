@@ -4119,11 +4119,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif
 #ifdef CONFIG_BCMWL5
 	else if (!strcmp(command, "Set_CoBrand")) {
-		int n = atoi(value);
-		if ((n >= 0) && (n <= 100))
-			set_cb(n);
-		else
-			puts("ATE_ERROR");
+		int n ;
+		if (value && (n=atoi(value)) && ((n >= 0) && (n <= 100))) {
+			if(set_cb(n) < 0)
+				puts("ATE_ERROR_INCORRECT_PARAMETER");
+		} else
+			puts("ATE_ERROR_INCORRECT_PARAMETER");
 		return 0;
 	}
 	else if (!strcmp(command, "Unset_CoBrand")) {
@@ -4559,7 +4560,7 @@ int ate_get_fw_upgrade_state(void) {
 int init_pass_nvram(void)
 {
 #ifdef RTCONFIG_NVRAM_ENCRYPT
-	char dec_passwd[128]={0};
+	char dec_passwd[128] __attribute__((unused)) ={0};
 #endif
 #if defined(RTCONFIG_BCMARM)
 	if (!nvram_get_int("x_Setting")) {
@@ -4579,7 +4580,6 @@ int init_pass_nvram(void)
 			_dprintf("READ ASUS PASS: Out of scope\n");
 			nvram_set("forget_it", "");
 		 } else {
-			int len = strlen(pass);
 			int i;
 			if (pass[0] == 0xff)
 				nvram_set("forget_it", "");
@@ -4607,3 +4607,4 @@ int init_pass_nvram(void)
 
 	return 0;
 }
+

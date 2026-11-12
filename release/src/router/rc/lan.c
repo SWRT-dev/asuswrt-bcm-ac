@@ -1858,9 +1858,7 @@ void start_lan(void)
 						system("ethswctl -c pause -p 1 -v 2");
 #endif
 				}
-#if defined(RTAXE7800) && !defined(RTCONFIG_BCM_MFG)
-				if (!nvram_get_int("x_Setting") && !strcmp(ifname, "eth1")) continue;
-#endif
+
 				/* Set the logical bridge address to that of the first interface */
 				strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
 				if (ioctl(sfd, SIOCGIFHWADDR, &ifr) == 0) {
@@ -2222,8 +2220,12 @@ gmac3_no_swbr:
 	if(nvram_match("lan_proto", "static"))
 #endif
 		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+//When stax is bridged to br0, duplicate IP addresses are not permitted within the LAN(lan_ipaddr=192.168.50.1).
 #if defined(RTCONFIG_SWRT) && defined(RTCONFIG_AMAS)
 	else if(aimesh_re_node())
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, "192.168.111.111", nvram_default_get("lan_netmask"));
+#elif defined(RTCONFIG_WIRELESSREPEATER)
+	else if(sw_mode() == SW_MODE_REPEATER)
 		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, "192.168.111.111", nvram_default_get("lan_netmask"));
 #endif
 	else
@@ -4192,7 +4194,7 @@ lan_up(char *lan_ifname)
 
 #if defined(RTCONFIG_MEDIA_SERVER) && defined(RTCONFIG_SAMBASRV) && defined(RTCONFIG_AMAS)
 	if(aimesh_re_node() && get_invoke_later()&INVOKELATER_DMS)
-		notify_rc("restart_samba");
+		notify_rc_and_wait_2min("restart_samba");
 #endif
 
 #ifdef RTCONFIG_REDIRECT_DNAME
@@ -4217,6 +4219,7 @@ lan_up(char *lan_ifname)
 		}
 	}
 #endif
+	update_srv_cert_if_lan_ip_changed();
 #if defined(RTCONFIG_AMAS) && defined(RTCONFIG_HND_ROUTER_AX)
 #if defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(ET8PRO) || defined(ET8_V2)
 	_dprintf("[%s][%d] skip (GPY211)\n", __FUNCTION__, __LINE__);
@@ -4254,6 +4257,7 @@ lan_down(char *lan_ifname)
 
 	update_lan_state(LAN_STATE_STOPPED, 0);
 
+	update_srv_cert_if_lan_ip_changed();
 #ifdef CONFIG_BCMWL5
 #if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
 #if defined(RTCONFIG_BCM4708) || defined(RTCONFIG_HND_ROUTER_AX)
@@ -5811,8 +5815,10 @@ void restart_wireless(void)
 #endif
 	}
 #ifdef CONFIG_BCMWL5
-	else
+	else {
 		nvram_set_int("obd_allow_scan", 0);
+		nvram_set_int("wlcscan", 0);
+	}
 #endif
 #endif
 #ifdef RTCONFIG_LANTIQ
@@ -6155,6 +6161,7 @@ void restart_wireless(void)
 #ifdef RTCONFIG_CFGSYNC
 	send_event_to_cfgmnt(EID_RC_RESTART_WIRELESS);
 #endif
+	restore_wan_ebtables_rules();
 }
 
 #ifdef RTCONFIG_BCM_7114
@@ -6598,7 +6605,7 @@ void set_onboarding_vif_status()
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 	}
 
-	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "sae")) {
+	if (nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "sae") || nvram_match(strcat_r(prefix, "closed", tmp), "1")) {
 		snprintf(wl_radio, sizeof(wl_radio), "wl%d_radio", unit);
 		if (nvram_get_int(wl_radio)) //radio on
 			nvram_set_int("obvif_bss", 1);

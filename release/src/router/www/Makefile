@@ -4,7 +4,7 @@ ASUSWRTTOOLSDIR = $(SRCBASE)/router/tools/Lnx_AsusWrtDictPrep
 ASUSWRTTOOLSDIR2 = $(SRCBASE)/router/tools/Lnx_ToolHelp
 
 MODELS_HAVE_USB3 = GT-AC2900 \
-	BRT-AC828 RT-AD7200 \
+ 	BRT-AC828 RT-AD7200 \
 	GT-AXY16000 \
 	DSL-AC68U DSL-AX82U \
 	RT-AC5300 GT-AC5300 GT-AC9600 RT-AC95U RT-AC3100 RT-AC3200 GT-AX11000\
@@ -15,7 +15,7 @@ MODELS_HAVE_USB3 = GT-AC2900 \
 	RT-N65U \
 	RT-N18U \
 	RP-AC68U \
-	RT-AXE7800 GT10 \
+	RT-AXE7800 GT10 RT-AX9000 \
 	GT-AXE11000 \
 	GT-AX6000 GT-AX11000_PRO GT-AXE16000 RT-AX88U_PRO
 
@@ -24,8 +24,8 @@ MODELS_HAVE_TRAFFIC_ANALYZER = RT-AC3200 RT-AC87U RT-AC88U RT-AX88U RT-AC86U GT-
 	RT-AX86U RT-AX68U RT-AC68U_V4 DSL-AX82U \
 	RT-AX86U_PRO \
 	MAP-AC2200 MAP-AC2200V RT-AC95U \
-	RT-AXE7800 GT10 \
-	GT-AXE11000 GT-AX6000 GT-AX11000_PRO GT-AXE16000 ET12 XT12 RT-AX88U_PRO
+	RT-AXE7800 GT10 RT-AX9000 \
+	GT-AXE11000 GT-AX6000 GT-AX11000_PRO GT-AXE16000 ET12 XT12 RT-AX88U_PRO XC5
 
 QIS_V2 = DSL-AC68U RT-AC88Q
 
@@ -70,6 +70,16 @@ ifeq ($(and $(RTCONFIG_AMAS),$(RTCONFIG_WIFI_SON)),y)
 	rm -rf $(INSTALLDIR)/www/www-sys/images
 	cp ../www/sysdep/$(BUILD_NAME)/www/images $(INSTALLDIR)/www/. -rfL || true
 endif
+
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME), $(QIS_V2)))
+	cp $(TOP)/www/sysdep/FUNCTION/QIS_V2/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
+	cp $(TOP)/www/sysdep/FUNCTION/QIS_V2/images $(INSTALLDIR)/www/ -rf
+	cp $(TOP)/www/sysdep/FUNCTION/QIS_V2/qis $(INSTALLDIR)/www/ -rf
+else
+	cp $(TOP)/www/sysdep/FUNCTION/QIS_V3/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
+	cp $(TOP)/www/sysdep/FUNCTION/QIS_V3/mobile $(INSTALLDIR)/www/ -rf
+endif
+
 	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rfL || true
 	cp ../www/sysdep/$(SWRT_NAME)/www $(INSTALLDIR)/. -rfL || true
 ifeq ($(RTCONFIG_BCMARM),y)
@@ -99,15 +109,6 @@ ifeq ($(RTCONFIG_ROG_UI), y)
 endif
 #endif
 
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME), $(QIS_V2)))
-	cp $(TOP)/www/sysdep/FUNCTION/QIS_V2/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
-	cp $(TOP)/www/sysdep/FUNCTION/QIS_V2/images $(INSTALLDIR)/www/ -rf
-	cp $(TOP)/www/sysdep/FUNCTION/QIS_V2/qis $(INSTALLDIR)/www/ -rf
-else
-	cp $(TOP)/www/sysdep/FUNCTION/QIS_V3/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
-	cp $(TOP)/www/sysdep/FUNCTION/QIS_V3/mobile $(INSTALLDIR)/www/ -rf
-endif
-
 ifneq ($(BUILD_NAME),DSL-AX82U)
 	rm -rf $(INSTALLDIR)/www/mobile/js/jstz.min.js
 	rm -rf $(INSTALLDIR)/www/mobile/pages/bridge_cfg_tmp_page.html
@@ -123,7 +124,7 @@ endif
 
 ifeq ($(RTCONFIG_WL_SCHED_V2), y)
 ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), GT-AXE11000 RT-AXE95Q ET8PRO ET8_V2 GT-AXE16000 ET12))
-		cp $(TOP)/www/sysdep/FUNCTION/WL_SCHED_V2/Advanced_WAdvanced_Content.asp $(INSTALLDIR)/www/Advanced_WAdvanced_Content.asp
+	cp $(TOP)/www/sysdep/FUNCTION/WL_SCHED_V2/Advanced_WAdvanced_Content.asp $(INSTALLDIR)/www/Advanced_WAdvanced_Content.asp
 endif
 endif
 ifeq ($(RTCONFIG_PC_SCHED_V3), y)
@@ -535,10 +536,6 @@ ifneq ($(RTCONFIG_FINDASUS), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/wifi-logo.png
 endif
 
-ifneq ($(RTCONFIG_JFFS2USERICON), y)
-	rm -rf $(INSTALLDIR)/www/ajax_uploadicon.asp
-endif
-
 ifneq ($(RTCONFIG_TR069), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_TR069_Content.asp
 endif
@@ -599,6 +596,7 @@ endif
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade_hover.svg
 endif
+	rm -rf $(INSTALLDIR)/www/js/fire.js
 ifneq ($(RTCONFIG_WTF_REDEEM)$(RTCONFIG_WTFAST), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/GameBoost_AiProtection.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/GameBoost_QoS.png
