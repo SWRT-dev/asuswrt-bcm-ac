@@ -499,18 +499,18 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
 va_list ap1,ap2;]], [[va_copy(ap1,ap2);]])],
 [have_va_copy=yes],
 [have_va_copy=no])
-AC_MSG_RESULT($have_va_copy)
+AC_MSG_RESULT([$have_va_copy])
 if test x"$have_va_copy" = x"yes"; then
-    AC_DEFINE(HAVE_VA_COPY,1,[Whether va_copy() is available])
+    AC_DEFINE([HAVE_VA_COPY],1,[Whether va_copy() is available])
 else
     AC_MSG_CHECKING([for __va_copy])
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
     va_list ap1,ap2;]], [[__va_copy(ap1,ap2);]])],
     [have___va_copy=yes],
     [have___va_copy=no])
-    AC_MSG_RESULT($have___va_copy)
+    AC_MSG_RESULT([$have___va_copy])
     if test x"$have___va_copy" = x"yes"; then
-        AC_DEFINE(HAVE___VA_COPY,1,[Whether __va_copy() is available])
+        AC_DEFINE([HAVE___VA_COPY],1,[Whether __va_copy() is available])
     fi
 fi
 
