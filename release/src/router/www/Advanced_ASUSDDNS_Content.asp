@@ -251,8 +251,6 @@ var aae_ddnsinfo = httpApi.nvramGet(["aae_ddnsinfo"], true).aae_ddnsinfo;
 var ipv6_service = httpApi.nvramGet(["ipv6_service"], true).ipv6_service;
 var asusddns_token_state = httpApi.nvramGet(["asusddns_token_state"], true).asusddns_token_state;
 var ddns_accournt_remove_note = stringSafeGet("<#asusddns_rm_account_hint#>");
-var current_page = window.location.pathname.split("/").pop();
-var faq_index_tmp = get_faq_index(FAQ_List, current_page, 1);
 
 function init(){
 	show_menu();
@@ -480,7 +478,6 @@ function ddns_load_body(){
         document.form.ddns_wildcard_x[1].disabled= 1;
         showhide("wildcard_field",0);
     }
-
     if (HTTPS_support) {
         show_cert_settings(1);
 		change_cert_method(orig_le_enable);
@@ -830,7 +827,7 @@ function change_ddns_setting(v){
 			showhide("linkToHome", 0);
 			showhide("wildcard_field",0);
 			showhide("check_ddns_field", 0);
-			if (('<% nvram_get("jffs2_enable"); %>' != '1') || ('<% nvram_get("jffs2_scripts"); %>' != '1'))
+			if ('<% nvram_get("jffs2_scripts"); %>' != '1')
 				showhide("need_custom_scripts", 1);
 			else
 			showhide("need_custom_scripts", 0);
@@ -882,7 +879,7 @@ function change_ddns_setting(v){
 				var disable_wild = 0;
 			document.form.ddns_wildcard_x[0].disabled= disable_wild;
 			document.form.ddns_wildcard_x[1].disabled= disable_wild;
-			if(v == "WWW.ZONEEDIT.COM" || v == "WWW.CLOUDFLARE.COM" || v == "DOMAINS.GOOGLE.COM"){
+			if(v == "WWW.ZONEEDIT.COM" || v == "WWW.CLOUDFLARE.COM" || v == "DOMAINS.GOOGLE.COM" || v == "WWW.NAMECHEAP.COM"){
 				showhide("link", 0);
 				showhide("linkToHome", 1);
 			}
@@ -902,7 +899,17 @@ function change_ddns_setting(v){
 	}
 	var default_hostname_label = "<a class=\"hintstyle\" href=\"javascript:void(0);\" onClick=\"openHint(5,13);\"><#LANHostConfig_x_DDNSHostNames_itemname#></a>";
 
-	if(v == "WWW.CLOUDFLARE.COM") {
+	if(v == "WWW.NAMECHEAP.COM") {
+		document.getElementById("ddns_username_th").innerHTML = "Domain Name";
+		document.getElementById("ddns_password_th").innerHTML = "<#LANHostConfig_x_DDNSPassword_itemname#>";
+		document.getElementById("ddns_hostname_th").innerHTML = default_hostname_label;
+	}
+	else if(v == "FREEDNS.AFRAID.ORG") {
+		document.getElementById("ddns_username_th").innerHTML = "Username";
+		document.getElementById("ddns_password_th").innerHTML = "<#PPPConnection_Password_itemname#>";
+		document.getElementById("ddns_hostname_th").innerHTML = default_hostname_label;
+	}
+	else if(v == "WWW.CLOUDFLARE.COM") {
 		document.getElementById("ddns_username_th").innerHTML = "Domain Name";
 		document.getElementById("ddns_password_th").innerHTML = "API Token";
 		document.getElementById("ddns_hostname_th").innerHTML = default_hostname_label;

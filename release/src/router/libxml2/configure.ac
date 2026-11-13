@@ -497,8 +497,8 @@ dnl Checking for va_copy availability
 AC_MSG_CHECKING([for va_copy])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
 va_list ap1,ap2;]], [[va_copy(ap1,ap2);]])],
-have_va_copy=yes,
-have_va_copy=no)
+[have_va_copy=yes],
+[have_va_copy=no])
 AC_MSG_RESULT($have_va_copy)
 if test x"$have_va_copy" = x"yes"; then
     AC_DEFINE(HAVE_VA_COPY,1,[Whether va_copy() is available])
@@ -506,8 +506,8 @@ else
     AC_MSG_CHECKING([for __va_copy])
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
     va_list ap1,ap2;]], [[__va_copy(ap1,ap2);]])],
-    have___va_copy=yes,
-    have___va_copy=no)
+    [have___va_copy=yes],
+    [have___va_copy=no])
     AC_MSG_RESULT($have___va_copy)
     if test x"$have___va_copy" = x"yes"; then
         AC_DEFINE(HAVE___VA_COPY,1,[Whether __va_copy() is available])
@@ -560,8 +560,8 @@ dnl Checking if gethostbyname() argument is const.
 AC_MSG_CHECKING([for const gethostbyname() argument])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]],
     [[(void)gethostbyname((const char *)"");]])],
-have_gethostbyname_const_arg=yes,
-have_gethostbyname_const_arg=no)
+[have_gethostbyname_const_arg=yes],
+[have_gethostbyname_const_arg=no])
 AC_MSG_RESULT($have_gethostbyname_const_arg)
 if test x"$have_gethostbyname_const_arg" = x"yes"; then
     AC_DEFINE([GETHOSTBYNAME_ARG_CAST], [],
@@ -576,8 +576,8 @@ AC_MSG_CHECKING([for const send() second argument])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <sys/socket.h>]],
     [[(void)send(1,(const char *)"",1,1);]])],
-have_send_const_arg2=yes,
-have_send_const_arg2=no)
+[have_send_const_arg2=yes],
+[have_send_const_arg2=no])
 AC_MSG_RESULT($have_send_const_arg2)
 if test x"$have_send_const_arg2" = x"yes"; then
     AC_DEFINE([SEND_ARG2_CAST], [],

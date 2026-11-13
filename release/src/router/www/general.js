@@ -352,7 +352,6 @@ function change_common_radio(o, s, v, r){
 			}
 
 			change_ddns_setting(document.form.ddns_server_x.value);
-			inputCtrl(document.form.ddns_refresh_x, 1);
 			show_ipv6update_setting();
 		}else{
 			if(document.form.ddns_server_x.value == "WWW.ASUS.COM"){
@@ -372,9 +371,8 @@ function change_common_radio(o, s, v, r){
 			document.form.ddns_regular_check.value = 0;
 			showhide("check_ddns_field", 0);
 			inputCtrl(document.form.ddns_regular_period, 0);
-			inputCtrl(document.form.ddns_refresh_x, 0);
 			showhide("ddns_ipv6update_tr", 0);
-
+			document.getElementById("ddns_hostname_tr").style.display = "none";
 			document.getElementById("ddns_status_tr").style.display = "none";
 			document.getElementById("ddns_result_tr").style.display = "none";
 		}
@@ -1995,6 +1993,8 @@ function getDDNSState(ddns_return_code, ddns_hostname, ddns_old_hostname)
 		ddnsStateHint = "Server Error";
 	else if(ddns_return_code.indexOf('401')!=-1)
 		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_10#>";
+	else if (ddns_return_code.indexOf('402')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_15#>";
 	else if(ddns_return_code.indexOf('407')!=-1)
 		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_11#>";
 	else if(ddns_return_code == 'Time-out')
