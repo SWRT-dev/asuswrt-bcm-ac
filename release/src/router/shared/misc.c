@@ -1451,6 +1451,39 @@ enum wan_unit_e get_first_connected_public_wan_unit(void)
 		return wan_unit;
 }
 
+enum wan_unit_e get_first_connected_dual_wan_unit(void)
+{
+	int i, wan_unit = WAN_UNIT_MAX;
+	char prefix[sizeof("wanXXXXXX_")], link[sizeof("link_wanXXXXXX")], tmp[100];
+
+	for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; ++i) {
+		if (get_dualwan_by_unit(i) == WANS_DUALWAN_IF_NONE || !is_wan_connect(i))
+			continue;
+
+		/* For LB mode, check link status. */
+		snprintf(prefix, sizeof(prefix), "wan%d_", i);
+		if (!i)
+			strlcpy(link, "link_wan", sizeof(link));
+		else
+			snprintf(link, sizeof(link), "link_wan%d", i);
+
+		if (!nvram_get_int(link))
+			continue;
+
+		if (( nvram_get_int(strlcat_r(prefix, "state_t", tmp, sizeof(tmp)))==2
+				&& nvram_get_int(strlcat_r(prefix, "sbstate_t", tmp, sizeof(tmp)))==0
+				&& nvram_get_int(strlcat_r(prefix, "auxstate_t", tmp, sizeof(tmp)))==0 ))
+		{
+				wan_unit = i;
+				break;
+		}
+	}
+	if(WAN_UNIT_MAX == i)
+		return WAN_UNIT_NONE;
+	else
+		return wan_unit;
+}
+
 int get_wan_proto(char *prefix)
 {
 	static const struct {
@@ -6673,3 +6706,4 @@ void testcase ( const char* pszTest )
 	printf ( "\n\n" );
 }
 #endif
+
