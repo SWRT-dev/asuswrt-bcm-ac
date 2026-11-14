@@ -1,4 +1,18 @@
-[ENGLISH](README_en.md)
+[ENGLISH](README_en.md) [中文](README.md)
+=======
+
+## 编译测试
+
+|型号|状态|
+|:--:|:-:|
+|rt-ac68u|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+|rt-ac88u|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+|rt-ac3100|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+|rt-ac5300|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+|rt-ac86u|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+|gt-ac2900|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+|gt-ac5300|[![Build testing](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml/badge.svg?branch=gtac5300)](https://github.com/SWRT-dev/asuswrt-bcm-ac/actions/workflows/github-actions.yml)|
+
 =======
 
 AC系列:[https://github.com/SWRT-dev/asuswrt-bcm-ac](https://github.com/SWRT-dev/asuswrt-bcm-ac)
