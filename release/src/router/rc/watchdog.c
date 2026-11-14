@@ -6779,9 +6779,9 @@ void regular_ddns_check(void)
 {
 #ifdef RPAC68U
 /* The workaround solution avoiding watchdog segfault on RP-AC68U. */
-	int r, wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #else
-	int r, wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #endif
 	char prefix[sizeof("wanXXXXXXXXXX_")], *host;
 	struct in_addr ip_addr;
@@ -6808,14 +6808,14 @@ void regular_ddns_check(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("DDNS", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return;
+				}
 			}
-			else {
-				wan_unit = u;
-			}
+			wan_unit = u;
 		}
 	}
 #endif
@@ -6833,7 +6833,6 @@ void regular_ddns_check(void)
 	}
 	
 	//_dprintf("WAN IP change!\n");
-	nvram_set("ddns_update_by_wdog", "1");
 	if (wan_unit != last_unit) {
 #ifndef RTCONFIG_INADYN
 		unlink("/tmp/ddns.cache");
@@ -6842,14 +6841,8 @@ void regular_ddns_check(void)
 #endif
 	}
 	logmessage("watchdog", "Hostname/IP mapping error! Restart ddns.");
-	if (last_unit != wan_unit)
-		r = notify_rc("restart_ddns");
-	else
-		r = notify_rc("start_ddns");
-
-	if (!r)
-		nvram_set_int("ddns_last_wan_unit", wan_unit);
-
+	stop_ddns();
+	start_ddns(NULL);
 
 	return;
 }
@@ -6858,9 +6851,9 @@ void ddns_check(void)
 {
 #ifdef RPAC68U
 /* The workaround solution avoiding watchdog segfault on RP-AC68U. */
-	int r, wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = rtk_wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #else
-	int r, wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
+	int wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #endif
 
 	//_dprintf("ddns_check... %d\n", ddns_check_count);
@@ -6877,14 +6870,14 @@ void ddns_check(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("DDNS", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return;
+				}
 			}
-			else {
-				wan_unit = u;
-			}
+			wan_unit = u;
 		}
 	}
 #endif
@@ -6908,7 +6901,7 @@ void ddns_check(void)
 	}
 
 	if (nvram_match("ddns_regular_check", "1")&& !nvram_match("ddns_server_x", "WWW.ASUS.COM")) {
-		int period = nvram_get_int("ddns_regular_period");
+		int period = nvram_get_int("ddns_regular_period"); //minute(s)
 		if (period < 30) period = 60;
 		if (ddns_check_count >= (period*2)) {
 			regular_ddns_check();
@@ -6918,14 +6911,26 @@ void ddns_check(void)
 		ddns_check_count++;
 	}
 
-	if (wan_unit == last_unit && nvram_match("ddns_updated", "1")) //already updated success
+	if (wan_unit == last_unit && nvram_match("ddns_updated", "1")) { //already updated success
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_INADYN)
+		/* not enable IPv6 or IPv6 already updated success */
+		if (!ipv6_enabled() || nvram_match("ddns_ipv6_update", "0") || (ipv6_enabled() && nvram_match("ddns_ipv6_update", "1") && nvram_match("ddns_ipv6_updated", "1"))) {
+			//logmessage("watchdog", "IPv4/IPv6 already updated success, exit DDNS Retry.\n");
+			return;
+		}
+#else
 		return;
+#endif
+	}
 
-	if (wan_unit == last_unit) {
-		if ( nvram_match("ddns_server_x", "WWW.ASUS.COM")) {
+	if (wan_unit == last_unit) { /* DDNS has already been run, ddns_last_wan_unit has been set. */
+		if ( nvram_match("ddns_server_x", "WWW.ASUS.COM") || nvram_match("ddns_server_x", "WWW.ASUS.COM.CN")) {
+			/* Only Time-out, connect_fail, -1 (in asusddns) or not auth_fail (not in asusddns) */
 			if ( !( !strcmp(nvram_safe_get("ddns_return_code_chk"),"Time-out") ||
 				!strcmp(nvram_safe_get("ddns_return_code_chk"),"connect_fail") ||
-				strstr(nvram_safe_get("ddns_return_code_chk"), "-1") ) )
+				strstr(nvram_safe_get("ddns_return_code_chk"), "-1") ||
+				strstr(nvram_safe_get("ddns_return_code_chk"), "390") //Server Error
+				) )
 				return;
 		}
 		else{ //non asusddns service
@@ -6945,6 +6950,7 @@ void ddns_check(void)
 	ddns_check_retry--;
 	/* Stop retry and show the return code to UI */
 	if (ddns_check_retry <= 0) {
+		/* If in "ddns_query" then continue to next round, otherwise start ddns. */
 		if (nvram_match("ddns_return_code", "ddns_query")) {
 			nvram_set("ddns_return_code", nvram_safe_get("ddns_return_code_chk"));
 			ddns_recover_min = ((30 + rand_seed_by_time() % 30)*2);
@@ -6961,7 +6967,6 @@ void ddns_check(void)
 	}
 	nvram_set_int("ddns_check_retry", ddns_check_retry);
 
-	nvram_set("ddns_update_by_wdog", "1");
 	if (wan_unit != last_unit) {
 #ifndef RTCONFIG_INADYN
 		unlink("/tmp/ddns.cache");
@@ -6970,13 +6975,8 @@ void ddns_check(void)
 #endif
 	}
 	logmessage("watchdog", "start ddns.");
-	if (last_unit != wan_unit)
-		r = notify_rc("restart_ddns watchdog");
-	else
-		r = notify_rc("start_ddns watchdog");
-
-	if (!r)
-		nvram_set_int("ddns_last_wan_unit", wan_unit);
+	stop_ddns();
+	start_ddns("watchdog");
 
 	return;
 }
@@ -10470,3 +10470,4 @@ void RC_SEND_NT_EVENT(int NT_EVENT_FLAG, char *sub_event)
 	if(nt_root) json_object_put(nt_root);
 }
 #endif
+

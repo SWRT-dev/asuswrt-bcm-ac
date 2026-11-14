@@ -1328,8 +1328,10 @@ deconfig6(char *wan_ifname, const int mode)
 #ifdef RTCONFIG_INADYN
 	if(mode == 1)
 	{
-		if (nvram_get_int("ddns_enable_x"))
-			notify_rc("restart_ddns");
+		if (nvram_get_int("ddns_enable_x") && nvram_get_int("ddns_ipv6_update")) {
+			stop_ddns();
+			start_ddns(NULL);
+		}
 	}
 #endif
 	return 0;
@@ -1981,8 +1983,10 @@ skip:
 #endif
 
 #ifdef RTCONFIG_INADYN
-	if (nvram_get_int("ddns_enable_x"))
-		notify_rc("restart_ddns");
+	if (nvram_get_int("ddns_enable_x") && nvram_get_int("ddns_ipv6_update")) {
+		stop_ddns();
+		start_ddns(NULL);
+	}
 #endif
         if (nvram_get_int("telnetd_enable"))
                 notify_rc("restart_telnetd");
@@ -2196,3 +2200,4 @@ void stop_6relayd(void)
 #endif // RTCONFIG_6RELAYD
 
 #endif // RTCONFIG_IPV6
+

@@ -4131,12 +4131,13 @@ ddns_updated_main(int argc, char *argv[])
 
 	nvram_set("ddns_cache", buf);
 	nvram_set("ddns_ipaddr", ip);
-#endif
 #ifdef RTCONFIG_IPV6
 	ipv6 = safe_getenv("INADYN_IPv6");
 	if (*ipv6) {
 		nvram_set("ddns_ipv6_ipaddr", ipv6);
+		nvram_set("ddns_ipv6_updated", "1");
 	}
+#endif
 #endif
 	nvram_set("ddns_status", "1");
 	nvram_set("ddns_server_x_old", nvram_safe_get("ddns_server_x"));
@@ -4258,6 +4259,12 @@ start_ddns(char *caller)
 		return 0;
 	}
 
+	/* MAX Retry Count mechanism */
+	if (caller == NULL) { // not from watchdog
+		//logmessage("ddns", "Reset DDNS Retry.\n");
+		nvram_set("ddns_check_retry", "10");
+	}
+
 	unit = wan_primary_ifunit();
 #if defined(RTCONFIG_DUALWAN)
 	if (nvram_match("wans_mode", "lb")) {
@@ -4268,14 +4275,14 @@ start_ddns(char *caller)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("ddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return -2;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("ddns", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return -2;
+				}
 			}
-			else {
-				unit = u;
-			}
+			unit = u;
 		}
 	}
 #endif
@@ -4293,56 +4300,73 @@ start_ddns(char *caller)
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 	wan_ifname = get_wan_ifname(unit);
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_INADYN)
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.(%d)", wan_ifname, ddns_check_retry);
+		nvram_unset("ddns_ipv6_updated");
+	}
+#endif
+
 	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
 #ifdef RTCONFIG_INADYN
 	if (wan_public) { // private WAN IP
-		/* use External WAN IP */
-		nvram_set_int("ddns_realip_x", 1);
-		realip = 1;
 #ifdef RTCONFIG_GETREALIP
+#ifdef RTCONFIG_IPV6
+		//NAT444(CGNAT), use ipv6 only, ddns server will discard private IP
+		//In China, if wan_ip is 10.x.x.x/100.x.x.x, there is a 95% probability that NAT444 is in use.
+		if(!strncmp(nvram_safe_get("territory_code"), "CN", 2) && nvram_get_int("ddns_ipv6_update") && nvram_pf_match(prefix, "proto", "pppoe"))
+			;
+		else
+#endif
 		if (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2) {
 			wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+			/* use External WAN IP */
+			nvram_set_int("ddns_realip_x", 1);
+			realip = 1;
+		} else {
+#ifdef RTCONFIG_IPV6
+			if (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)
+#endif
+			{
+				/* Trigger watchdog when start fails */
+				logmessage("ddns", "%s not find External WAN IP, go retry.(%d)", wan_ifname, ddns_check_retry);
+				nvram_unset("ddns_updated");
+				nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+				nvram_set("ddns_return_code_chk", "-1");
+				return -1;
+			}
 		}
 #endif
-	} else {
+	}
+	if (realip == 0) {
 		/* use Internal WAN IP */
 		nvram_set_int("ddns_realip_x", 0);
 	}
 #endif
 
 	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
-		logmessage("ddns", "WAN IP is empty.(%d)", ddns_check_retry);
-		/* Trigger watchdog when start fails */
+		logmessage("ddns", "%s not find WAN IP or link internet, go retry.(%d)", wan_ifname, ddns_check_retry);
 		nvram_unset("ddns_updated");
 		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
 		nvram_set("ddns_return_code_chk", "-1");
 		return -1;
 	}
-#ifdef RTCONFIG_IPV6
-	if (nvram_get_int("ddns_ipv6_update")
-		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
-	{
-		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.(%d)", wan_ifname, ddns_check_retry);
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
-		nvram_set("ddns_return_code_chk", "-1");
-		return -1;
-	}
-#endif
 
 	if (
 #ifdef RTCONFIG_INADYN
 		realip == 0 &&
-#endif
 #ifdef RTCONFIG_IPV6
-		!nvram_get_int("ddns_ipv6_update") &&
+		(!nvram_get_int("ddns_ipv6_update") || (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)) &&
+#endif
 #endif
 		wan_public) { // private WAN IP
 		logmessage("ddns", "use Private WAN IP (%s).(%d)", wan_ip, ddns_check_retry);
 		nvram_unset("ddns_updated");
 		nvram_set("ddns_return_code", "299");
 		nvram_set("ddns_return_code_chk", "299");
+		nvram_set_int("ddns_last_wan_unit", unit);
 		return -1;
 	}
 
@@ -4355,13 +4379,18 @@ start_ddns(char *caller)
 	if (inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
-#ifdef RTCONFIG_IPV6
-		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_INADYN)
+		&& (!ipv6_enabled() || nvram_match("ddns_ipv6_update", "0") || (ipv6_enabled() && nvram_match("ddns_ipv6_update", "1") && 
+		((strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0 && strnlen(nvram_safe_get("ddns_ipv6_ipaddr"), INET6_ADDRSTRLEN) == 0) || nvram_match("ddns_ipv6_ipaddr", ip6_addr))))
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
 	) {
 		logmessage("ddns", "IP address, server and hostname have not changed since the last update.");
-		return -1;
+		nvram_set("ddns_updated", "1");
+		/* for UI display */
+		nvram_set("ddns_return_code", "");
+		nvram_set("ddns_return_code_chk", ",200");
+		return 0;
 	}
 
 #ifndef RTCONFIG_INADYN
@@ -4449,7 +4478,9 @@ start_ddns(char *caller)
 		service = "peanuthull", asus_ddns = 2;
 	} 
 	else if (strcmp(server, "WWW.3322.ORG")==0)
-		service = "qdns dynamic";
+		service = "dyndns@3322.org";
+    else if (strcmp(server, "CUSTOM")==0)
+                service = "";
 	else {
 		logmessage("ddns", "Error ddns server name: %s\n", server);
 		return 0;
@@ -4462,12 +4493,6 @@ start_ddns(char *caller)
 	/* Show WAN unit used by ddns client to console and syslog. */
 	_dprintf("start_ddns update %s %s, wan_unit %d\n", server, service, unit);
 	logmessage("ddns", "update %s %s, wan_unit %d\n", server, service, unit);
-
-	/* MAX Retry Count mechanism */
-	if (caller == NULL) { // not from watchdog
-		//logmessage("ddns", "Reset DDNS Retry.\n");
-		nvram_set("ddns_check_retry", "10");
-	}
 
 	nvram_set("ddns_return_code", "ddns_query");
 
@@ -4489,9 +4514,6 @@ start_ddns(char *caller)
 	unlink(cache_path);
 	nvram_unset("ddns_cache");
 	nvram_unset("ddns_ipaddr");
-#ifdef RTCONFIG_IPV6
-	nvram_unset("ddns_ipv6_ipaddr");
-#endif
 	nvram_unset("ddns_status");
 	nvram_unset("ddns_updated");
 	logmessage("ddns", "Clear ddns cache.");
@@ -4509,6 +4531,7 @@ start_ddns(char *caller)
 		nvram_unset("ddns_ipaddr");
 #ifdef RTCONFIG_IPV6
 		nvram_unset("ddns_ipv6_ipaddr");
+		nvram_unset("ddns_ipv6_updated");
 #endif
 		nvram_unset("ddns_status");
 		nvram_unset("ddns_updated");
@@ -4564,14 +4587,28 @@ start_ddns(char *caller)
 	}
 #else
 	if (*service) {
+#ifdef RTCONFIG_LETSENCRYPT
+		int asus_le = (asus_ddns == 1 && nvram_get_int("le_enable") == 1);
+#endif
 		char *inadyn_argv[] = { "/usr/sbin/inadyn",
 			"-e", "/sbin/ddns_updated",
 			"-l", nvram_get_int("ddns_debug") ? "debug" : "notice",
+#ifdef RTCONFIG_LETSENCRYPT
+			asus_le ? "-1" : NULL,
+			asus_le ? "--force" : NULL,
+#endif
 			NULL
 		};
 
 		if ((fp = fopen("/etc/inadyn.conf", "w"))) {
-			fprintf(fp, "provider %s {\n", service);
+			if (asus_ddns == 10) {
+				fprintf(fp, "custom namecheap {\n");
+				fprintf(fp, "ddns-server = dynamicdns.park-your-domain.com\n");
+				// We store the domain.tld in the username nvram
+				fprintf(fp, "ddns-path = \"/update?domain=%%u&password=%%p&host=%%h\"\n");
+			} else {
+				fprintf(fp, "provider %s {\n", service);
+			}
 			fprintf(fp, "hostname = %s\n", host);
 			fprintf(fp, "username = '%s'\n", ppp_safe_escape(user, tmp, sizeof(tmp)));
 			fprintf(fp, "password = '%s'\n", ppp_safe_escape(passwd, tmp, sizeof(tmp)));
@@ -4597,7 +4634,13 @@ start_ddns(char *caller)
 				|| strcmp(server, "WWW.CLOUDFLARE.COM") == 0))
 				fprintf(fp, "allow-ipv6 = true\n");
 #endif
+
+			append_custom_config("inadyn.conf", fp);
+
 			fclose(fp);
+
+			use_custom_config("inadyn.conf", "/etc/inadyn.conf");
+			run_postconf("inadyn", "/etc/inadyn.conf");
 
 #ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE
 			if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
@@ -4607,7 +4650,9 @@ start_ddns(char *caller)
 				{
 					nvram_set("ddns_return_code", ",390");
 					nvram_set("ddns_return_code_chk", ",390");
-					return 0;
+					nvram_set_int("ddns_last_wan_unit", unit);
+					logmessage("ddns", "update ddns token failed(%d)\n", nvram_get_int("asusddns_token_state"));
+					return -1;
 				}
 			}
 #endif
@@ -4905,7 +4950,7 @@ clean_ddns(void)
 	nvram_set("ddns_hostname_old", "");
 	nvram_set("ddns_cache", "");
 	nvram_set("ddns_ipaddr", "");
-#ifdef RTCONFIG_IPV6
+#if defined(RTCONFIG_IPV6) && defined(RTCONFIG_INADYN)
 	nvram_set("ddns_ipv6_ipaddr", "");
 #endif
 #ifdef RTCONFIG_ACCOUNT_BINDING
@@ -4949,14 +4994,14 @@ asusddns_unregister(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-#ifndef RTCONFIG_INADYN
-				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
-				return -2;
-#endif
+				u = get_first_connected_dual_wan_unit(); /* can use private WAN IP */
+				if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
+				{
+					logmessage("ddns", "[%s] None of wan can connect to internet in load balance Dual WAN.", __FUNCTION__);
+					return -2;
+				}
 			}
-			else {
-				unit = u;
-			}
+			unit = u;
 		}
 	}
 #endif
@@ -4993,7 +5038,7 @@ _dprintf("%s: do ez-ipupdate to unregister! unit = %d wan_ifname = %s nserver = 
 #else
 	{
 		char *inadyn_argv[] = { "/usr/sbin/inadyn",
-			"-1", /* once == forced */
+			"-1", "--force",
 			"-l", nvram_get_int("ddns_debug") ? "debug" : "notice",
 			NULL
 		};
@@ -5032,7 +5077,7 @@ _dprintf("%s: do ez-ipupdate to unregister! unit = %d wan_ifname = %s nserver = 
 				if(update_asus_ddns_token() != 1 || nvram_get_int("asusddns_token_state") != 1)
 				{
 					nvram_set("asusddns_reg_result", "unregister,390");
-					return 0;
+					return -1;
 				}
 			}
 #endif			
