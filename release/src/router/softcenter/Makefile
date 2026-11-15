@@ -23,6 +23,9 @@ CFLAGS += -I$(TOP)/openssl/include
 LDFLAGS = -L$(TOP)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared -lcrypt -ldl
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl $(if $(or $(RTCONFIG_OPENSSL11),$(RTCONFIG_OPENSSL3)),-lpthread,) $(if $(RTCONFIG_OPENSSL3),-latomic,)
 LDFLAGS += $(EXTRA_LDFLAGS)
+ifeq ($(HND_ROUTER),y)
+LDFLAGS += -L$(TOP)/wlcsm -lwlcsm
+endif
 
 #export SC_BUILD=y
 all: versioncmp base64_encode resolveip sc_auth
